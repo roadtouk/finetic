@@ -9,25 +9,10 @@ import { useAuthStore } from "@/lib/auth-store";
 import { Play, ChevronLeft, ChevronRight } from "lucide-react";
 import { AuroraBackground } from "@/components/aurora-background";
 
-interface JellyfinItem {
-  Id: string;
-  Name: string;
-  Type: string;
-  ProductionYear?: number;
-  Overview?: string;
-  ImageTags?: {
-    Primary?: string;
-    Backdrop?: string;
-  };
-  BackdropImageTags?: string[];
-  CommunityRating?: number;
-  RunTimeTicks?: number;
-}
-
 export function HomePage() {
   const { user, fetchMovies, fetchTVShows, getImageUrl } = useAuthStore();
-  const [movies, setMovies] = useState<JellyfinItem[]>([]);
-  const [tvShows, setTVShows] = useState<JellyfinItem[]>([]);
+  const [movies, setMovies] = useState<any[]>([]);
+  const [tvShows, setTVShows] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const moviesScrollRef = useRef<HTMLDivElement>(null);

@@ -130,12 +130,11 @@ export const useAuthStore = create<AuthState>()(
             includeItemTypes: [BaseItemKind.Movie],
             recursive: true,
             sortBy: [ItemSortBy.DateCreated],
-            sortOrder: SortOrder.Descending,
+            sortOrder: [SortOrder.Descending],
             limit,
             fields: [
               ItemFields.CanDelete,
               ItemFields.PrimaryImageAspectRatio,
-              ItemFields.ProductionYear,
               ItemFields.Overview,
             ],
           });
@@ -157,12 +156,11 @@ export const useAuthStore = create<AuthState>()(
             includeItemTypes: [BaseItemKind.Series],
             recursive: true,
             sortBy: [ItemSortBy.DateCreated],
-            sortOrder: SortOrder.Descending,
+            sortOrder: [SortOrder.Descending],
             limit,
             fields: [
               ItemFields.CanDelete,
               ItemFields.PrimaryImageAspectRatio,
-              ItemFields.ProductionYear,
               ItemFields.Overview,
             ],
           });
@@ -192,7 +190,6 @@ export const useAuthStore = create<AuthState>()(
             fields: [
               ItemFields.CanDelete,
               ItemFields.PrimaryImageAspectRatio,
-              ItemFields.ProductionYear,
               ItemFields.Overview,
             ],
           });

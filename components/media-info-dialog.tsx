@@ -20,9 +20,9 @@ function formatBytes(bytes: number, decimals = 2) {
 export function MediaInfoDialog({ mediaSource }: MediaInfoDialogProps) {
   if (!mediaSource) return null
 
-  const videoStream = mediaSource.MediaStreams.find((s: MediaStream) => s.Type === 'Video')
-  const audioStreams = mediaSource.MediaStreams.filter((s: MediaStream) => s.Type === 'Audio')
-  const subtitleStreams = mediaSource.MediaStreams.filter((s: MediaStream) => s.Type === 'Subtitle')
+  const videoStream = mediaSource.MediaStreams!.find((s: MediaStream) => s.Type === 'Video')
+  const audioStreams = mediaSource.MediaStreams!.filter((s: MediaStream) => s.Type === 'Audio')
+  const subtitleStreams = mediaSource.MediaStreams!.filter((s: MediaStream) => s.Type === 'Subtitle')
 
   return (
     <div className="text-sm">
@@ -31,7 +31,7 @@ export function MediaInfoDialog({ mediaSource }: MediaInfoDialogProps) {
         <div>{mediaSource.Container}</div>
 
         <div className="font-semibold">Size</div>
-        <div>{formatBytes(mediaSource.Size)}</div>
+        <div>{formatBytes(mediaSource.Size!)}</div>
 
         <div className="font-semibold">Path</div>
         <div className="truncate">{mediaSource.Path}</div>
@@ -48,7 +48,7 @@ export function MediaInfoDialog({ mediaSource }: MediaInfoDialogProps) {
             <div>{videoStream.Width}x{videoStream.Height}</div>
 
             <div className="font-semibold">Bitrate</div>
-            <div>{Math.round(videoStream.BitRate / 1000)} kbps</div>
+            <div>{Math.round(videoStream.BitRate! / 1000)} kbps</div>
 
             <div className="font-semibold">Frame Rate</div>
             <div>{videoStream.AverageFrameRate} fps</div>
@@ -72,7 +72,7 @@ export function MediaInfoDialog({ mediaSource }: MediaInfoDialogProps) {
                 <div>{stream.Channels}</div>
 
                 <div className="font-semibold">Bitrate</div>
-                <div>{Math.round(stream.BitRate / 1000)} kbps</div>
+                <div>{Math.round(stream.BitRate! / 1000)} kbps</div>
               </div>
             </div>
           ))}

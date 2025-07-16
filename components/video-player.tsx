@@ -45,6 +45,7 @@ import {
   MediaPlaybackRateMenu,
   MediaCaptionsMenu,
   MediaSettingsMenuButton,
+  // @ts-ignore
 } from "media-chrome/react/menu";
 import { useAuthStore } from "@/lib/auth-store";
 
@@ -73,7 +74,9 @@ export function VideoPlayer({
   const [isLoading, setIsLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [currentQuality, setCurrentQuality] = useState<string | undefined>(undefined);
+  const [currentQuality, setCurrentQuality] = useState<string | undefined>(
+    undefined
+  );
 
   const { getStreamUrl } = useAuthStore();
 
@@ -202,9 +205,8 @@ export function VideoPlayer({
 
           <HlsVideoElement
             slot="media"
-            src={
-              videoUrl
-            }
+            src={videoUrl}
+            // @ts-ignore
             ref={videoRef}
             preload="auto"
             autoPlay

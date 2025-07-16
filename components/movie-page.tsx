@@ -104,7 +104,7 @@ export function MoviePage({ movieId }: MoviePageProps) {
     const extractColors = async () => {
       if (movie && movie.ImageTags?.Primary) {
         const imageUrl = getImageUrl(
-          movie.Id,
+          movie.Id!,
           "Primary",
           movie.ImageTags.Primary
         );
@@ -202,10 +202,10 @@ export function MoviePage({ movieId }: MoviePageProps) {
         {isFullScreen && selectedVersion && (
           <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
             <VideoPlayer
-              itemId={movie.Id}
-              mediaSourceId={selectedVersion.Id}
-              videoUrl={getStreamUrl(movie.Id, selectedVersion.Id)}
-              movieTitle={movie.Name}
+              itemId={movie.Id!}
+              mediaSourceId={selectedVersion.Id!}
+              videoUrl={getStreamUrl(movie.Id!, selectedVersion.Id!)}
+              movieTitle={movie.Name!}
               onEnded={() => setIsFullScreen(false)}
               onBack={() => setIsFullScreen(false)}
               availableQualities={availableQualities}
@@ -237,11 +237,11 @@ export function MoviePage({ movieId }: MoviePageProps) {
                 <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0">
                   <img
                     src={getImageUrl(
-                      movie.Id,
+                      movie.Id!,
                       "Primary",
                       movie.ImageTags?.Primary
                     )}
-                    alt={movie.Name}
+                    alt={movie.Name!}
                     className="w-full h-auto rounded-lg shadow-lg"
                   />
                 </div>
@@ -281,7 +281,7 @@ export function MoviePage({ movieId }: MoviePageProps) {
                               variant="outline"
                               className="overflow-hidden whitespace-nowrap text-ellipsis"
                             >
-                              {getMediaDetailsFromName(selectedVersion.Name)}
+                              {getMediaDetailsFromName(selectedVersion.Name!)}
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent>
@@ -301,7 +301,7 @@ export function MoviePage({ movieId }: MoviePageProps) {
                           size="icon"
                           onClick={() =>
                             window.open(
-                              getDownloadUrl(movie.Id, selectedVersion.Id),
+                              getDownloadUrl(movie.Id!, selectedVersion.Id!),
                               "_blank"
                             )
                           }
@@ -346,11 +346,11 @@ export function MoviePage({ movieId }: MoviePageProps) {
                             <div className="overflow-hidden rounded-full">
                               <img
                                 src={getImageUrl(
-                                  person.Id,
+                                  person.Id!,
                                   "Primary",
-                                  person.PrimaryImageTag
+                                  person.PrimaryImageTag!
                                 )}
-                                alt={person.Name}
+                                alt={person.Name!}
                                 className="aspect-square h-fit w-24 object-cover"
                               />
                             </div>

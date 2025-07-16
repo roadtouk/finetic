@@ -10,26 +10,11 @@ import { useAuthStore } from "@/lib/auth-store";
 import { ArrowLeft, Search as SearchIcon } from "lucide-react";
 import { AuroraBackground } from "@/components/aurora-background";
 
-interface JellyfinItem {
-  Id: string;
-  Name: string;
-  Type: string;
-  ProductionYear?: number;
-  Overview?: string;
-  ImageTags?: {
-    Primary?: string;
-    Backdrop?: string;
-  };
-  BackdropImageTags?: string[];
-  CommunityRating?: number;
-  RunTimeTicks?: number;
-}
-
 export function SearchPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { searchItems, getImageUrl } = useAuthStore();
-  const [searchResults, setSearchResults] = useState<JellyfinItem[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 

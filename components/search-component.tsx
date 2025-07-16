@@ -9,31 +9,13 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
 import { Badge } from "./ui/badge";
 
-interface JellyfinItem {
-  Id: string;
-  Name: string;
-  Type: string;
-  ProductionYear?: number;
-  Overview?: string;
-  ImageTags?: {
-    Primary?: string;
-    Backdrop?: string;
-  };
-  BackdropImageTags?: string[];
-  CommunityRating?: number;
-  RunTimeTicks?: number;
-  ParentIndexNumber?: number; // Season number for episodes
-  IndexNumber?: number; // Episode number
-  SeriesName?: string; // Show name for episodes
-}
-
 interface SearchComponentProps {
   className?: string;
 }
 
 export function SearchComponent({ className = "" }: SearchComponentProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<JellyfinItem[]>([]);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const router = useRouter();
@@ -116,7 +98,7 @@ export function SearchComponent({ className = "" }: SearchComponentProps) {
     }
   };
 
-  const handleSuggestionClick = (item: JellyfinItem) => {
+  const handleSuggestionClick = (item: any) => {
     setShowSuggestions(false);
     if (item.Type === "Movie") {
       router.push(`/movie/${item.Id}`);
