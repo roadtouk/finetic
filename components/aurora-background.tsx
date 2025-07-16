@@ -30,7 +30,8 @@ export function AuroraBackground({
   }
 
   // Only show aurora in dark mode or when system theme resolves to dark
-  const shouldShowAurora = theme === "dark" || (theme === "system" && resolvedTheme === "dark");
+  const shouldShowAurora =
+    theme === "dark" || (theme === "system" && resolvedTheme === "dark");
 
   if (!shouldShowAurora) {
     return null;
@@ -38,11 +39,7 @@ export function AuroraBackground({
 
   return (
     <div className={className}>
-      <Aurora
-        colorStops={colorStops}
-        amplitude={amplitude}
-        blend={blend}
-      />
+      <Aurora colorStops={colorStops} amplitude={amplitude} blend={blend} />
     </div>
   );
 }

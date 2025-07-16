@@ -2,26 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import axios from 'axios'
 
-interface JellyfinUser {
-  Id: string
-  Name: string
-  AccessToken: string
-}
-
-interface JellyfinItem {
-  Id: string
-  Name: string
-  Type: string
-  ProductionYear?: number
-  Overview?: string
-  ImageTags?: {
-    Primary?: string
-    Backdrop?: string
-  }
-  BackdropImageTags?: string[]
-  CommunityRating?: number
-  RunTimeTicks?: number
-}
+import { JellyfinUser, JellyfinItem } from '../types/jellyfin'
 
 interface AuthState {
   serverUrl: string | null
@@ -35,7 +16,9 @@ interface AuthState {
   fetchMovies: (limit?: number) => Promise<JellyfinItem[]>
   fetchTVShows: (limit?: number) => Promise<JellyfinItem[]>
   searchItems: (query: string) => Promise<JellyfinItem[]>
+  fetchMovieDetails: (movieId: string) => Promise<JellyfinItem | null>
   getImageUrl: (itemId: string, imageType?: string, tag?: string) => string
+  getDownloadUrl: (itemId: string, mediaSourceId: string) => string
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -202,6 +185,30 @@ export const useAuthStore = create<AuthState>()(
           url += `?tag=${tag}`
         }
         return url
+      },
+
+      fetchMovieDetails: async (movieId: string): Promise<any | null> => {
+        try {
+          const { serverUrl, user } = get()
+          if (!serverUrl || !user) return null
+
+          const response = await axios.get(`${serverUrl}/Users/${user.Id}/Items/${movieId}`, {
+            headers: {
+              'X-Emby-Authorization': `MediaBrowser Client="Jellyfin Web Client", Device="Browser", DeviceId="web-client", Version="1.0.0", Token="${user.AccessToken}"`
+            }
+          })
+
+          return response.data
+        } catch (error) {
+          console.error('Failed to fetch movie details:', error)
+          return null
+        }
+      },
+
+      getDownloadUrl: (itemId: string, mediaSourceId: string): string => {
+        const { serverUrl, user } = get()
+        if (!serverUrl || !user) return ''
+        return `${serverUrl}/Items/${itemId}/Download?api_key=${user.AccessToken}&MediaSourceId=${mediaSourceId}`
       }
     }),
     {

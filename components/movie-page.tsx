@@ -1,0 +1,252 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { useAuthStore } from "@/lib/auth-store";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { MediaInfoDialog } from "@/components/media-info-dialog";
+import { Info, Download } from "lucide-react";
+import { SearchComponent } from "@/components/search-component";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { AuroraBackground } from "@/components/aurora-background";
+import { Vibrant } from "node-vibrant/browser";
+
+interface MoviePageProps {
+  movieId: string;
+}
+
+export function MoviePage({ movieId }: MoviePageProps) {
+  const { fetchMovieDetails, getImageUrl, getDownloadUrl } = useAuthStore();
+  const [movie, setMovie] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedVersion, setSelectedVersion] = useState<any>(null);
+  const [vibrantColors, setVibrantColors] = useState<string[]>([]);
+
+  const getMediaDetailsFromName = (name: string) => {
+    const resolutionMatch = name.match(/(\d+p)/i);
+    const hdrMatch = name.match(/(HDR|DV|Dolby Vision)/i);
+    const audioMatch = name.match(
+      /(DDP5[.\s]1|TrueHD|DTS-HD MA|DTS-HD|DTS|AAC|AC3|FLAC|Opus)/i
+    );
+
+    let details = [];
+    if (resolutionMatch) details.push(resolutionMatch[1]);
+    if (hdrMatch) details.push(hdrMatch[1].toUpperCase());
+    if (audioMatch) {
+      let audioDetail = audioMatch[1];
+      if (audioDetail.toLowerCase() === "ddp5 1") {
+        audioDetail = "DDP5.1";
+      }
+      details.push(audioDetail);
+    }
+
+    return details.length > 0 ? details.join(" - ") : name;
+  };
+
+  useEffect(() => {
+    const loadMovieDetails = async () => {
+      setIsLoading(true);
+      try {
+        const movieData = await fetchMovieDetails(movieId);
+        setMovie(movieData);
+        if (movieData.MediaSources && movieData.MediaSources.length > 0) {
+          setSelectedVersion(movieData.MediaSources[0]);
+        }
+      } catch (error) {
+        console.error("Failed to load movie details:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadMovieDetails();
+  }, [fetchMovieDetails, movieId]);
+
+  useEffect(() => {
+    const extractColors = async () => {
+      if (movie && movie.ImageTags?.Primary) {
+        const imageUrl = getImageUrl(movie.Id, "Primary", movie.ImageTags.Primary);
+        try {
+          const palette = await Vibrant.from(imageUrl).getPalette();
+          const colors: string[] = [];
+          if (palette.Vibrant) colors.push(palette.Vibrant.hex);
+          if (palette.DarkVibrant) colors.push(palette.DarkVibrant.hex);
+          if (palette.LightVibrant) colors.push(palette.LightVibrant.hex);
+          if (palette.Muted) colors.push(palette.Muted.hex);
+          if (palette.DarkMuted) colors.push(palette.DarkMuted.hex);
+          if (colors.length > 0) {
+            setVibrantColors(colors);
+          }
+        } catch (error) {
+          console.error("Failed to extract vibrant colors:", error);
+        }
+      }
+    };
+    extractColors();
+  }, [movie, getImageUrl]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center w-full">
+        <div className="text-center">
+          <div className="animate-spin h-12 w-12 border-4 border-muted border-t-foreground rounded-full mx-auto mb-4"></div>
+          <p className="text-foreground text-lg">Loading movie details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!movie) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center w-full">
+        <p className="text-foreground text-lg">Movie not found.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative px-4 py-6 max-w-full overflow-hidden">
+      <AuroraBackground
+        colorStops={vibrantColors.length > 0 ? vibrantColors : ["#AA5CC3", "#00A4DC", "#AA5CC3"]}
+        amplitude={0.8}
+        blend={0.4}
+      />
+      <div className="relative z-[9999] mb-4">
+        <div className="max-w-2xl mb-2">
+          <SearchComponent />
+        </div>
+      </div>
+      <div className="relative min-h-screen text-foreground mt-12">
+        <div className="relative pb-16">
+          <div className="flex flex-col md:flex-row gap-8">
+            {/* Movie Poster */}
+            <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0">
+              <img
+                src={getImageUrl(movie.Id, "Primary", movie.ImageTags?.Primary)}
+                alt={movie.Name}
+                className="w-full h-auto rounded-lg shadow-lg"
+              />
+            </div>
+
+            {/* Movie Info */}
+            <div className="w-full md:w-2/3 lg:w-3/4 mt-4">
+              <h1 className="text-4xl font-bold mb-2 font-poppins">
+                {movie.Name}
+              </h1>
+              <div className="flex items-center gap-2 mb-4">
+                {movie.ProductionYear && (
+                  <Badge variant="outline" className="bg-sidebar">
+                    {movie.ProductionYear}
+                  </Badge>
+                )}
+                {movie.OfficialRating && (
+                  <Badge variant="outline" className="bg-sidebar">
+                    {movie.OfficialRating}
+                  </Badge>
+                )}
+                {movie.RunTimeTicks && (
+                  <Badge variant="outline" className="bg-sidebar">
+                    {Math.round(movie.RunTimeTicks / 600000000)} min
+                  </Badge>
+                )}
+              </div>
+              <p className="mb-6">{movie.Overview}</p>
+
+              {/* Movie Versions Dropdown */}
+              {movie.MediaSources &&
+                movie.MediaSources.length > 1 &&
+                selectedVersion && (
+                  <div className="mb-6 flex items-center gap-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild className="truncate">
+                        <Button
+                          variant="outline"
+                          className="overflow-hidden whitespace-nowrap text-ellipsis"
+                        >
+                          {getMediaDetailsFromName(selectedVersion.Name)}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        {movie.MediaSources.map((source: any) => (
+                          <DropdownMenuItem
+                            key={source.Id}
+                            onSelect={() => setSelectedVersion(source)}
+                          >
+                            {source.Name}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => window.open(getDownloadUrl(movie.Id, selectedVersion.Id), "_blank")}
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="icon">
+                          <Info className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Media Info</DialogTitle>
+                        </DialogHeader>
+                        <MediaInfoDialog mediaSource={selectedVersion} />
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                )}
+
+              {/* Cast Information */}
+              <div>
+                <h2 className="text-2xl font-semibold mb-4">Cast</h2>
+                <ScrollArea className="w-full whitespace-nowrap rounded-md border">
+                  <div className="flex w-max space-x-4 p-4">
+                    {movie.People.map((person: any, index: number) => (
+                      <figure key={`${person.Id}-${index}`} className="shrink-0">
+                        <div className="overflow-hidden rounded-full">
+                          <img
+                            src={getImageUrl(
+                              person.Id,
+                              "Primary",
+                              person.PrimaryImageTag
+                            )}
+                            alt={person.Name}
+                            className="aspect-square h-fit w-24 object-cover"
+                          />
+                        </div>
+                        <figcaption className="pt-2 text-xs text-center text-muted-foreground">
+                          <p className="font-semibold text-foreground">{person.Name}</p>
+                          <p className="text-sm">{person.Role}</p>
+                        </figcaption>
+                      </figure>
+                    ))}
+                  </div>
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
