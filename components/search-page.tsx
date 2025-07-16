@@ -89,7 +89,8 @@ export function SearchPage() {
                   Results for &ldquo;{query}&rdquo;
                 </h2>
                 <p className="text-muted-foreground mt-1">
-                  {searchResults.length} item{searchResults.length !== 1 ? "s" : ""} found
+                  {searchResults.length} item
+                  {searchResults.length !== 1 ? "s" : ""} found
                 </p>
               </div>
             )}
@@ -106,9 +107,12 @@ export function SearchPage() {
               <Card className="bg-card border-border text-foreground">
                 <CardContent className="p-12 text-center">
                   <SearchIcon className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">No results found</h3>
+                  <h3 className="text-xl font-semibold mb-2">
+                    No results found
+                  </h3>
                   <p className="text-muted-foreground mb-4">
-                    We couldn&apos;t find any movies, TV shows, or episodes matching &ldquo;{query}&rdquo;
+                    We couldn&apos;t find any movies, TV shows, or episodes
+                    matching &ldquo;{query}&rdquo;
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Try adjusting your search terms or browse our library
@@ -121,7 +125,9 @@ export function SearchPage() {
           <Card className="bg-card border-border text-foreground">
             <CardContent className="p-12 text-center">
               <SearchIcon className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Search your library</h3>
+              <h3 className="text-xl font-semibold mb-2">
+                Search your library
+              </h3>
               <p className="text-muted-foreground">
                 Enter a search term above to find movies, TV shows, and episodes
               </p>
