@@ -180,7 +180,7 @@ export function MoviePage({ movieId }: MoviePageProps) {
   return (
     <>
       <AnimatePresence>
-        {isFullScreen && (
+        {isFullScreen && selectedVersion && (
           <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
             <VideoPlayer
               videoUrl={getStreamUrl(movie.Id, selectedVersion.Id)}
