@@ -122,7 +122,7 @@ export function AppSidebar() {
                   <JellyfinIcon className="size-6" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-medium">Finaly</span>
+                  <span className="font-medium">Finetic</span>
                   <span className="text-xs">
                     {serverUrl && new URL(serverUrl).hostname}
                   </span>

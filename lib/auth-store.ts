@@ -20,12 +20,12 @@ type JellyfinUserWithToken = UserDto & { AccessToken?: string };
 // Create global Jellyfin SDK instance
 const jellyfin = new Jellyfin({
   clientInfo: {
-    name: "Finaly",
+    name: "Finetic",
     version: "1.0.0",
   },
   deviceInfo: {
-    name: "Finaly Web Client",
-    id: "finaly-web-client",
+    name: "Finetic Web Client",
+    id: "finetic-web-client",
   },
 });
 

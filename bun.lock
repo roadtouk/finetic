@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "finaly",
+      "name": "finetic",
       "dependencies": {
         "@jellyfin/sdk": "^0.11.0",
         "@radix-ui/react-dialog": "^1.1.14",
