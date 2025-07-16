@@ -58,6 +58,8 @@ export function AppSidebar() {
 
   useEffect(() => {
     const fetchLibraries = async () => {
+      // For now, we'll use the direct fetch approach since we need to migrate the library endpoint
+      // This should be migrated to use the SDK's LibraryApi later
       if (!serverUrl || !user) return;
 
       setIsLoading(true);

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuthStore } from "@/lib/auth-store";
+import { JellyfinItem, MediaSourceInfo, PersonInfo } from "@/types/jellyfin";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,13 +69,14 @@ export function MoviePage({ movieId }: MoviePageProps) {
       setIsLoading(true);
       try {
         const movieData = await fetchMovieDetails(movieId);
+        console.log("Fetched movie data:", movieData);
         setMovie(movieData);
-        if (movieData.MediaSources && movieData.MediaSources.length > 0) {
+        if (movieData && movieData.MediaSources && movieData.MediaSources.length > 0) {
           setSelectedVersion(movieData.MediaSources[0]);
 
           const qualities: string[] = [];
           movieData.MediaSources.forEach((source) => {
-            source.MediaStreams.forEach((stream) => {
+            source.MediaStreams?.forEach((stream) => {
               if (stream.Type === "Video" && stream.Height) {
                 qualities.push(`${stream.Height}p`);
               }
@@ -336,7 +338,7 @@ export function MoviePage({ movieId }: MoviePageProps) {
                     <h2 className="text-2xl font-semibold mb-4">Cast</h2>
                     <ScrollArea className="w-full whitespace-nowrap rounded-md border">
                       <div className="flex w-max space-x-4 p-4">
-                        {movie.People.map((person: PersonInfo, index: number) => (
+                        {movie.People?.map((person: PersonInfo, index: number) => (
                           <figure
                             key={`${person.Id}-${index}`}
                             className="shrink-0"

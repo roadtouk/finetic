@@ -1,4 +1,4 @@
-import { MoviePage } from '@/components/movie-page'
+import { MoviePage } from "@/components/movie-page";
 
 interface MovieProps {
   params: {
@@ -6,6 +6,7 @@ interface MovieProps {
   };
 }
 
-export default function Movie({ params }: MovieProps) {
-  return <MoviePage movieId={params.id} />
+export default async function Movie({ params }: MovieProps) {
+  const { id } = await params;
+  return <MoviePage movieId={id} />;
 }
