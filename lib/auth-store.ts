@@ -19,7 +19,7 @@ interface AuthState {
   fetchMovieDetails: (movieId: string) => Promise<JellyfinItem | null>,
   getImageUrl: (itemId: string, imageType?: string, tag?: string) => string
   getDownloadUrl: (itemId: string, mediaSourceId: string) => string
-  getStreamUrl: (itemId: string, mediaSourceId: string) => string
+  getStreamUrl: (itemId: string, mediaSourceId: string, quality?: string) => string
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -212,10 +212,26 @@ export const useAuthStore = create<AuthState>()(
         return `${serverUrl}/Items/${itemId}/Download?api_key=${user.AccessToken}&MediaSourceId=${mediaSourceId}`
       },
 
-      getStreamUrl: (itemId: string, mediaSourceId: string): string => {
+      getStreamUrl: (itemId: string, mediaSourceId: string, quality?: string): string => {
         const { serverUrl, user } = get()
         if (!serverUrl || !user) return ''
-        return `${serverUrl}/Videos/${itemId}/master.m3u8?api_key=${user.AccessToken}&MediaSourceId=${mediaSourceId}&PlaySessionId=${user.Id}&VideoCodec=h264,hevc&AudioCodec=aac,mp3&TranscodingProfile=Default`
+        let url = `${serverUrl}/Videos/${itemId}/master.m3u8?api_key=${user.AccessToken}&MediaSourceId=${mediaSourceId}&PlaySessionId=${user.Id}&VideoCodec=h264,hevc&AudioCodec=aac,mp3&TranscodingProfile=Default`
+
+        if (quality) {
+          switch (quality) {
+            case '2160p':
+              url += '&width=3840&height=2160&videoBitRate=20000000'
+              break
+            case '1080p':
+              url += '&width=1920&height=1080&videoBitRate=8000000'
+              break
+            case '720p':
+              url += '&width=1280&height=720&videoBitRate=4000000'
+              break
+          }
+        }
+
+        return url
       }
     }),
     {

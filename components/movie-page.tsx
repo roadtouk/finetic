@@ -40,6 +40,7 @@ export function MoviePage({ movieId }: MoviePageProps) {
     useState<MediaSourceInfo | null>(null);
   const [vibrantColors, setVibrantColors] = useState<string[]>([]);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [availableQualities, setAvailableQualities] = useState<string[]>([]);
 
   const getMediaDetailsFromName = (name: string) => {
     const resolutionMatch = name.match(/(\d+p)/i);
@@ -70,6 +71,22 @@ export function MoviePage({ movieId }: MoviePageProps) {
         setMovie(movieData);
         if (movieData.MediaSources && movieData.MediaSources.length > 0) {
           setSelectedVersion(movieData.MediaSources[0]);
+
+          const qualities: string[] = [];
+          movieData.MediaSources.forEach((source) => {
+            source.MediaStreams.forEach((stream) => {
+              if (stream.Type === "Video" && stream.Height) {
+                qualities.push(`${stream.Height}p`);
+              }
+            });
+          });
+          // Add common transcoding options if not already present
+          if (!qualities.includes("2160p")) qualities.push("2160p");
+          if (!qualities.includes("1080p")) qualities.push("1080p");
+          if (!qualities.includes("720p")) qualities.push("720p");
+          if (!qualities.includes("480p")) qualities.push("480p");
+          if (!qualities.includes("360p")) qualities.push("360p");
+          setAvailableQualities(Array.from(new Set(qualities)).sort((a, b) => parseInt(b) - parseInt(a)));
         }
       } catch (error) {
         console.error("Failed to load movie details:", error);
@@ -183,10 +200,13 @@ export function MoviePage({ movieId }: MoviePageProps) {
         {isFullScreen && selectedVersion && (
           <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
             <VideoPlayer
+              itemId={movie.Id}
+              mediaSourceId={selectedVersion.Id}
               videoUrl={getStreamUrl(movie.Id, selectedVersion.Id)}
               movieTitle={movie.Name}
               onEnded={() => setIsFullScreen(false)}
               onBack={() => setIsFullScreen(false)}
+              availableQualities={availableQualities}
             />
           </div>
         )}

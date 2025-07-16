@@ -11,7 +11,6 @@ import {
   RotateCw,
   Volume1,
   Volume,
-  Settings,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import {
@@ -27,7 +26,6 @@ import {
   MediaSeekForwardButton,
   MediaPreviewTimeDisplay,
   MediaDurationDisplay,
-  MediaChromeDialog,
 } from "media-chrome/react";
 import {
   Tooltip,
@@ -36,36 +34,29 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import "hls-video-element";
-import HlsVideoElement from "hls-video-element/react";
+// import HlsVideoElement from "hls-video-element/react";
 import "dash-video-element";
+import DashVideoElement from "dash-video-element/react";
 import {
   MediaRenditionMenu,
+  MediaRenditionMenuButton,
   MediaSettingsMenu,
-  MediaSettingsMenuItem,
-  MediaPlaybackRateMenu,
-  MediaCaptionsMenu,
   MediaSettingsMenuButton,
+  MediaSettingsMenuItem,
 } from "media-chrome/react/menu";
-import { useAuthStore } from "@/lib/auth-store";
 
 interface VideoPlayerProps {
   videoUrl: string;
-  itemId: string;
-  mediaSourceId: string;
   movieTitle?: string;
   onEnded?: () => void;
   onBack?: () => void;
-  availableQualities: string[];
 }
 
 export function VideoPlayer({
   videoUrl,
-  itemId,
-  mediaSourceId,
   movieTitle,
   onEnded,
   onBack,
-  availableQualities,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hovered, setHovered] = useState(false);
@@ -73,9 +64,6 @@ export function VideoPlayer({
   const [isLoading, setIsLoading] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [currentQuality, setCurrentQuality] = useState<string | undefined>(undefined);
-
-  const { getStreamUrl } = useAuthStore();
 
   const formatTime = (seconds: number) => {
     const date = new Date(seconds * 1000);
@@ -92,9 +80,6 @@ export function VideoPlayer({
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-
-    const streamUrl = getStreamUrl(itemId, mediaSourceId, currentQuality);
-    video.src = streamUrl;
 
     const handleEnded = () => {
       if (onEnded) onEnded();
@@ -150,7 +135,7 @@ export function VideoPlayer({
       video.removeEventListener("pause", handlePause);
       video.removeEventListener("volumechange", handleVolumeChange);
     };
-  }, [onEnded, itemId, mediaSourceId, currentQuality, getStreamUrl]);
+  }, [onEnded]);
 
   return (
     <motion.div
@@ -189,7 +174,7 @@ export function VideoPlayer({
             "--media-control-hover-background": "transparent",
           }}
         >
-          {/* <DashVideoElement
+          <DashVideoElement
             slot="media"
             src={
               "https://dash.akamaized.net/akamai/streamroot/050714/Spring_4Ktest.mpd"
@@ -198,18 +183,16 @@ export function VideoPlayer({
             preload="auto"
             autoPlay
             className="w-full h-full object-contain"
-          /> */}
+          />
 
-          <HlsVideoElement
+          {/* <HlsVideoElement
             slot="media"
-            src={
-              videoUrl
-            }
+            src={videoUrl}
             ref={videoRef}
             preload="auto"
             autoPlay
             className="w-full h-full object-contain"
-          />
+          /> */}
 
           {hovered && (
             <motion.div
@@ -245,36 +228,7 @@ export function VideoPlayer({
                   <MediaDurationDisplay className="text-white text-sm font-sans font-medium px-0"></MediaDurationDisplay>
                 </div>
               </div>
-              <MediaSettingsMenu anchor="auto" hidden>
-                <MediaSettingsMenuItem>
-                  Speed
-                  <MediaPlaybackRateMenu slot="submenu" hidden>
-                    <div slot="title">Speed</div>
-                  </MediaPlaybackRateMenu>
-                </MediaSettingsMenuItem>
 
-                <MediaSettingsMenuItem>
-                  Quality
-                  <MediaRenditionMenu slot="submenu" hidden>
-                    <div slot="title">Quality</div>
-                    {availableQualities.map((quality) => (
-                      <MediaSettingsMenuItem
-                        key={quality}
-                        onClick={() => setCurrentQuality(quality)}
-                      >
-                        {quality}
-                      </MediaSettingsMenuItem>
-                    ))}
-                  </MediaRenditionMenu>
-                </MediaSettingsMenuItem>
-
-                <MediaSettingsMenuItem>
-                  Captions
-                  <MediaCaptionsMenu slot="submenu" hidden>
-                    <div slot="title">Captions</div>
-                  </MediaCaptionsMenu>
-                </MediaSettingsMenuItem>
-              </MediaSettingsMenu>
               <TooltipProvider>
                 <MediaControlBar className="w-full px-4 items-center justify-center gap-x-6 bg-black/50">
                   <Tooltip>
@@ -385,6 +339,15 @@ export function VideoPlayer({
 
                   <MediaVolumeRange className="hidden md:block w-20"></MediaVolumeRange>
 
+                  <MediaSettingsMenu  anchor="auto">
+                    <MediaSettingsMenuItem>
+                      Quality
+                      <MediaRenditionMenu slot="submenu">
+                        <div slot="title">Quality</div>
+                      </MediaRenditionMenu>
+                    </MediaSettingsMenuItem>
+                  </MediaSettingsMenu>
+
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -406,25 +369,6 @@ export function VideoPlayer({
                             />
                           </span>
                         </MediaFullscreenButton>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Fullscreen</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        asChild
-                        className="size-9 rounded-full px-2.5 py-2.5 hover:scale-105 hidden md:block"
-                        variant={"ghost"}
-                      >
-                        <MediaSettingsMenuButton>
-                          <span slot="icon">
-                            <Settings
-                              aria-hidden="true"
-                              className="h-5 w-5 text-white"
-                            />
-                          </span>
-                        </MediaSettingsMenuButton>
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>Fullscreen</TooltipContent>
