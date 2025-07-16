@@ -187,9 +187,9 @@ export function VideoPlayer({
           className="w-full h-full"
           style={{
             // @ts-expect-error
-            "--media-background-color": "transparent",
-            "--media-control-background": "transparent",
-            "--media-control-hover-background": "transparent",
+            "--media-background-color": "white",
+            "--media-control-background": "white",
+            "--media-control-hover-background": "white",
           }}
         >
           {/* <DashVideoElement
