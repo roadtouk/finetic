@@ -59,7 +59,7 @@ export function MediaInfoDialog({ mediaSource }: MediaInfoDialogProps) {
       {audioStreams.length > 0 && (
         <div className="mt-4">
           <h4 className="font-semibold text-lg mb-2">Audio</h4>
-          {audioStreams.map((stream: any, index: number) => (
+          {audioStreams.map((stream: MediaStream, index: number) => (
             <div key={index} className="pl-4 mb-2">
               <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                 <div className="font-semibold">Language</div>
@@ -82,7 +82,7 @@ export function MediaInfoDialog({ mediaSource }: MediaInfoDialogProps) {
       {subtitleStreams.length > 0 && (
         <div className="mt-4">
           <h4 className="font-semibold text-lg mb-2">Subtitles</h4>
-          {subtitleStreams.map((stream: any, index: number) => (
+          {subtitleStreams.map((stream: MediaStream, index: number) => (
             <div key={index} className="pl-4 mb-2">
               <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                 <div className="font-semibold">Language</div>

@@ -16,9 +16,10 @@ interface AuthState {
   fetchMovies: (limit?: number) => Promise<JellyfinItem[]>
   fetchTVShows: (limit?: number) => Promise<JellyfinItem[]>
   searchItems: (query: string) => Promise<JellyfinItem[]>
-  fetchMovieDetails: (movieId: string) => Promise<JellyfinItem | null>
+  fetchMovieDetails: (movieId: string) => Promise<JellyfinItem | null>,
   getImageUrl: (itemId: string, imageType?: string, tag?: string) => string
   getDownloadUrl: (itemId: string, mediaSourceId: string) => string
+  getStreamUrl: (itemId: string, mediaSourceId: string) => string
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -187,7 +188,7 @@ export const useAuthStore = create<AuthState>()(
         return url
       },
 
-      fetchMovieDetails: async (movieId: string): Promise<any | null> => {
+      fetchMovieDetails: async (movieId: string): Promise<JellyfinItem | null> => {
         try {
           const { serverUrl, user } = get()
           if (!serverUrl || !user) return null
@@ -209,6 +210,12 @@ export const useAuthStore = create<AuthState>()(
         const { serverUrl, user } = get()
         if (!serverUrl || !user) return ''
         return `${serverUrl}/Items/${itemId}/Download?api_key=${user.AccessToken}&MediaSourceId=${mediaSourceId}`
+      },
+
+      getStreamUrl: (itemId: string, mediaSourceId: string): string => {
+        const { serverUrl, user } = get()
+        if (!serverUrl || !user) return ''
+        return `${serverUrl}/Videos/${itemId}/master.m3u8?api_key=${user.AccessToken}&MediaSourceId=${mediaSourceId}&PlaySessionId=${user.Id}&VideoCodec=h264,hevc&AudioCodec=aac,mp3&TranscodingProfile=Default`
       }
     }),
     {

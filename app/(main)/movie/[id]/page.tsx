@@ -1,5 +1,11 @@
 import { MoviePage } from '@/components/movie-page'
 
-export default function Movie({ params }: { params: { id: string } }) {
+interface MovieProps {
+  params: {
+    id: string;
+  };
+}
+
+export default function Movie({ params }: MovieProps) {
   return <MoviePage movieId={params.id} />
 }

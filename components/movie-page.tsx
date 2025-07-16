@@ -18,9 +18,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { MediaInfoDialog } from "@/components/media-info-dialog";
-import { Info, Download } from "lucide-react";
+import { Info, Download, Play } from "lucide-react";
 import { SearchComponent } from "@/components/search-component";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { VideoPlayer } from "@/components/video-player";
+import { AnimatePresence } from "framer-motion";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AuroraBackground } from "@/components/aurora-background";
 import { Vibrant } from "node-vibrant/browser";
 
@@ -29,11 +32,14 @@ interface MoviePageProps {
 }
 
 export function MoviePage({ movieId }: MoviePageProps) {
-  const { fetchMovieDetails, getImageUrl, getDownloadUrl } = useAuthStore();
-  const [movie, setMovie] = useState<any>(null);
+  const { fetchMovieDetails, getImageUrl, getDownloadUrl, getStreamUrl } =
+    useAuthStore();
+  const [movie, setMovie] = useState<JellyfinItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedVersion, setSelectedVersion] = useState<any>(null);
+  const [selectedVersion, setSelectedVersion] =
+    useState<MediaSourceInfo | null>(null);
   const [vibrantColors, setVibrantColors] = useState<string[]>([]);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   const getMediaDetailsFromName = (name: string) => {
     const resolutionMatch = name.match(/(\d+p)/i);
@@ -42,7 +48,7 @@ export function MoviePage({ movieId }: MoviePageProps) {
       /(DDP5[.\s]1|TrueHD|DTS-HD MA|DTS-HD|DTS|AAC|AC3|FLAC|Opus)/i
     );
 
-    let details = [];
+    const details: string[] = [];
     if (resolutionMatch) details.push(resolutionMatch[1]);
     if (hdrMatch) details.push(hdrMatch[1].toUpperCase());
     if (audioMatch) {
@@ -78,7 +84,11 @@ export function MoviePage({ movieId }: MoviePageProps) {
   useEffect(() => {
     const extractColors = async () => {
       if (movie && movie.ImageTags?.Primary) {
-        const imageUrl = getImageUrl(movie.Id, "Primary", movie.ImageTags.Primary);
+        const imageUrl = getImageUrl(
+          movie.Id,
+          "Primary",
+          movie.ImageTags.Primary
+        );
         try {
           const palette = await Vibrant.from(imageUrl).getPalette();
           const colors: string[] = [];
@@ -100,10 +110,60 @@ export function MoviePage({ movieId }: MoviePageProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center w-full">
-        <div className="text-center">
-          <div className="animate-spin h-12 w-12 border-4 border-muted border-t-foreground rounded-full mx-auto mb-4"></div>
-          <p className="text-foreground text-lg">Loading movie details...</p>
+      <div className="relative px-4 py-6 max-w-full overflow-hidden">
+        <AuroraBackground
+          colorStops={["#AA5CC3", "#00A4DC", "#AA5CC3"]}
+          amplitude={0.8}
+          blend={0.4}
+        />
+        <div className="relative z-[9999] mb-4">
+          <div className="max-w-2xl mb-2">
+            <SearchComponent />
+          </div>
+        </div>
+        <div className="relative min-h-screen text-foreground mt-12">
+          <div className="relative pb-16">
+            <div className="flex flex-col md:flex-row gap-8">
+              {/* Movie Poster Skeleton */}
+              <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0">
+                <Skeleton className="w-full h-96 rounded-lg" />
+              </div>
+
+              {/* Movie Info Skeleton */}
+              <div className="w-full md:w-2/3 lg:w-3/4 mt-4">
+                <Skeleton className="h-10 w-3/4 mb-4" />
+                <div className="flex items-center gap-2 mb-4">
+                  <Skeleton className="h-6 w-20" />
+                  <Skeleton className="h-6 w-20" />
+                  <Skeleton className="h-6 w-20" />
+                </div>
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-3/4 mb-6" />
+
+                {/* Buttons Skeleton */}
+                <div className="mb-6 flex items-center gap-2">
+                  <Skeleton className="h-10 w-32" />
+                  <Skeleton className="h-10 w-10" />
+                  <Skeleton className="h-10 w-10" />
+                </div>
+
+                {/* Cast Information Skeleton */}
+                <div>
+                  <Skeleton className="h-8 w-40 mb-4" />
+                  <div className="flex space-x-4 overflow-hidden">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="flex flex-col items-center">
+                        <Skeleton className="w-24 h-24 rounded-full mb-2" />
+                        <Skeleton className="h-4 w-20 mb-1" />
+                        <Skeleton className="h-3 w-16" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -118,135 +178,177 @@ export function MoviePage({ movieId }: MoviePageProps) {
   }
 
   return (
-    <div className="relative px-4 py-6 max-w-full overflow-hidden">
-      <AuroraBackground
-        colorStops={vibrantColors.length > 0 ? vibrantColors : ["#AA5CC3", "#00A4DC", "#AA5CC3"]}
-        amplitude={0.8}
-        blend={0.4}
-      />
-      <div className="relative z-[9999] mb-4">
-        <div className="max-w-2xl mb-2">
-          <SearchComponent />
-        </div>
-      </div>
-      <div className="relative min-h-screen text-foreground mt-12">
-        <div className="relative pb-16">
-          <div className="flex flex-col md:flex-row gap-8">
-            {/* Movie Poster */}
-            <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0">
-              <img
-                src={getImageUrl(movie.Id, "Primary", movie.ImageTags?.Primary)}
-                alt={movie.Name}
-                className="w-full h-auto rounded-lg shadow-lg"
-              />
+    <>
+      <AnimatePresence>
+        {isFullScreen && (
+          <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
+            <VideoPlayer
+              videoUrl={getStreamUrl(movie.Id, selectedVersion.Id)}
+              onEnded={() => setIsFullScreen(false)}
+              onBack={() => setIsFullScreen(false)}
+            />
+          </div>
+        )}
+      </AnimatePresence>
+
+      {!isFullScreen && (
+        <div className="relative px-4 py-6 max-w-full overflow-hidden">
+          <AuroraBackground
+            colorStops={
+              vibrantColors.length > 0
+                ? vibrantColors
+                : ["#AA5CC3", "#00A4DC", "#AA5CC3"]
+            }
+            amplitude={0.8}
+            blend={0.4}
+          />
+          <div className="relative z-[9999] mb-4">
+            <div className="max-w-2xl mb-2">
+              <SearchComponent />
             </div>
+          </div>
+          <div className="relative min-h-screen text-foreground mt-12">
+            <div className="relative pb-16">
+              <div className="flex flex-col md:flex-row gap-8">
+                {/* Movie Poster */}
+                <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0">
+                  <img
+                    src={getImageUrl(
+                      movie.Id,
+                      "Primary",
+                      movie.ImageTags?.Primary
+                    )}
+                    alt={movie.Name}
+                    className="w-full h-auto rounded-lg shadow-lg"
+                  />
+                </div>
 
-            {/* Movie Info */}
-            <div className="w-full md:w-2/3 lg:w-3/4 mt-4">
-              <h1 className="text-4xl font-bold mb-2 font-poppins">
-                {movie.Name}
-              </h1>
-              <div className="flex items-center gap-2 mb-4">
-                {movie.ProductionYear && (
-                  <Badge variant="outline" className="bg-sidebar">
-                    {movie.ProductionYear}
-                  </Badge>
-                )}
-                {movie.OfficialRating && (
-                  <Badge variant="outline" className="bg-sidebar">
-                    {movie.OfficialRating}
-                  </Badge>
-                )}
-                {movie.RunTimeTicks && (
-                  <Badge variant="outline" className="bg-sidebar">
-                    {Math.round(movie.RunTimeTicks / 600000000)} min
-                  </Badge>
-                )}
-              </div>
-              <p className="mb-6">{movie.Overview}</p>
+                {/* Movie Info */}
+                <div className="w-full md:w-2/3 lg:w-3/4 mt-4">
+                  <h1 className="text-4xl font-bold mb-2 font-poppins">
+                    {movie.Name}
+                  </h1>
+                  <div className="flex items-center gap-2 mb-4 mt-4">
+                    {movie.ProductionYear && (
+                      <Badge variant="outline" className="bg-sidebar">
+                        {movie.ProductionYear}
+                      </Badge>
+                    )}
+                    {movie.OfficialRating && (
+                      <Badge variant="outline" className="bg-sidebar">
+                        {movie.OfficialRating}
+                      </Badge>
+                    )}
+                    {movie.RunTimeTicks && (
+                      <Badge variant="outline" className="bg-sidebar">
+                        {Math.round(movie.RunTimeTicks / 600000000)} min
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="mb-6">{movie.Overview}</p>
 
-              {/* Movie Versions Dropdown */}
-              {movie.MediaSources &&
-                movie.MediaSources.length > 1 &&
-                selectedVersion && (
-                  <div className="mb-6 flex items-center gap-2">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild className="truncate">
+                  {/* Movie Versions Dropdown */}
+                  {movie.MediaSources &&
+                    movie.MediaSources.length > 1 &&
+                    selectedVersion && (
+                      <div className="mb-6 flex items-center gap-2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild className="truncate">
+                            <Button
+                              variant="outline"
+                              className="overflow-hidden whitespace-nowrap text-ellipsis"
+                            >
+                              {getMediaDetailsFromName(selectedVersion.Name)}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            {movie.MediaSources.map((source: MediaSourceInfo) => (
+                              <DropdownMenuItem
+                                key={source.Id}
+                                onSelect={() => setSelectedVersion(source)}
+                              >
+                                {source.Name}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+
                         <Button
                           variant="outline"
-                          className="overflow-hidden whitespace-nowrap text-ellipsis"
+                          size="icon"
+                          onClick={() =>
+                            window.open(
+                              getDownloadUrl(movie.Id, selectedVersion.Id),
+                              "_blank"
+                            )
+                          }
                         >
-                          {getMediaDetailsFromName(selectedVersion.Name)}
+                          <Download className="h-4 w-4" />
                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        {movie.MediaSources.map((source: any) => (
-                          <DropdownMenuItem
-                            key={source.Id}
-                            onSelect={() => setSelectedVersion(source)}
+
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setIsFullScreen(true)}
+                        >
+                          <Play className="h-4 w-4" />
+                        </Button>
+
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="icon">
+                              <Info className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Media Info</DialogTitle>
+                            </DialogHeader>
+                            <MediaInfoDialog mediaSource={selectedVersion} />
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    )}
+
+                  {/* Cast Information */}
+                  <div>
+                    <h2 className="text-2xl font-semibold mb-4">Cast</h2>
+                    <ScrollArea className="w-full whitespace-nowrap rounded-md border">
+                      <div className="flex w-max space-x-4 p-4">
+                        {movie.People.map((person: PersonInfo, index: number) => (
+                          <figure
+                            key={`${person.Id}-${index}`}
+                            className="shrink-0"
                           >
-                            {source.Name}
-                          </DropdownMenuItem>
+                            <div className="overflow-hidden rounded-full">
+                              <img
+                                src={getImageUrl(
+                                  person.Id,
+                                  "Primary",
+                                  person.PrimaryImageTag
+                                )}
+                                alt={person.Name}
+                                className="aspect-square h-fit w-24 object-cover"
+                              />
+                            </div>
+                            <figcaption className="pt-2 text-xs text-center text-muted-foreground">
+                              <p className="font-semibold text-foreground">
+                                {person.Name}
+                              </p>
+                              <p className="text-sm">{person.Role}</p>
+                            </figcaption>
+                          </figure>
                         ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => window.open(getDownloadUrl(movie.Id, selectedVersion.Id), "_blank")}
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
-
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="icon">
-                          <Info className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Media Info</DialogTitle>
-                        </DialogHeader>
-                        <MediaInfoDialog mediaSource={selectedVersion} />
-                      </DialogContent>
-                    </Dialog>
+                      </div>
+                      <ScrollBar orientation="horizontal" />
+                    </ScrollArea>
                   </div>
-                )}
-
-              {/* Cast Information */}
-              <div>
-                <h2 className="text-2xl font-semibold mb-4">Cast</h2>
-                <ScrollArea className="w-full whitespace-nowrap rounded-md border">
-                  <div className="flex w-max space-x-4 p-4">
-                    {movie.People.map((person: any, index: number) => (
-                      <figure key={`${person.Id}-${index}`} className="shrink-0">
-                        <div className="overflow-hidden rounded-full">
-                          <img
-                            src={getImageUrl(
-                              person.Id,
-                              "Primary",
-                              person.PrimaryImageTag
-                            )}
-                            alt={person.Name}
-                            className="aspect-square h-fit w-24 object-cover"
-                          />
-                        </div>
-                        <figcaption className="pt-2 text-xs text-center text-muted-foreground">
-                          <p className="font-semibold text-foreground">{person.Name}</p>
-                          <p className="text-sm">{person.Role}</p>
-                        </figcaption>
-                      </figure>
-                    ))}
-                  </div>
-                  <ScrollBar orientation="horizontal" />
-                </ScrollArea>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 }
