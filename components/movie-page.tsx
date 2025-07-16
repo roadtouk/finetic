@@ -184,6 +184,7 @@ export function MoviePage({ movieId }: MoviePageProps) {
           <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
             <VideoPlayer
               videoUrl={getStreamUrl(movie.Id, selectedVersion.Id)}
+              movieTitle={movie.Name}
               onEnded={() => setIsFullScreen(false)}
               onBack={() => setIsFullScreen(false)}
             />
