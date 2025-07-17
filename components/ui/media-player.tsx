@@ -52,7 +52,7 @@ import {
   useMediaFullscreenRef,
   useMediaRef,
   useMediaSelector,
-} from "media-chrome/react/media-store";
+} from "media-chrome/dist/react/media-store";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
@@ -286,6 +286,8 @@ function MediaPlayerRootImpl(props: MediaPlayerRootProps) {
   const hideControlsTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   const lastMouseMoveRef = React.useRef<number>(Date.now());
   const volumeIndicatorTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const keyboardActionThrottleRef = React.useRef<NodeJS.Timeout | null>(null);
+  const lastKeyPressTimeRef = React.useRef<number>(0);
 
   const mediaPaused = useMediaSelector((state) => state.mediaPaused ?? true);
   const isFullscreen = useMediaSelector(
@@ -393,6 +395,32 @@ function MediaPlayerRootImpl(props: MediaPlayerRootProps) {
     dragging,
   ]);
 
+  const throttledDispatch = React.useCallback(
+    (action: { type: string; detail?: any }) => {
+      const now = Date.now();
+      const timeSinceLastKeyPress = now - lastKeyPressTimeRef.current;
+      
+      // Clear any existing throttle timeout
+      if (keyboardActionThrottleRef.current) {
+        clearTimeout(keyboardActionThrottleRef.current);
+      }
+      
+      // If it's been less than 100ms since last key press, throttle the action
+      if (timeSinceLastKeyPress < 100) {
+        keyboardActionThrottleRef.current = setTimeout(() => {
+          dispatch(action);
+          keyboardActionThrottleRef.current = null;
+        }, 50);
+      } else {
+        // Execute immediately if enough time has passed
+        dispatch(action);
+      }
+      
+      lastKeyPressTimeRef.current = now;
+    },
+    [dispatch]
+  );
+
   const onKeyDown = React.useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       if (disabled) return;
@@ -451,7 +479,7 @@ function MediaPlayerRootImpl(props: MediaPlayerRootProps) {
             isVideo ||
             (mediaElement instanceof HTMLAudioElement && event.shiftKey)
           ) {
-            dispatch({
+            throttledDispatch({
               type: MediaActionTypes.MEDIA_SEEK_REQUEST,
               detail: Math.min(
                 mediaElement.duration,
@@ -467,7 +495,7 @@ function MediaPlayerRootImpl(props: MediaPlayerRootProps) {
             isVideo ||
             (mediaElement instanceof HTMLAudioElement && event.shiftKey)
           ) {
-            dispatch({
+            throttledDispatch({
               type: MediaActionTypes.MEDIA_SEEK_REQUEST,
               detail: Math.max(0, mediaElement.currentTime - SEEK_STEP_SHORT),
             });
@@ -478,7 +506,7 @@ function MediaPlayerRootImpl(props: MediaPlayerRootProps) {
           event.preventDefault();
           if (isVideo) {
             onVolumeIndicatorTrigger();
-            dispatch({
+            throttledDispatch({
               type: MediaActionTypes.MEDIA_VOLUME_REQUEST,
               detail: Math.min(1, mediaElement.volume + 0.1),
             });
@@ -489,7 +517,7 @@ function MediaPlayerRootImpl(props: MediaPlayerRootProps) {
           event.preventDefault();
           if (isVideo) {
             onVolumeIndicatorTrigger();
-            dispatch({
+            throttledDispatch({
               type: MediaActionTypes.MEDIA_VOLUME_REQUEST,
               detail: Math.max(0, mediaElement.volume - 0.1),
             });
@@ -639,7 +667,7 @@ function MediaPlayerRootImpl(props: MediaPlayerRootProps) {
       }
     },
     [
-      dispatch,
+      throttledDispatch,
       rootImplProps.onKeyDown,
       onVolumeIndicatorTrigger,
       onPipError,
@@ -649,6 +677,15 @@ function MediaPlayerRootImpl(props: MediaPlayerRootProps) {
       autoHide,
     ]
   );
+
+  // Cleanup throttle timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (keyboardActionThrottleRef.current) {
+        clearTimeout(keyboardActionThrottleRef.current);
+      }
+    };
+  }, []);
 
   const onKeyUp = React.useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -781,7 +818,7 @@ function MediaPlayerRootImpl(props: MediaPlayerRootProps) {
           "dark relative isolate flex flex-col overflow-hidden rounded-lg bg-background outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_video]:relative [&_video]:object-contain",
           "data-[state=fullscreen]:[&_video]:size-full [:fullscreen_&]:flex [:fullscreen_&]:h-full [:fullscreen_&]:max-h-screen [:fullscreen_&]:flex-col [:fullscreen_&]:justify-between",
           "[&_[data-slider]::before]:-top-4 [&_[data-slider]::before]:-bottom-2 [&_[data-slider]::before]:absolute [&_[data-slider]::before]:inset-x-0 [&_[data-slider]::before]:z-10 [&_[data-slider]::before]:h-8 [&_[data-slider]::before]:cursor-pointer [&_[data-slider]::before]:content-[''] [&_[data-slider]]:relative [&_[data-slot='media-player-seek']:not([data-hovering])::before]:cursor-default",
-          "[&_video::-webkit-media-text-track-display]:top-auto! [&_video::-webkit-media-text-track-display]:bottom-[4%]! [&_video::-webkit-media-text-track-display]:mb-0! data-[state=fullscreen]:data-[controls-visible]:[&_video::-webkit-media-text-track-display]:bottom-[9%]! data-[controls-visible]:[&_video::-webkit-media-text-track-display]:bottom-[13%]! data-[state=fullscreen]:[&_video::-webkit-media-text-track-display]:bottom-[7%]!",
+          "[&_video::-webkit-media-text-track-display]:top-auto! [&_video::-webkit-media-text-track-display]:bottom-[12%]! [&_video::-webkit-media-text-track-display]:mb-0! data-[state=fullscreen]:data-[controls-visible]:[&_video::-webkit-media-text-track-display]:bottom-[17%]! data-[controls-visible]:[&_video::-webkit-media-text-track-display]:bottom-[21%]! data-[state=fullscreen]:[&_video::-webkit-media-text-track-display]:bottom-[15%]!",
           className
         )}
       >

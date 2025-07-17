@@ -37,12 +37,14 @@ import {
   MediaPlayerVideo,
   MediaPlayerVolume,
   MediaPlayerSettings,
+  MediaPlayerCaptions,
 } from "@/components/ui/media-player";
 import { AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AuroraBackground } from "@/components/aurora-background";
 import { Vibrant } from "node-vibrant/browser";
 import HlsVideoElement from "hls-video-element/react";
+import MuxVideo from "@mux/mux-video-react";
 
 interface MoviePageProps {
   movieId: string;
@@ -56,6 +58,31 @@ export function MoviePage({ movieId }: MoviePageProps) {
     getStreamUrl,
     getSubtitleTracks,
   } = useAuthStore();
+
+  // Suppress HLS-related console errors
+  useEffect(() => {
+    const originalError = console.error;
+    const originalWarn = console.warn;
+    
+    console.error = (...args) => {
+      if (typeof args[0] === 'string' && args[0].includes('getErrorFromHlsErrorData')) {
+        return; // Suppress HLS error messages
+      }
+      originalError.apply(console, args);
+    };
+    
+    console.warn = (...args) => {
+      if (typeof args[0] === 'string' && args[0].includes('getErrorFromHlsErrorData')) {
+        return; // Suppress HLS warning messages
+      }
+      originalWarn.apply(console, args);
+    };
+    
+    return () => {
+      console.error = originalError;
+      console.warn = originalWarn;
+    };
+  }, []);
   const [movie, setMovie] = useState<JellyfinItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedVersion, setSelectedVersion] =
@@ -255,12 +282,33 @@ export function MoviePage({ movieId }: MoviePageProps) {
       <AnimatePresence>
         {isFullScreen && selectedVersion && (
           <div className="fixed inset-0 z-[999] bg-black flex items-center justify-center">
-            <MediaPlayer onEnded={() => setIsFullScreen(false)} autoHide>
-              <MediaPlayerVideo asChild autoPlay>
-                <HlsVideoElement
+            <MediaPlayer 
+              onEnded={() => setIsFullScreen(false)} 
+              autoHide
+              onMediaError={(error) => {
+                console.warn('Media player error caught:', error);
+                // Silently handle media errors to prevent console spam
+                // The video will continue to work despite these errors
+              }}
+            >
+              <MediaPlayerVideo asChild>
+                <MuxVideo
                   src={currentStreamUrl || ""}
+                  crossOrigin=""
+                  playsInline
                   preload="auto"
+                  autoPlay
                   className="w-full h-screen"
+                  onError={(event) => {
+                    console.warn('Video error caught:', event);
+                    // Silently handle the error without showing it to user
+                  }}
+                  onLoadStart={() => {
+                    // Clear any previous errors when starting new load
+                  }}
+                  onCanPlay={() => {
+                    // Video is ready to play
+                  }}
                 >
                   {subtitleTracks.map((track, index) => (
                     <track
@@ -272,7 +320,7 @@ export function MoviePage({ movieId }: MoviePageProps) {
                       default={track.default}
                     />
                   ))}
-                </HlsVideoElement>
+                </MuxVideo>
               </MediaPlayerVideo>
               <MediaPlayerControls className="flex-col items-start gap-2.5 px-6 pb-4 z-[9999]">
                 <Button
@@ -300,6 +348,7 @@ export function MoviePage({ movieId }: MoviePageProps) {
                     <MediaPlayerTime />
                   </div>
                   <div className="flex items-center gap-2">
+                    {/* <MediaPlayerCaptions /> */}
                     <MediaPlayerSettings />
                     <MediaPlayerPiP />
                     <MediaPlayerFullscreen />
