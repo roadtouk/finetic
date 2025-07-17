@@ -3,6 +3,7 @@
 import React from 'react'
 
 import { MediaSourceInfo, MediaStream } from '../types/jellyfin'
+import { ScrollArea } from './ui/scroll-area'
 
 interface MediaInfoDialogProps {
   mediaSource: MediaSourceInfo
@@ -25,76 +26,83 @@ export function MediaInfoDialog({ mediaSource }: MediaInfoDialogProps) {
   const subtitleStreams = mediaSource.MediaStreams!.filter((s: MediaStream) => s.Type === 'Subtitle')
 
   return (
-    <div className="text-sm">
-      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-        <div className="font-semibold">Container</div>
-        <div>{mediaSource.Container}</div>
+    <ScrollArea className="max-h-[70vh] pr-4">
+      <div className="text-sm">
+        <section className="mb-6">
+          <h3 className="font-semibold text-lg mb-2">General</h3>
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
+            <dt className="font-semibold">Container</dt>
+            <dd>{mediaSource.Container}</dd>
 
-        <div className="font-semibold">Size</div>
-        <div>{formatBytes(mediaSource.Size!)}</div>
+            <dt className="font-semibold">Size</dt>
+            <dd>{formatBytes(mediaSource.Size!)}</dd>
 
-        <div className="font-semibold">Path</div>
-        <div className="truncate">{mediaSource.Path}</div>
+            <dt className="font-semibold">Path</dt>
+            <dd className="truncate">{mediaSource.Path}</dd>
+          </dl>
+        </section>
+
+        {videoStream && (
+          <section className="mb-6">
+            <h3 className="font-semibold text-lg mb-2">Video</h3>
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 pl-4">
+              <dt className="font-semibold">Codec</dt>
+              <dd>{videoStream.Codec}</dd>
+
+              <dt className="font-semibold">Resolution</dt>
+              <dd>{videoStream.Width}x{videoStream.Height}</dd>
+
+              <dt className="font-semibold">Bitrate</dt>
+              <dd>{Math.round(videoStream.BitRate! / 1000)} kbps</dd>
+
+              <dt className="font-semibold">Frame Rate</dt>
+              <dd>{videoStream.AverageFrameRate} fps</dd>
+            </dl>
+          </section>
+        )}
+
+        {audioStreams.length > 0 && (
+          <section className="mb-6">
+            <h3 className="font-semibold text-lg mb-2">Audio</h3>
+            {audioStreams.map((stream: MediaStream, index: number) => (
+              <div key={index} className="mb-4 last:mb-0">
+                <h4 className="font-medium text-base mb-2 pl-4">Audio Stream {index + 1}</h4>
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-2 pl-8">
+                  <dt className="font-semibold">Language</dt>
+                  <dd>{stream.Language || 'Unknown'}</dd>
+
+                  <dt className="font-semibold">Codec</dt>
+                  <dd>{stream.Codec}</dd>
+
+                  <dt className="font-semibold">Channels</dt>
+                  <dd>{stream.Channels}</dd>
+
+                  <dt className="font-semibold">Bitrate</dt>
+                  <dd>{Math.round(stream.BitRate! / 1000)} kbps</dd>
+                </dl>
+              </div>
+            ))}
+          </section>
+        )}
+
+        {subtitleStreams.length > 0 && (
+          <section className="mb-6">
+            <h3 className="font-semibold text-lg mb-2">Subtitles</h3>
+            {subtitleStreams.map((stream: MediaStream, index: number) => (
+              <div key={index} className="mb-4 last:mb-0">
+                <h4 className="font-medium text-base mb-2 pl-4">Subtitle Stream {index + 1}</h4>
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-2 pl-8">
+                  <dt className="font-semibold">Language</dt>
+                  <dd>{stream.Language || 'Unknown'}</dd>
+
+                  <dt className="font-semibold">Format</dt>
+                  <dd>{stream.Codec}</dd>
+                </dl>
+              </div>
+            ))}
+          </section>
+        )}
       </div>
-
-      {videoStream && (
-        <div className="mt-4">
-          <h4 className="font-semibold text-lg mb-2">Video</h4>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 pl-4">
-            <div className="font-semibold">Codec</div>
-            <div>{videoStream.Codec}</div>
-
-            <div className="font-semibold">Resolution</div>
-            <div>{videoStream.Width}x{videoStream.Height}</div>
-
-            <div className="font-semibold">Bitrate</div>
-            <div>{Math.round(videoStream.BitRate! / 1000)} kbps</div>
-
-            <div className="font-semibold">Frame Rate</div>
-            <div>{videoStream.AverageFrameRate} fps</div>
-          </div>
-        </div>
-      )}
-
-      {audioStreams.length > 0 && (
-        <div className="mt-4">
-          <h4 className="font-semibold text-lg mb-2">Audio</h4>
-          {audioStreams.map((stream: MediaStream, index: number) => (
-            <div key={index} className="pl-4 mb-2">
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                <div className="font-semibold">Language</div>
-                <div>{stream.Language || 'Unknown'}</div>
-
-                <div className="font-semibold">Codec</div>
-                <div>{stream.Codec}</div>
-
-                <div className="font-semibold">Channels</div>
-                <div>{stream.Channels}</div>
-
-                <div className="font-semibold">Bitrate</div>
-                <div>{Math.round(stream.BitRate! / 1000)} kbps</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {subtitleStreams.length > 0 && (
-        <div className="mt-4">
-          <h4 className="font-semibold text-lg mb-2">Subtitles</h4>
-          {subtitleStreams.map((stream: MediaStream, index: number) => (
-            <div key={index} className="pl-4 mb-2">
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                <div className="font-semibold">Language</div>
-                <div>{stream.Language || 'Unknown'}</div>
-
-                <div className="font-semibold">Format</div>
-                <div>{stream.Codec}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    </ScrollArea>
   )
 }
