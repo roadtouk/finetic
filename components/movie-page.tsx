@@ -19,14 +19,30 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { MediaInfoDialog } from "@/components/media-info-dialog";
-import { Info, Download, Play } from "lucide-react";
+import { Info, Download, Play, ArrowLeft } from "lucide-react";
 import { SearchComponent } from "@/components/search-component";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { VideoPlayer } from "@/components/video-player";
+import {
+  MediaPlayer,
+  MediaPlayerControls,
+  MediaPlayerControlsOverlay,
+  MediaPlayerFullscreen,
+  MediaPlayerPiP,
+  MediaPlayerPlay,
+  MediaPlayerPlaybackSpeed,
+  MediaPlayerSeek,
+  MediaPlayerSeekBackward,
+  MediaPlayerSeekForward,
+  MediaPlayerTime,
+  MediaPlayerVideo,
+  MediaPlayerVolume,
+  MediaPlayerSettings,
+} from "@/components/ui/media-player";
 import { AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AuroraBackground } from "@/components/aurora-background";
 import { Vibrant } from "node-vibrant/browser";
+import HlsVideoElement from "hls-video-element/react";
 
 interface MoviePageProps {
   movieId: string;
@@ -221,16 +237,49 @@ export function MoviePage({ movieId }: MoviePageProps) {
     <>
       <AnimatePresence>
         {isFullScreen && selectedVersion && (
-          <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
-            <VideoPlayer
-              itemId={movie.Id!}
-              mediaSourceId={selectedVersion.Id!}
-              videoUrl={getStreamUrl(movie.Id!, selectedVersion.Id!)}
-              movieTitle={movie.Name!}
-              onEnded={() => setIsFullScreen(false)}
-              onBack={() => setIsFullScreen(false)}
-              availableQualities={availableQualities}
-            />
+          <div className="fixed inset-0 z-[999] bg-black flex items-center justify-center">
+            <MediaPlayer onEnded={() => setIsFullScreen(false)} autoHide>
+              <MediaPlayerVideo asChild autoPlay>
+                <HlsVideoElement
+                  src={getStreamUrl(movie.Id!, selectedVersion.Id!)}
+                  preload="auto"
+                  className="w-full h-screen"
+                />
+              </MediaPlayerVideo>
+              <MediaPlayerControls className="flex-col items-start gap-2.5 px-6 pb-4 z-[9999]">
+                <Button
+                  variant="ghost"
+                  className="fixed left-4 top-4 z-10"
+                  onClick={() => setIsFullScreen(false)}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Go Back
+                </Button>
+                <MediaPlayerControlsOverlay />
+                <div className="flex w-full items-center justify-between">
+                  <h2 className="text-lg font-semibold text-white truncate pb-2">
+                    {movie.Name}
+                  </h2>
+                  <div className="w-8" /> {/* Spacer for centering */}
+                </div>
+                <MediaPlayerSeek />
+                <div className="flex w-full items-center gap-2">
+                  <div className="flex flex-1 items-center gap-2">
+                    <MediaPlayerPlay />
+                    <MediaPlayerSeekBackward />
+                    <MediaPlayerSeekForward />
+                    <MediaPlayerVolume expandable />
+                    <MediaPlayerTime />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MediaPlayerPlaybackSpeed />
+                    <MediaPlayerSettings />
+                    <MediaPlayerPiP />
+                    <MediaPlayerFullscreen />
+                  </div>
+                </div>
+              </MediaPlayerControls>
+            </MediaPlayer>
           </div>
         )}
       </AnimatePresence>
