@@ -1,38 +1,27 @@
 "use client";
 
-import React from 'react'
-import Link from 'next/link'
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { getImageUrl } from "@/app/actions";
+import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 
-interface JellyfinItem {
-  Id: string;
-  Name: string;
-  Type: string;
-  ProductionYear?: number;
-  Overview?: string;
-  ImageTags?: {
-    Primary?: string;
-    Backdrop?: string;
-  };
-  BackdropImageTags?: string[];
-  CommunityRating?: number;
-  RunTimeTicks?: number;
-}
+export function MediaCard({
+  item,
+  serverUrl,
+}: {
+  item: any;
+  serverUrl: string;
+}) {
+  const linkHref =
+    item.Type === "Movie" ? `/movie/${item.Id}` : `/show/${item.Id}`;
 
-interface MediaCardProps {
-  item: JellyfinItem;
-  getImageUrl: (id: string, type: string, tag: string) => string;
-}
-
-export function MediaCard({ item, getImageUrl }: MediaCardProps) {
-  const imageUrl = item.ImageTags?.Primary
-    ? getImageUrl(item.Id, "Primary", item.ImageTags.Primary)
-    : "";
+  const imageUrl = `${serverUrl}/Items/${item.Id}/Images/Primary`;
 
   return (
-    <Link href={`/movie/${item.Id}`}>
+    <Link href={linkHref}>
       <div className="cursor-pointer group overflow-hidden rounded-lg w-36 transition active:scale-[0.98] select-none">
         <div className="relative aspect-[2/3] w-full">
-          {imageUrl ? (
+          {serverUrl ? (
             <img
               src={imageUrl}
               alt={item.Name}

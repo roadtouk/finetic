@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MediaCard } from "@/components/media-card";
-import { SearchComponent } from "@/components/search-component";
+import { SearchBar } from "@/components/search-component";
 import { useAuthStore } from "@/lib/auth-store";
 import { ArrowLeft, Search as SearchIcon } from "lucide-react";
 import { AuroraBackground } from "@/components/aurora-background";
@@ -72,7 +72,7 @@ export function SearchPage() {
 
         {/* Search Component */}
         <div className="max-w-2xl mb-8">
-          <SearchComponent />
+          <SearchBar />
         </div>
 
         {/* Search Results */}

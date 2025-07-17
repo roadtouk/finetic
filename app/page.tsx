@@ -2,19 +2,24 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/lib/auth-store";
+import { isAuthenticated, getServerUrl } from "@/app/actions";
 
 export default function RootPage() {
   const router = useRouter();
-  const { isAuthenticated, serverUrl } = useAuthStore();
-
   useEffect(() => {
-    if (isAuthenticated && serverUrl) {
-      router.replace("/home");
-    } else {
-      router.replace("/login");
-    }
-  }, [isAuthenticated, serverUrl, router]);
+    const checkAuthStatus = async () => {
+      const authenticated = await isAuthenticated();
+      const serverUrl = await getServerUrl();
+      
+      if (authenticated && serverUrl) {
+        router.replace("/home");
+      } else {
+        router.replace("/login");
+      }
+    };
+    
+    checkAuthStatus();
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">

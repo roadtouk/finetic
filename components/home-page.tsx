@@ -4,13 +4,13 @@ import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MediaCard } from "@/components/media-card";
-import { SearchComponent } from "@/components/search-component";
-import { useAuthStore } from "@/lib/auth-store";
+import { SearchBar } from "@/components/search-component";
+import { getUser, fetchMovies, fetchTVShows, getImageUrl } from "@/app/actions";
 import { Play, ChevronLeft, ChevronRight } from "lucide-react";
 import { AuroraBackground } from "@/components/aurora-background";
 
-export function HomePage() {
-  const { user, fetchMovies, fetchTVShows, getImageUrl } = useAuthStore();
+export function HomePage({ serverUrl }: { serverUrl: string }) {
+  const [user, setUser] = useState<any>(null);
   const [movies, setMovies] = useState<any[]>([]);
   const [tvShows, setTVShows] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,10 +34,12 @@ export function HomePage() {
     const loadContent = async () => {
       setIsLoading(true);
       try {
-        const [moviesData, tvShowsData] = await Promise.all([
+        const [userData, moviesData, tvShowsData] = await Promise.all([
+          getUser(),
           fetchMovies(12),
           fetchTVShows(12),
         ]);
+        setUser(userData);
         setMovies(moviesData);
         setTVShows(tvShowsData);
       } catch (error) {
@@ -48,7 +50,7 @@ export function HomePage() {
     };
 
     loadContent();
-  }, [fetchMovies, fetchTVShows]);
+  }, []);
 
   if (isLoading) {
     return (
@@ -73,7 +75,7 @@ export function HomePage() {
       {/* Search Component - Moved to top */}
       <div className="relative z-[9999] mb-8">
         <div className="max-w-2xl mb-6">
-          <SearchComponent />
+          <SearchBar />
         </div>
       </div>
 
@@ -123,7 +125,7 @@ export function HomePage() {
             <div className="flex gap-4 w-max">
               {movies.map((movie) => (
                 <div key={movie.Id} className="flex-shrink-0">
-                  <MediaCard item={movie} getImageUrl={getImageUrl} />
+                  <MediaCard item={movie} serverUrl={serverUrl} />
                 </div>
               ))}
             </div>
@@ -132,7 +134,9 @@ export function HomePage() {
           <Card className="bg-card border-border text-foreground">
             <CardContent className="p-8 text-center">
               <Play className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No movies found in your library</p>
+              <p className="text-muted-foreground">
+                No movies found in your library
+              </p>
             </CardContent>
           </Card>
         )}
@@ -175,7 +179,7 @@ export function HomePage() {
             <div className="flex gap-4 w-max">
               {tvShows.map((show) => (
                 <div key={show.Id} className="flex-shrink-0">
-                  <MediaCard item={show} getImageUrl={getImageUrl} />
+                  <MediaCard item={show} serverUrl={serverUrl} />
                 </div>
               ))}
             </div>
@@ -184,7 +188,9 @@ export function HomePage() {
           <Card className="bg-card border-border text-foreground">
             <CardContent className="p-8 text-center">
               <Play className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No TV shows found in your library</p>
+              <p className="text-muted-foreground">
+                No TV shows found in your library
+              </p>
             </CardContent>
           </Card>
         )}
@@ -203,7 +209,9 @@ export function HomePage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{movies.length}</div>
-              <p className="text-xs text-muted-foreground">Available to watch</p>
+              <p className="text-xs text-muted-foreground">
+                Available to watch
+              </p>
             </CardContent>
           </Card>
 
@@ -225,7 +233,9 @@ export function HomePage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">Online</div>
-              <p className="text-xs text-muted-foreground">Connection healthy</p>
+              <p className="text-xs text-muted-foreground">
+                Connection healthy
+              </p>
             </CardContent>
           </Card>
 

@@ -6,20 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Film, Tv, Calendar, PlayCircle, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/lib/auth-store";
+import { searchItems, getImageUrl } from "@/app/actions";
 import { Badge } from "./ui/badge";
+import { SearchSuggestionItem } from "./SearchSuggestionItem";
 
-interface SearchComponentProps {
+interface SearchBarProps {
   className?: string;
 }
 
-export function SearchComponent({ className = "" }: SearchComponentProps) {
+export function SearchBar({ className = "" }: SearchBarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const router = useRouter();
-  const { searchItems, getImageUrl } = useAuthStore();
+  // Server actions are imported directly
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
@@ -190,115 +191,12 @@ export function SearchComponent({ className = "" }: SearchComponentProps) {
                 Search Results
               </div>
               {suggestions.map((item) => (
-                <div
+                <SearchSuggestionItem
                   key={item.Id}
+                  item={item}
                   onClick={() => handleSuggestionClick(item)}
-                  className="flex items-center gap-3 p-3 hover:bg-accent rounded-lg cursor-pointer transition-colors"
-                >
-                  {/* Poster Image */}
-                  <div
-                    className={`aspect-[2/3] h-16 bg-muted rounded overflow-hidden flex-shrink-0`}
-                  >
-                    {item.ImageTags?.Primary ? (
-                      <img
-                        src={getImageUrl(
-                          item.Id,
-                          "Primary",
-                          item.ImageTags.Primary
-                        )}
-                        alt={item.Name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        {item.Type === "Movie" ? (
-                          <Film className="h-6 w-6 text-muted-foreground" />
-                        ) : item.Type === "Episode" ? (
-                          <PlayCircle className="h-6 w-6 text-muted-foreground" />
-                        ) : (
-                          <Tv className="h-6 w-6 text-muted-foreground" />
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Content Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="text-foreground font-medium truncate">
-                        {item.Name}
-                      </h4>
-                      {item.Type === "Movie" ? (
-                        <Badge className="text-white bg-blue-600">
-                          <Film className="h-3 w-3 mr-0.5" />
-                          Movie
-                        </Badge>
-                      ) : item.Type === "Series" ? (
-                        <Badge className="text-white bg-emerald-600">
-                          <Tv className="h-3 w-3 mr-0.5" />
-                          Series
-                        </Badge>
-                      ) : item.Type === "Episode" ? (
-                        <Badge className="text-white bg-amber-600">
-                          <PlayCircle className="h-3 w-3 mr-0.5" />
-                          Episode
-                        </Badge>
-                      ) : null}
-                    </div>
-
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      {item.ProductionYear && (
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {item.ProductionYear}
-                        </div>
-                      )}
-
-                      {item.RunTimeTicks &&
-                        formatRuntime(item.RunTimeTicks) && (
-                          <div className="flex items-center gap-1">
-                            <PlayCircle className="h-3 w-3" />
-                            {formatRuntime(item.RunTimeTicks)}
-                          </div>
-                        )}
-
-                      {item.CommunityRating && (
-                        <div className="flex items-center gap-1">
-                          <Star className="h-3 w-3" />{" "}
-                          {item.CommunityRating.toFixed(1)}
-                        </div>
-                      )}
-
-                      {/* Show episode/season/show info for episodes */}
-                      {item.Type === "Episode" && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {typeof item.ParentIndexNumber === "number" &&
-                            typeof item.IndexNumber === "number" && (
-                              <span>
-                                S{item.ParentIndexNumber}E{item.IndexNumber}
-                              </span>
-                            )}
-                          {/* Show name of parent show if available */}
-                          {item.SeriesName && (
-                            <span className="truncate max-w-[120px]">
-                              {item.SeriesName}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {item.Overview && (
-                      <p className="text-xs text-muted-foreground/70 mt-1 line-clamp-2 truncate">
-                        {item.Overview.substring(0, 80)}
-                        {item.Overview.length > 80 ? "..." : ""}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                  formatRuntime={formatRuntime}
+                />
               ))}
             </div>
           )}

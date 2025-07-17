@@ -1,0 +1,117 @@
+"use server";
+
+import { cookies } from "next/headers";
+import { Jellyfin } from "@jellyfin/sdk";
+import { Api } from "@jellyfin/sdk/lib/api";
+import { ItemsApi } from "@jellyfin/sdk/lib/generated-client/api/items-api";
+import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models/base-item-dto";
+import { BaseItemKind } from "@jellyfin/sdk/lib/generated-client/models/base-item-kind";
+import { ItemFields } from "@jellyfin/sdk/lib/generated-client/models/item-fields";
+import { ItemSortBy } from "@jellyfin/sdk/lib/generated-client/models/item-sort-by";
+import { SortOrder } from "@jellyfin/sdk/lib/generated-client/models/sort-order";
+import { UserLibraryApi } from "@jellyfin/sdk/lib/generated-client/api/user-library-api";
+import { getItemsApi } from "@jellyfin/sdk/lib/utils/api/items-api";
+
+// Type aliases for easier use
+type JellyfinItem = BaseItemDto;
+
+// Create global Jellyfin SDK instance
+const jellyfin = new Jellyfin({
+  clientInfo: {
+    name: "Finetic",
+    version: "1.0.0",
+  },
+  deviceInfo: {
+    name: "Finetic Web Client",
+    id: "finetic-web-client",
+  },
+});
+
+// Helper function to get auth data from cookies
+async function getAuthData() {
+  const cookieStore = await cookies();
+  const authData = cookieStore.get("jellyfin-auth");
+
+  if (!authData?.value) {
+    throw new Error("Not authenticated");
+  }
+
+  const parsed = JSON.parse(authData.value);
+  return { serverUrl: parsed.serverUrl, user: parsed.user };
+}
+
+export async function fetchMovies(limit: number = 20): Promise<JellyfinItem[]> {
+  const { serverUrl, user } = await getAuthData();
+  const api = jellyfin.createApi(serverUrl);
+  api.accessToken = user.AccessToken;
+
+  console.log(serverUrl, api.accessToken, user.Id);
+
+  try {
+    const { data } = await getItemsApi(api).getItems({
+      userId: user.Id,
+      includeItemTypes: [BaseItemKind.Movie],
+      recursive: true,
+      sortBy: [ItemSortBy.DateCreated],
+      sortOrder: [SortOrder.Descending],
+      limit,
+      fields: [
+        ItemFields.CanDelete,
+        ItemFields.PrimaryImageAspectRatio,
+        ItemFields.Overview,
+      ],
+    });
+    return data.Items || [];
+  } catch (error) {
+    console.error("Failed to fetch movies:", error);
+    return [];
+  }
+}
+
+export async function fetchTVShows(
+  limit: number = 20
+): Promise<JellyfinItem[]> {
+  const { serverUrl, user } = await getAuthData();
+  const api = jellyfin.createApi(serverUrl);
+  api.accessToken = user.AccessToken;
+
+  try {
+    const { data } = await getItemsApi(api).getItems({
+      userId: user.Id,
+      includeItemTypes: [BaseItemKind.Series],
+      recursive: true,
+      sortBy: [ItemSortBy.DateCreated],
+      sortOrder: [SortOrder.Descending],
+      limit,
+      fields: [
+        ItemFields.CanDelete,
+        ItemFields.PrimaryImageAspectRatio,
+        ItemFields.Overview,
+      ],
+    });
+    return data.Items || [];
+  } catch (error) {
+    console.error("Failed to fetch TV shows:", error);
+    return [];
+  }
+}
+
+export async function fetchMediaDetails(
+  mediaItemId: string
+): Promise<JellyfinItem | null> {
+  const { serverUrl, user } = await getAuthData();
+  const api = jellyfin.createApi(serverUrl);
+  api.accessToken = user.AccessToken;
+
+  try {
+    const userLibraryApi = new UserLibraryApi(api.configuration);
+    const { data } = await userLibraryApi.getItem({
+      userId: user.Id,
+      itemId: mediaItemId,
+    });
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch media details:", error);
+    return null;
+  }
+}

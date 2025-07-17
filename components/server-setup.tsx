@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { useAuthStore } from "@/lib/auth-store";
+import { checkServerHealth, setServerUrl } from "@/app/actions";
 import { Loader2, Server } from "lucide-react";
 
 interface ServerSetupProps {
@@ -23,7 +23,7 @@ export function ServerSetup({ onNext }: ServerSetupProps) {
   const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const { checkServerHealth, setServerUrl } = useAuthStore();
+  // Server actions are imported directly
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +45,7 @@ export function ServerSetup({ onNext }: ServerSetupProps) {
       const isValid = await checkServerHealth(cleanUrl);
 
       if (isValid) {
-        setServerUrl(cleanUrl);
+        await setServerUrl(cleanUrl);
         onNext();
       } else {
         setError(

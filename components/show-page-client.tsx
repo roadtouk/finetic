@@ -1,98 +1,43 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import {
-  fetchMediaDetails,
-  getImageUrl,
-  getDownloadUrl,
-  getStreamUrl,
-  getSubtitleTracks,
-} from "@/app/actions";
-import { JellyfinItem, MediaSourceInfo, PersonInfo } from "@/types/jellyfin";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { MediaInfoDialog } from "@/components/media-info-dialog";
-import { Info, Download, Play, ArrowLeft } from "lucide-react";
-import { SearchBar } from "@/components/search-component";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import {
-  MediaPlayer,
-  MediaPlayerControls,
-  MediaPlayerControlsOverlay,
-  MediaPlayerFullscreen,
-  MediaPlayerPiP,
-  MediaPlayerPlay,
-  MediaPlayerPlaybackSpeed,
-  MediaPlayerSeek,
-  MediaPlayerSeekBackward,
-  MediaPlayerSeekForward,
-  MediaPlayerTime,
-  MediaPlayerVideo,
-  MediaPlayerVolume,
-  MediaPlayerSettings,
-  MediaPlayerCaptions,
-} from "@/components/ui/media-player";
-import { AnimatePresence } from "framer-motion";
-import { Skeleton } from "@/components/ui/skeleton";
-import { AuroraBackground } from "@/components/aurora-background";
-import { Vibrant } from "node-vibrant/browser";
-import HlsVideoElement from "hls-video-element/react";
-import MuxVideo from "@mux/mux-video-react";
+import React, { useState, useEffect } from 'react';
+import { BaseItemDto, MediaSourceInfo, PersonInfo, UserDto } from '@jellyfin/sdk/lib/generated-client/models';
+import Vibrant from 'node-vibrant';
+import { AnimatePresence } from 'framer-motion';
+import { AuroraBackground } from '@/components/aurora-background';
+import { SearchBar } from '@/components/search-component';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { MediaPlayer, MediaPlayerControls, MediaPlayerControlsOverlay, MediaPlayerFullscreen, MediaPlayerPiP, MediaPlayerPlay, MediaPlayerSeek, MediaPlayerSeekBackward, MediaPlayerSeekForward, MediaPlayerTime, MediaPlayerVideo, MediaPlayerVolume, MediaPlayerSettings } from '@/components/ui/media-player';
+import MuxVideo from '@mux/mux-video-react';
+import { ArrowLeft, Download, Info, Play } from 'lucide-react';
+import { MediaInfoDialog } from './media-info-dialog';
+import { getImageUrl, getDownloadUrl, getStreamUrl, getSubtitleTracks } from '@/app/actions';
 
-interface MoviePageProps {
-  movieId: string;
+// Type aliases for easier use
+type JellyfinItem = BaseItemDto;
+type JellyfinUser = UserDto & { AccessToken?: string };
+
+interface ShowPageClientProps {
+  showId: string;
+  initialShow: JellyfinItem;
+  initialSeasons: JellyfinItem[];
+  serverUrl: string;
+  user: JellyfinUser | null;
 }
 
-export function MoviePage({ movieId }: MoviePageProps) {
-  // Server actions are now imported directly
+export function ShowPageClient({ showId, initialShow, initialSeasons, serverUrl, user }: ShowPageClientProps) {
+  // Server actions are imported directly
+  // Client-side functions still needed for interactive features
 
-  // Suppress HLS-related console errors
-  useEffect(() => {
-    const originalError = console.error;
-    const originalWarn = console.warn;
-
-    console.error = (...args) => {
-      if (
-        typeof args[0] === "string" &&
-        args[0].includes("getErrorFromHlsErrorData")
-      ) {
-        return; // Suppress HLS error messages
-      }
-      originalError.apply(console, args);
-    };
-
-    console.warn = (...args) => {
-      if (
-        typeof args[0] === "string" &&
-        args[0].includes("getErrorFromHlsErrorData")
-      ) {
-        return; // Suppress HLS warning messages
-      }
-      originalWarn.apply(console, args);
-    };
-
-    return () => {
-      console.error = originalError;
-      console.warn = originalWarn;
-    };
-  }, []);
-  const [movie, setMovie] = useState<JellyfinItem | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedVersion, setSelectedVersion] =
-    useState<MediaSourceInfo | null>(null);
+  // State
+  const [show, setShow] = useState<JellyfinItem | null>(initialShow);
+  const [seasons, setSeasons] = useState<JellyfinItem[]>(initialSeasons);
+  const [selectedVersion, setSelectedVersion] = useState<MediaSourceInfo | null>(null);
   const [vibrantColors, setVibrantColors] = useState<string[]>([]);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [availableQualities, setAvailableQualities] = useState<string[]>([]);
@@ -107,6 +52,68 @@ export function MoviePage({ movieId }: MoviePageProps) {
     }>
   >([]);
 
+  // Initialize media source and qualities
+  useEffect(() => {
+    if (
+      show &&
+      show.MediaSources &&
+      show.MediaSources.length > 0
+    ) {
+      setSelectedVersion(show.MediaSources[0]);
+
+      const qualities: string[] = [];
+      show.MediaSources.forEach((source) => {
+        source.MediaStreams?.forEach((stream) => {
+          if (stream.Type === "Video" && stream.Height) {
+            qualities.push(`${stream.Height}p`);
+          }
+        });
+      });
+      
+      // Add common transcoding options if not already present
+      if (!qualities.includes("2160p")) qualities.push("2160p");
+      if (!qualities.includes("1080p")) qualities.push("1080p");
+      if (!qualities.includes("720p")) qualities.push("720p");
+      if (!qualities.includes("480p")) qualities.push("480p");
+      if (!qualities.includes("360p")) qualities.push("360p");
+      
+      setAvailableQualities(
+        Array.from(new Set(qualities)).sort(
+          (a, b) => parseInt(b) - parseInt(a)
+        )
+      );
+    }
+  }, [show]);
+
+  // Extract vibrant colors from poster
+  useEffect(() => {
+    const extractColors = async () => {
+      if (show && show.ImageTags?.Primary) {
+        const imageUrl = await getImageUrl(
+          show.Id!,
+          "Primary",
+          show.ImageTags.Primary
+        );
+        try {
+          const palette = await Vibrant.from(imageUrl).getPalette();
+          const colors: string[] = [];
+          if (palette.Vibrant) colors.push(palette.Vibrant.hex);
+          if (palette.DarkVibrant) colors.push(palette.DarkVibrant.hex);
+          if (palette.LightVibrant) colors.push(palette.LightVibrant.hex);
+          if (palette.Muted) colors.push(palette.Muted.hex);
+          if (palette.DarkMuted) colors.push(palette.DarkMuted.hex);
+          if (colors.length > 0) {
+            setVibrantColors(colors);
+          }
+        } catch (error) {
+          console.error("Failed to extract vibrant colors:", error);
+        }
+      }
+    };
+    extractColors();
+  }, [show, serverUrl]);
+
+  // Helper function to format media details from name
   const getMediaDetailsFromName = (name: string) => {
     const resolutionMatch = name.match(/(\d+p)/i);
     const hdrMatch = name.match(/(HDR|DV|Dolby Vision)/i);
@@ -141,144 +148,10 @@ export function MoviePage({ movieId }: MoviePageProps) {
     );
   };
 
-  useEffect(() => {
-    const loadMovieDetails = async () => {
-      setIsLoading(true);
-      try {
-        const movieData = await fetchMediaDetails(movieId);
-        console.log("Fetched movie data:", movieData);
-        setMovie(movieData);
-        if (
-          movieData &&
-          movieData.MediaSources &&
-          movieData.MediaSources.length > 0
-        ) {
-          setSelectedVersion(movieData.MediaSources[0]);
-
-          const qualities: string[] = [];
-          movieData.MediaSources.forEach((source) => {
-            source.MediaStreams?.forEach((stream) => {
-              if (stream.Type === "Video" && stream.Height) {
-                qualities.push(`${stream.Height}p`);
-              }
-            });
-          });
-          // Add common transcoding options if not already present
-          if (!qualities.includes("2160p")) qualities.push("2160p");
-          if (!qualities.includes("1080p")) qualities.push("1080p");
-          if (!qualities.includes("720p")) qualities.push("720p");
-          if (!qualities.includes("480p")) qualities.push("480p");
-          if (!qualities.includes("360p")) qualities.push("360p");
-          setAvailableQualities(
-            Array.from(new Set(qualities)).sort(
-              (a, b) => parseInt(b) - parseInt(a)
-            )
-          );
-        }
-      } catch (error) {
-        console.error("Failed to load movie details:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadMovieDetails();
-    // Clear stream URL when movie changes
-    setCurrentStreamUrl(null);
-  }, [fetchMediaDetails, movieId]);
-
-  useEffect(() => {
-    const extractColors = async () => {
-      if (movie && movie.ImageTags?.Primary) {
-        const imageUrl = getImageUrl(
-          movie.Id!,
-          "Primary",
-          movie.ImageTags.Primary
-        );
-        try {
-          const palette = await Vibrant.from(imageUrl).getPalette();
-          const colors: string[] = [];
-          if (palette.Vibrant) colors.push(palette.Vibrant.hex);
-          if (palette.DarkVibrant) colors.push(palette.DarkVibrant.hex);
-          if (palette.LightVibrant) colors.push(palette.LightVibrant.hex);
-          if (palette.Muted) colors.push(palette.Muted.hex);
-          if (palette.DarkMuted) colors.push(palette.DarkMuted.hex);
-          if (colors.length > 0) {
-            setVibrantColors(colors);
-          }
-        } catch (error) {
-          console.error("Failed to extract vibrant colors:", error);
-        }
-      }
-    };
-    extractColors();
-  }, [movie, getImageUrl]);
-
-  if (isLoading) {
-    return (
-      <div className="relative px-4 py-6 max-w-full overflow-hidden">
-        <AuroraBackground
-          colorStops={["#AA5CC3", "#00A4DC", "#AA5CC3"]}
-          amplitude={0.8}
-          blend={0.4}
-        />
-        <div className="relative z-[9999] mb-4">
-          <div className="max-w-2xl mb-2">
-            <SearchBar />
-          </div>
-        </div>
-        <div className="relative min-h-screen text-foreground mt-12">
-          <div className="relative pb-16">
-            <div className="flex flex-col md:flex-row gap-8">
-              {/* Movie Poster Skeleton */}
-              <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0">
-                <Skeleton className="w-full h-96 rounded-lg" />
-              </div>
-
-              {/* Movie Info Skeleton */}
-              <div className="w-full md:w-2/3 lg:w-3/4 mt-4">
-                <Skeleton className="h-10 w-3/4 mb-4" />
-                <div className="flex items-center gap-2 mb-4">
-                  <Skeleton className="h-6 w-20" />
-                  <Skeleton className="h-6 w-20" />
-                  <Skeleton className="h-6 w-20" />
-                </div>
-                <Skeleton className="h-4 w-full mb-2" />
-                <Skeleton className="h-4 w-full mb-2" />
-                <Skeleton className="h-4 w-3/4 mb-6" />
-
-                {/* Buttons Skeleton */}
-                <div className="mb-6 flex items-center gap-2">
-                  <Skeleton className="h-10 w-32" />
-                  <Skeleton className="h-10 w-10" />
-                  <Skeleton className="h-10 w-10" />
-                </div>
-
-                {/* Cast Information Skeleton */}
-                <div>
-                  <Skeleton className="h-8 w-40 mb-4" />
-                  <div className="flex space-x-4 overflow-hidden">
-                    {[...Array(4)].map((_, i) => (
-                      <div key={i} className="flex flex-col items-center">
-                        <Skeleton className="w-24 h-24 rounded-full mb-2" />
-                        <Skeleton className="h-4 w-20 mb-1" />
-                        <Skeleton className="h-3 w-16" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!movie) {
+  if (!show) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center w-full">
-        <p className="text-foreground text-lg">Movie not found.</p>
+        <p className="text-foreground text-lg">Show not found.</p>
       </div>
     );
   }
@@ -293,8 +166,6 @@ export function MoviePage({ movieId }: MoviePageProps) {
               autoHide
               onMediaError={(error) => {
                 console.warn("Media player error caught:", error);
-                // Silently handle media errors to prevent console spam
-                // The video will continue to work despite these errors
               }}
             >
               <MediaPlayerVideo asChild>
@@ -307,13 +178,6 @@ export function MoviePage({ movieId }: MoviePageProps) {
                   className="w-full h-screen bg-black"
                   onError={(event) => {
                     console.warn("Video error caught:", event);
-                    // Silently handle the error without showing it to user
-                  }}
-                  onLoadStart={() => {
-                    // Clear any previous errors when starting new load
-                  }}
-                  onCanPlay={() => {
-                    // Video is ready to play
                   }}
                 >
                   {subtitleTracks.map((track, index) => (
@@ -340,7 +204,7 @@ export function MoviePage({ movieId }: MoviePageProps) {
                 <MediaPlayerControlsOverlay />
                 <div className="flex w-full items-center justify-between">
                   <h2 className="text-2xl font-semibold text-white truncate pb-2">
-                    {movie.Name}
+                    {show.Name}
                   </h2>
                   <div className="w-8" /> {/* Spacer for centering */}
                 </div>
@@ -354,7 +218,6 @@ export function MoviePage({ movieId }: MoviePageProps) {
                     <MediaPlayerTime />
                   </div>
                   <div className="flex items-center gap-2">
-                    {/* <MediaPlayerCaptions /> */}
                     <MediaPlayerSettings />
                     <MediaPlayerPiP />
                     <MediaPlayerFullscreen />
@@ -385,44 +248,42 @@ export function MoviePage({ movieId }: MoviePageProps) {
           <div className="relative min-h-screen text-foreground mt-12">
             <div className="relative pb-16">
               <div className="flex flex-col md:flex-row gap-8">
-                {/* Movie Poster */}
+                {/* Show Poster */}
                 <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0">
                   <img
-                    src={
-                      getImageUrl(movie.Id!, "Primary", movie.ImageTags?.Primary)
-                    }
-                    alt={movie.Name!}
+                    src={`${serverUrl}/Items/${show.Id}/Images/Primary${show.ImageTags?.Primary ? `?tag=${show.ImageTags.Primary}` : ''}`}
+                    alt={show.Name!}
                     className="w-full h-auto rounded-lg shadow-lg"
                   />
                 </div>
 
-                {/* Movie Info */}
+                {/* Show Info */}
                 <div className="w-full md:w-2/3 lg:w-3/4 mt-4">
                   <h1 className="text-4xl font-semibold mb-2 font-poppins">
-                    {movie.Name}
+                    {show.Name}
                   </h1>
                   <div className="flex items-center gap-2 mb-4 mt-4">
-                    {movie.ProductionYear && (
+                    {show.ProductionYear && (
                       <Badge variant="outline" className="bg-sidebar">
-                        {movie.ProductionYear}
+                        {show.ProductionYear}
                       </Badge>
                     )}
-                    {movie.OfficialRating && (
+                    {show.OfficialRating && (
                       <Badge variant="outline" className="bg-sidebar">
-                        {movie.OfficialRating}
+                        {show.OfficialRating}
                       </Badge>
                     )}
-                    {movie.RunTimeTicks && (
+                    {show.RunTimeTicks && (
                       <Badge variant="outline" className="bg-sidebar">
-                        {Math.round(movie.RunTimeTicks / 600000000)} min
+                        {Math.round(show.RunTimeTicks / 600000000)} min
                       </Badge>
                     )}
                   </div>
-                  <p className="mb-6">{movie.Overview}</p>
+                  <p className="mb-6">{show.Overview}</p>
 
-                  {/* Movie Versions Dropdown */}
-                  {movie.MediaSources &&
-                    movie.MediaSources.length > 1 &&
+                  {/* Show Versions Dropdown */}
+                  {show.MediaSources &&
+                    show.MediaSources.length > 0 &&
                     selectedVersion && (
                       <div className="mb-6 flex items-center gap-2">
                         <DropdownMenu>
@@ -435,13 +296,13 @@ export function MoviePage({ movieId }: MoviePageProps) {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent>
-                            {movie.MediaSources.map(
+                            {show.MediaSources.map(
                               (source: MediaSourceInfo) => (
                                 <DropdownMenuItem
                                   key={source.Id}
                                   onSelect={() => {
                                     setSelectedVersion(source);
-                                    setCurrentStreamUrl(null); // Clear stream URL when changing version
+                                    setCurrentStreamUrl(null);
                                   }}
                                   className="fill-foreground gap-3 flex justify-between"
                                 >
@@ -463,12 +324,10 @@ export function MoviePage({ movieId }: MoviePageProps) {
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={() =>
-                            window.open(
-                              getDownloadUrl(movie.Id!, selectedVersion.Id!),
-                              "_blank"
-                            )
-                          }
+                          onClick={async () => {
+                            const downloadUrl = await getDownloadUrl(show.Id!, selectedVersion.Id!);
+                            window.open(downloadUrl, "_blank");
+                          }}
                         >
                           <Download className="h-4 w-4" />
                         </Button>
@@ -477,9 +336,8 @@ export function MoviePage({ movieId }: MoviePageProps) {
                           variant="outline"
                           size="icon"
                           onClick={async () => {
-                            // Generate a new stream URL each time play is clicked
-                            const streamUrl = getStreamUrl(
-                              movie.Id!,
+                            const streamUrl = await getStreamUrl(
+                              show.Id!,
                               selectedVersion.Id!
                             );
                             setCurrentStreamUrl(streamUrl);
@@ -487,10 +345,9 @@ export function MoviePage({ movieId }: MoviePageProps) {
                             // Fetch subtitle tracks
                             try {
                               const tracks = await getSubtitleTracks(
-                                movie.Id!,
+                                show.Id!,
                                 selectedVersion.Id!
                               );
-                              console.log("Fetched subtitle tracks:", tracks);
                               setSubtitleTracks(tracks);
                             } catch (error) {
                               console.error(
@@ -521,12 +378,39 @@ export function MoviePage({ movieId }: MoviePageProps) {
                       </div>
                     )}
 
+                  {/* Seasons Section */}
+                  <div className="mb-6">
+                    <h2 className="text-2xl font-semibold mb-4">Seasons</h2>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                      {seasons.map((season) => (
+                        <div
+                          key={season.Id}
+                          className="bg-card rounded-lg p-4 hover:bg-accent cursor-pointer transition-colors"
+                        >
+                          <div className="aspect-[2/3] bg-muted rounded mb-2">
+                            {season.ImageTags?.Primary && (
+                              <img
+                                src={`${serverUrl}/Items/${season.Id}/Images/Primary${season.ImageTags?.Primary ? `?tag=${season.ImageTags.Primary}` : ''}`}
+                                alt={season.Name!}
+                                className="w-full h-full object-cover rounded"
+                              />
+                            )}
+                          </div>
+                          <h3 className="font-medium text-sm truncate">{season.Name}</h3>
+                          <p className="text-xs text-muted-foreground">
+                            {season.ChildCount} episodes
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Cast Information */}
                   <div>
                     <h2 className="text-2xl font-semibold mb-4">Cast</h2>
                     <ScrollArea className="w-full whitespace-nowrap rounded-md border">
                       <div className="flex w-max space-x-4 p-4">
-                        {movie.People?.map(
+                        {show.People?.map(
                           (person: PersonInfo, index: number) => (
                             <figure
                               key={`${person.Id}-${index}`}
@@ -534,11 +418,7 @@ export function MoviePage({ movieId }: MoviePageProps) {
                             >
                               <div className="overflow-hidden rounded-full">
                                 <img
-                                  src={getImageUrl(
-                                    person.Id!,
-                                    "Primary",
-                                    person.PrimaryImageTag!
-                                  )}
+                                  src={`${serverUrl}/Items/${person.Id}/Images/Primary${person.PrimaryImageTag ? `?tag=${person.PrimaryImageTag}` : ''}`}
                                   alt={person.Name!}
                                   className="aspect-square h-fit w-24 object-cover"
                                 />

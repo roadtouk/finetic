@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/lib/auth-store";
+import { isAuthenticated, getServerUrl } from "@/app/actions";
 import { ServerSetup } from "@/components/server-setup";
 import { LoginForm } from "@/components/login-form";
 
@@ -10,20 +10,26 @@ type OnboardingStep = "server" | "login";
 
 export function OnboardingFlow() {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("server");
-  const { isAuthenticated, serverUrl } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
-    // Check if user is already authenticated
-    if (isAuthenticated && serverUrl) {
-      router.replace("/home");
-      return;
-    } else if (serverUrl && !isAuthenticated) {
-      setCurrentStep("login");
-    } else {
-      setCurrentStep("server");
-    }
-  }, [isAuthenticated, serverUrl, router]);
+    const checkAuthStatus = async () => {
+      const authenticated = await isAuthenticated();
+      const serverUrl = await getServerUrl();
+      
+      // Check if user is already authenticated
+      if (authenticated && serverUrl) {
+        router.replace("/home");
+        return;
+      } else if (serverUrl && !authenticated) {
+        setCurrentStep("login");
+      } else {
+        setCurrentStep("server");
+      }
+    };
+    
+    checkAuthStatus();
+  }, [router]);
 
   const handleServerSetup = () => {
     setCurrentStep("login");

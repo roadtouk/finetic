@@ -27,7 +27,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useAuthStore } from "@/lib/auth-store";
+import { getUser, getServerUrl, logout } from "@/app/actions";
 import { JellyfinIcon } from "@/components/jellyfin-icon";
 import {
   Film,
@@ -50,50 +50,58 @@ interface JellyfinLibrary {
 }
 
 export function AppSidebar() {
-  const { user, serverUrl, logout } = useAuthStore();
   const { setTheme } = useTheme();
   const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+  const [serverUrl, setServerUrl] = useState<string | null>(null);
   const [libraries, setLibraries] = useState<JellyfinLibrary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchLibraries = async () => {
-      // For now, we'll use the direct fetch approach since we need to migrate the library endpoint
-      // This should be migrated to use the SDK's LibraryApi later
-      if (!serverUrl || !user) return;
-
+    const fetchData = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`${serverUrl}/Library/VirtualFolders`, {
-          headers: {
-            "X-Emby-Authorization": `MediaBrowser Client="Jellyfin Web Client", Device="Browser", DeviceId="web-client", Version="1.0.0", Token="${user.AccessToken}"`,
-          },
-        });
+        const [userData, serverUrlData] = await Promise.all([
+          getUser(),
+          getServerUrl(),
+        ]);
+        
+        setUser(userData);
+        setServerUrl(serverUrlData);
+        
+        // Fetch libraries if we have both user and server URL
+        if (userData && serverUrlData) {
+          const response = await fetch(`${serverUrlData}/Library/VirtualFolders`, {
+            headers: {
+              "X-Emby-Authorization": `MediaBrowser Client="Jellyfin Web Client", Device="Browser", DeviceId="web-client", Version="1.0.0", Token="${userData.AccessToken}"`,
+            },
+          });
 
-        if (response.ok) {
-          const data = await response.json();
-          // Only show movie and TV show libraries
-          const supportedLibraries = (data || []).filter(
-            (library: JellyfinLibrary) => {
-              const type = library.CollectionType?.toLowerCase();
-              return type === "movies" || type === "tvshows";
-            }
-          );
-          setLibraries(supportedLibraries);
+          if (response.ok) {
+            const data = await response.json();
+            // Only show movie and TV show libraries
+            const supportedLibraries = (data || []).filter(
+              (library: JellyfinLibrary) => {
+                const type = library.CollectionType?.toLowerCase();
+                return type === "movies" || type === "tvshows";
+              }
+            );
+            setLibraries(supportedLibraries);
+          }
         }
       } catch (error) {
-        console.error("Failed to fetch libraries:", error);
+        console.error("Failed to fetch data:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchLibraries();
-  }, [serverUrl, user]);
+    fetchData();
+  }, []);
 
-  const handleLogout = () => {
-    logout();
-    router.push('/login');
+  const handleLogout = async () => {
+    await logout();
+    // logout() already handles the redirect
   };
 
   const getLibraryIcon = (collectionType: string) => {

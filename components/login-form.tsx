@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { useAuthStore } from "@/lib/auth-store";
+import { authenticateUser, getServerUrl } from "@/app/actions";
 import { Loader2, User, ArrowLeft } from "lucide-react";
 
 interface LoginFormProps {
@@ -25,7 +25,7 @@ export function LoginForm({ onSuccess, onBack }: LoginFormProps) {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const { authenticateUser, serverUrl } = useAuthStore();
+  // Server actions are imported directly
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,7 +72,7 @@ export function LoginForm({ onSuccess, onBack }: LoginFormProps) {
           </div>
           <CardTitle className="text-2xl">Sign In</CardTitle>
           <CardDescription>
-            Connect to {serverUrl && new URL(serverUrl).hostname}
+            Connect to your Jellyfin server
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
