@@ -41,6 +41,14 @@ import {
 } from "media-chrome/dist/react/menu";
 import { useAuthStore } from "@/lib/auth-store";
 import { Slider } from "@/components/ui/slider"; // Import your Slider component
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface VideoPlayerProps {
   videoUrl: string;
@@ -223,39 +231,6 @@ export function VideoPlayer({
             className="w-full h-full object-contain"
           />
 
-          <MediaSettingsMenu
-            className=" z-[99] "
-          >
-            <MediaSettingsMenuItem>
-              Speed
-              <MediaPlaybackRateMenu slot="submenu">
-                <div slot="title">Speed</div>
-              </MediaPlaybackRateMenu>
-            </MediaSettingsMenuItem>
-
-            <MediaSettingsMenuItem>
-              Quality
-              <MediaRenditionMenu slot="submenu">
-                <div slot="title">Quality</div>
-                {availableQualities.map((quality) => (
-                  <MediaSettingsMenuItem
-                    key={quality}
-                    onClick={() => setCurrentQuality(quality)}
-                  >
-                    {quality}
-                  </MediaSettingsMenuItem>
-                ))}
-              </MediaRenditionMenu>
-            </MediaSettingsMenuItem>
-
-            <MediaSettingsMenuItem>
-              Captions
-              <MediaCaptionsMenu slot="submenu">
-                <div slot="title">Captions</div>
-              </MediaCaptionsMenu>
-            </MediaSettingsMenuItem>
-          </MediaSettingsMenu>
-
           <div
             className={`absolute flex flex-col justify-end z-50 h-16 bottom-0 w-full pb-8 px-8 transition-opacity duration-300 ${
               hovered ? "opacity-100" : "opacity-0"
@@ -384,20 +359,35 @@ export function VideoPlayer({
                   />
                 </div>
 
-                <Button
-                  asChild
-                  className="size-9 rounded-full px-2.5 py-2.5 hover:scale-105 hidden md:block"
-                  variant={"ghost"}
-                >
-                  <MediaSettingsMenuButton>
-                    <span slot="icon">
-                      <Settings2
-                        aria-hidden="true"
-                        className="h-5 w-5 text-white"
-                      />
-                    </span>
-                  </MediaSettingsMenuButton>
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      asChild
+                      className="size-9 rounded-full px-2.5 py-2.5 hover:scale-105 hidden md:block"
+                      variant={"ghost"}
+                    >
+                      <MediaSettingsMenuButton>
+                        <span slot="icon">
+                          <Settings2
+                            aria-hidden="true"
+                            className="h-5 w-5 text-white"
+                          />
+                        </span>
+                      </MediaSettingsMenuButton>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56">
+                    <DropdownMenuLabel>Appearance</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuCheckboxItem>
+                      Status Bar
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem disabled>
+                      Activity Bar
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem>Panel</DropdownMenuCheckboxItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Button
                   asChild
                   className="size-9 rounded-full px-2.5 py-2.5 hover:scale-105 hidden md:block"
