@@ -4,6 +4,7 @@ import React, { useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MediaCard } from "@/components/media-card";
+import { MediaCardSkeleton } from "@/components/media-card-skeleton";
 import { Play, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface MediaSectionProps {
@@ -11,13 +12,15 @@ interface MediaSectionProps {
   mediaItems: any[];
   serverUrl: string;
   onViewAll?: () => void;
+  isLoading?: boolean;
 }
 
 export function MediaSection({ 
   sectionName, 
   mediaItems, 
   serverUrl, 
-  onViewAll 
+  onViewAll,
+  isLoading = false
 }: MediaSectionProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -66,7 +69,17 @@ export function MediaSection({
           </Button>
         </div>
       </div>
-      {mediaItems.length > 0 ? (
+      {isLoading ? (
+        <div className="overflow-x-auto pb-4" ref={scrollRef}>
+          <div className="flex gap-4 w-max">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={`skeleton-${index}`} className="flex-shrink-0">
+                <MediaCardSkeleton />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : mediaItems.length > 0 ? (
         <div className="overflow-x-auto pb-4" ref={scrollRef}>
           <div className="flex gap-4 w-max">
             {mediaItems.map((item) => (

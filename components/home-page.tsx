@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MediaCard } from "@/components/media-card";
+import { MediaSection } from "@/components/media-section";
 import { SearchBar } from "@/components/search-component";
 import { getUser, fetchMovies, fetchTVShows, getImageUrl } from "@/app/actions";
 import { Play, ChevronLeft, ChevronRight } from "lucide-react";
