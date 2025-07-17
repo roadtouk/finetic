@@ -63,27 +63,21 @@ export function MoviePage({ movieId }: MoviePageProps) {
   useEffect(() => {
     const originalError = console.error;
     const originalWarn = console.warn;
-
+    
     console.error = (...args) => {
-      if (
-        typeof args[0] === "string" &&
-        args[0].includes("getErrorFromHlsErrorData")
-      ) {
+      if (typeof args[0] === 'string' && args[0].includes('getErrorFromHlsErrorData')) {
         return; // Suppress HLS error messages
       }
       originalError.apply(console, args);
     };
-
+    
     console.warn = (...args) => {
-      if (
-        typeof args[0] === "string" &&
-        args[0].includes("getErrorFromHlsErrorData")
-      ) {
+      if (typeof args[0] === 'string' && args[0].includes('getErrorFromHlsErrorData')) {
         return; // Suppress HLS warning messages
       }
       originalWarn.apply(console, args);
     };
-
+    
     return () => {
       console.error = originalError;
       console.warn = originalWarn;
@@ -288,24 +282,25 @@ export function MoviePage({ movieId }: MoviePageProps) {
       <AnimatePresence>
         {isFullScreen && selectedVersion && (
           <div className="fixed inset-0 z-[999] bg-black flex items-center justify-center">
-            <MediaPlayer
-              onEnded={() => setIsFullScreen(false)}
+            <MediaPlayer 
+              onEnded={() => setIsFullScreen(false)} 
               autoHide
               onMediaError={(error) => {
-                console.warn("Media player error caught:", error);
+                console.warn('Media player error caught:', error);
                 // Silently handle media errors to prevent console spam
                 // The video will continue to work despite these errors
               }}
             >
               <MediaPlayerVideo asChild>
-                <HlsVideoElement
+                <MuxVideo
                   src={currentStreamUrl || ""}
                   crossOrigin=""
                   playsInline
                   preload="auto"
+                  autoPlay
                   className="w-full h-screen bg-black"
                   onError={(event) => {
-                    console.warn("Video error caught:", event);
+                    console.warn('Video error caught:', event);
                     // Silently handle the error without showing it to user
                   }}
                   onLoadStart={() => {
@@ -325,7 +320,7 @@ export function MoviePage({ movieId }: MoviePageProps) {
                       default={track.default}
                     />
                   ))}
-                </HlsVideoElement>
+                </MuxVideo>
               </MediaPlayerVideo>
               <MediaPlayerControls className="flex-col items-start gap-2.5 px-6 pb-4 z-[9999]">
                 <Button
