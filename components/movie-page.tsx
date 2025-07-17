@@ -63,21 +63,27 @@ export function MoviePage({ movieId }: MoviePageProps) {
   useEffect(() => {
     const originalError = console.error;
     const originalWarn = console.warn;
-    
+
     console.error = (...args) => {
-      if (typeof args[0] === 'string' && args[0].includes('getErrorFromHlsErrorData')) {
+      if (
+        typeof args[0] === "string" &&
+        args[0].includes("getErrorFromHlsErrorData")
+      ) {
         return; // Suppress HLS error messages
       }
       originalError.apply(console, args);
     };
-    
+
     console.warn = (...args) => {
-      if (typeof args[0] === 'string' && args[0].includes('getErrorFromHlsErrorData')) {
+      if (
+        typeof args[0] === "string" &&
+        args[0].includes("getErrorFromHlsErrorData")
+      ) {
         return; // Suppress HLS warning messages
       }
       originalWarn.apply(console, args);
     };
-    
+
     return () => {
       console.error = originalError;
       console.warn = originalWarn;
@@ -282,11 +288,11 @@ export function MoviePage({ movieId }: MoviePageProps) {
       <AnimatePresence>
         {isFullScreen && selectedVersion && (
           <div className="fixed inset-0 z-[999] bg-black flex items-center justify-center">
-            <MediaPlayer 
-              onEnded={() => setIsFullScreen(false)} 
+            <MediaPlayer
+              onEnded={() => setIsFullScreen(false)}
               autoHide
               onMediaError={(error) => {
-                console.warn('Media player error caught:', error);
+                console.warn("Media player error caught:", error);
                 // Silently handle media errors to prevent console spam
                 // The video will continue to work despite these errors
               }}
@@ -300,7 +306,7 @@ export function MoviePage({ movieId }: MoviePageProps) {
                   autoPlay
                   className="w-full h-screen bg-black"
                   onError={(event) => {
-                    console.warn('Video error caught:', event);
+                    console.warn("Video error caught:", event);
                     // Silently handle the error without showing it to user
                   }}
                   onLoadStart={() => {
@@ -439,9 +445,17 @@ export function MoviePage({ movieId }: MoviePageProps) {
                                     setSelectedVersion(source);
                                     setCurrentStreamUrl(null); // Clear stream URL when changing version
                                   }}
-                                  className="fill-foreground gap-1.5"
+                                  className="fill-foreground gap-3 flex justify-between"
                                 >
-                                  {getMediaDetailsFromName(source.Name!)}
+                                  {getMediaDetailsFromName(
+                                    selectedVersion.Name!
+                                  )}
+                                  <Badge
+                                    variant="outline"
+                                    className="bg-sidebar"
+                                  >
+                                    {source.Size ? `${(source.Size / (1024 ** 3)).toFixed(2)} GB` : "Unknown size"}
+                                  </Badge>
                                 </DropdownMenuItem>
                               )
                             )}
