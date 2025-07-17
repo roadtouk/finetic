@@ -50,6 +50,7 @@ interface AuthState {
     mediaSourceId: string,
     quality?: string
   ) => string;
+  getSubtitleTracks: (itemId: string, mediaSourceId: string) => Promise<Array<{kind: string, label: string, language: string, src: string, default?: boolean}>>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -258,7 +259,11 @@ export const useAuthStore = create<AuthState>()(
       ): string => {
         const { serverUrl, user } = get();
         if (!serverUrl || !user) return "";
-        let url = `${serverUrl}/Videos/${itemId}/master.m3u8?api_key=${user.AccessToken}&MediaSourceId=${mediaSourceId}&PlaySessionId=${user.Id}&VideoCodec=h264,hevc&AudioCodec=aac,mp3&TranscodingProfile=Default`;
+        
+        // Generate a unique PlaySessionId for each stream request
+        const playSessionId = crypto.randomUUID();
+        
+        let url = `${serverUrl}/Videos/${itemId}/master.m3u8?api_key=${user.AccessToken}&MediaSourceId=${mediaSourceId}&PlaySessionId=${playSessionId}&VideoCodec=h264,hevc&AudioCodec=aac,mp3&TranscodingProfile=Default`;
 
         if (quality) {
           switch (quality) {
@@ -275,6 +280,40 @@ export const useAuthStore = create<AuthState>()(
         }
 
         return url;
+      },
+      getSubtitleTracks: async (
+        itemId: string,
+        mediaSourceId: string
+      ): Promise<Array<{kind: string, label: string, language: string, src: string, default?: boolean}>> => {
+        const { serverUrl, user } = get();
+        if (!serverUrl || !user) return [];
+        try {
+          // First get the media item to find subtitle streams
+          const userLibraryApi = new UserLibraryApi(get().api!.configuration);
+          const { data: item } = await userLibraryApi.getItem({
+            userId: user.Id,
+            itemId: itemId,
+          });
+          
+          const mediaSource = item.MediaSources?.find(ms => ms.Id === mediaSourceId);
+          const subtitleStreams = mediaSource?.MediaStreams?.filter(stream => stream.Type === 'Subtitle') || [];
+          
+          const subtitleTracks = subtitleStreams.map(stream => {
+            const src = `${serverUrl}/Videos/${itemId}/${mediaSourceId}/Subtitles/${stream.Index}/Stream.vtt?api_key=${user.AccessToken}`;
+            return {
+              kind: "subtitles",
+              label: stream.DisplayTitle || stream.Language || `Track ${stream.Index}`,
+              language: stream.Language || "unknown",
+              src: src,
+              default: stream.IsDefault || false
+            };
+          });
+          
+          return subtitleTracks;
+        } catch (error) {
+          console.error("Failed to fetch subtitle tracks:", error);
+          return [];
+        }
       },
     }),
     {
