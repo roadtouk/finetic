@@ -127,7 +127,7 @@ export function AppSidebar() {
             >
               <Link href="/home">
                 <div className="text-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <JellyfinIcon className="size-6" />
+                  <JellyfinIcon className="size-6 fill-primary" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
                   <span className="font-medium">Finetic</span>

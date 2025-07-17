@@ -18,14 +18,14 @@ export function MediaCard({
   const imageUrl = `${serverUrl}/Items/${item.Id}/Images/Primary`;
 
   return (
-    <Link href={linkHref}>
-      <div className="cursor-pointer group overflow-hidden rounded-lg w-36 transition active:scale-[0.98] select-none">
+    <Link href={linkHref} draggable={false}>
+      <div className="cursor-pointer group overflow-hidden w-36 transition active:scale-[0.98] select-none">
         <div className="relative aspect-[2/3] w-full">
           {serverUrl ? (
             <img
               src={imageUrl}
               alt={item.Name}
-              className="w-full h-full object-cover transition duration-300 shadow-lg hover:brightness-85"
+              className="w-full h-full object-cover transition duration-300 shadow-lg hover:brightness-85 rounded-md border shadow-sm group-hover:shadow-md"
               onError={(e) => {
                 e.currentTarget.style.display = "none";
               }}
@@ -36,6 +36,21 @@ export function MediaCard({
               <div className="text-white/60 text-sm">No Image</div>
             </div>
           )}
+        </div>
+        <div className="px-1">
+          <div className="mt-2.5 text-sm font-medium text-foreground truncate group-hover:underline">
+            {item.Name}
+          </div>
+          <div className="text-xs text-muted-foreground mt-0.5">
+            {item.Type === "Movie" || item.Type === "Series"
+              ? item.ProductionYear
+              : item.SeriesName}
+          </div>
+          <div className="text-xs text-muted-foreground mt-0.5">
+            {item.Type === "Episode"
+              ? `S${item.ParentIndexNumber} • E${item.IndexNumber}`
+              : ""}
+          </div>
         </div>
       </div>
     </Link>
