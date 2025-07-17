@@ -46,13 +46,19 @@ export function MoviePage({ movieId }: MoviePageProps) {
   const getMediaDetailsFromName = (name: string) => {
     const resolutionMatch = name.match(/(\d+p)/i);
     const hdrMatch = name.match(/(HDR|DV|Dolby Vision)/i);
+    const isDolbyVision =
+      hdrMatch &&
+      (hdrMatch[1].toLowerCase() === "dv" ||
+        hdrMatch[1].toLowerCase() === "dolby vision");
     const audioMatch = name.match(
       /(DDP5[.\s]1|TrueHD|DTS-HD MA|DTS-HD|DTS|AAC|AC3|FLAC|Opus)/i
     );
 
     const details: string[] = [];
+    let dolbyIcon: React.ReactNode = null;
+
     if (resolutionMatch) details.push(resolutionMatch[1]);
-    if (hdrMatch) details.push(hdrMatch[1].toUpperCase());
+
     if (audioMatch) {
       let audioDetail = audioMatch[1];
       if (audioDetail.toLowerCase() === "ddp5 1") {
@@ -61,7 +67,14 @@ export function MoviePage({ movieId }: MoviePageProps) {
       details.push(audioDetail);
     }
 
-    return details.length > 0 ? details.join(" - ") : name;
+    return details.length > 0 ? (
+      <>
+        {details.join(" - ")}
+        {dolbyIcon && <span className="ml-1">{dolbyIcon}</span>}
+      </>
+    ) : (
+      name
+    );
   };
 
   useEffect(() => {
@@ -71,7 +84,11 @@ export function MoviePage({ movieId }: MoviePageProps) {
         const movieData = await fetchMovieDetails(movieId);
         console.log("Fetched movie data:", movieData);
         setMovie(movieData);
-        if (movieData && movieData.MediaSources && movieData.MediaSources.length > 0) {
+        if (
+          movieData &&
+          movieData.MediaSources &&
+          movieData.MediaSources.length > 0
+        ) {
           setSelectedVersion(movieData.MediaSources[0]);
 
           const qualities: string[] = [];
@@ -88,7 +105,11 @@ export function MoviePage({ movieId }: MoviePageProps) {
           if (!qualities.includes("720p")) qualities.push("720p");
           if (!qualities.includes("480p")) qualities.push("480p");
           if (!qualities.includes("360p")) qualities.push("360p");
-          setAvailableQualities(Array.from(new Set(qualities)).sort((a, b) => parseInt(b) - parseInt(a)));
+          setAvailableQualities(
+            Array.from(new Set(qualities)).sort(
+              (a, b) => parseInt(b) - parseInt(a)
+            )
+          );
         }
       } catch (error) {
         console.error("Failed to load movie details:", error);
@@ -248,7 +269,7 @@ export function MoviePage({ movieId }: MoviePageProps) {
 
                 {/* Movie Info */}
                 <div className="w-full md:w-2/3 lg:w-3/4 mt-4">
-                  <h1 className="text-4xl font-bold mb-2 font-poppins">
+                  <h1 className="text-4xl font-semibold mb-2 font-poppins">
                     {movie.Name}
                   </h1>
                   <div className="flex items-center gap-2 mb-4 mt-4">
@@ -279,20 +300,23 @@ export function MoviePage({ movieId }: MoviePageProps) {
                           <DropdownMenuTrigger asChild className="truncate">
                             <Button
                               variant="outline"
-                              className="overflow-hidden whitespace-nowrap text-ellipsis"
+                              className="overflow-hidden whitespace-nowrap text-ellipsis fill-foreground gap-1.5"
                             >
                               {getMediaDetailsFromName(selectedVersion.Name!)}
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent>
-                            {movie.MediaSources.map((source: MediaSourceInfo) => (
-                              <DropdownMenuItem
-                                key={source.Id}
-                                onSelect={() => setSelectedVersion(source)}
-                              >
-                                {source.Name}
-                              </DropdownMenuItem>
-                            ))}
+                            {movie.MediaSources.map(
+                              (source: MediaSourceInfo) => (
+                                <DropdownMenuItem
+                                  key={source.Id}
+                                  onSelect={() => setSelectedVersion(source)}
+                                  className="fill-foreground gap-1.5"
+                                >
+                                  {getMediaDetailsFromName(source.Name!)}
+                                </DropdownMenuItem>
+                              )
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
 
@@ -338,30 +362,32 @@ export function MoviePage({ movieId }: MoviePageProps) {
                     <h2 className="text-2xl font-semibold mb-4">Cast</h2>
                     <ScrollArea className="w-full whitespace-nowrap rounded-md border">
                       <div className="flex w-max space-x-4 p-4">
-                        {movie.People?.map((person: PersonInfo, index: number) => (
-                          <figure
-                            key={`${person.Id}-${index}`}
-                            className="shrink-0"
-                          >
-                            <div className="overflow-hidden rounded-full">
-                              <img
-                                src={getImageUrl(
-                                  person.Id!,
-                                  "Primary",
-                                  person.PrimaryImageTag!
-                                )}
-                                alt={person.Name!}
-                                className="aspect-square h-fit w-24 object-cover"
-                              />
-                            </div>
-                            <figcaption className="pt-2 text-xs text-center text-muted-foreground">
-                              <p className="font-semibold text-foreground">
-                                {person.Name}
-                              </p>
-                              <p className="text-sm">{person.Role}</p>
-                            </figcaption>
-                          </figure>
-                        ))}
+                        {movie.People?.map(
+                          (person: PersonInfo, index: number) => (
+                            <figure
+                              key={`${person.Id}-${index}`}
+                              className="shrink-0"
+                            >
+                              <div className="overflow-hidden rounded-full">
+                                <img
+                                  src={getImageUrl(
+                                    person.Id!,
+                                    "Primary",
+                                    person.PrimaryImageTag!
+                                  )}
+                                  alt={person.Name!}
+                                  className="aspect-square h-fit w-24 object-cover"
+                                />
+                              </div>
+                              <figcaption className="pt-2 text-xs text-center text-muted-foreground">
+                                <p className="font-semibold text-foreground">
+                                  {person.Name}
+                                </p>
+                                <p className="text-sm">{person.Role}</p>
+                              </figcaption>
+                            </figure>
+                          )
+                        )}
                       </div>
                       <ScrollBar orientation="horizontal" />
                     </ScrollArea>
