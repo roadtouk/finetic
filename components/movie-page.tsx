@@ -25,6 +25,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { MediaInfoDialog } from "@/components/media-info-dialog";
+import { MediaActions } from "@/components/media-actions";
 import { Info, Download, Play, ArrowLeft } from "lucide-react";
 import { SearchBar } from "@/components/search-component";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -91,8 +92,6 @@ export function MoviePage({ movieId }: MoviePageProps) {
   }, []);
   const [movie, setMovie] = useState<JellyfinItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedVersion, setSelectedVersion] =
-    useState<MediaSourceInfo | null>(null);
   const [vibrantColors, setVibrantColors] = useState<string[]>([]);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [availableQualities, setAvailableQualities] = useState<string[]>([]);
@@ -153,8 +152,6 @@ export function MoviePage({ movieId }: MoviePageProps) {
           movieData.MediaSources &&
           movieData.MediaSources.length > 0
         ) {
-          setSelectedVersion(movieData.MediaSources[0]);
-
           const qualities: string[] = [];
           movieData.MediaSources.forEach((source) => {
             source.MediaStreams?.forEach((stream) => {
@@ -286,7 +283,7 @@ export function MoviePage({ movieId }: MoviePageProps) {
   return (
     <>
       <AnimatePresence>
-        {isFullScreen && selectedVersion && (
+        {isFullScreen && currentStreamUrl && (
           <div className="fixed inset-0 z-[999] bg-black flex items-center justify-center">
             <MediaPlayer
               onEnded={() => setIsFullScreen(false)}
@@ -420,106 +417,13 @@ export function MoviePage({ movieId }: MoviePageProps) {
                   </div>
                   <p className="mb-6">{movie.Overview}</p>
 
-                  {/* Movie Versions Dropdown */}
-                  {movie.MediaSources &&
-                    movie.MediaSources.length > 1 &&
-                    selectedVersion && (
-                      <div className="mb-6 flex items-center gap-2">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild className="truncate">
-                            <Button
-                              variant="outline"
-                              className="overflow-hidden whitespace-nowrap text-ellipsis fill-foreground gap-1.5"
-                            >
-                              {getMediaDetailsFromName(selectedVersion.Name!)}
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                            {movie.MediaSources.map(
-                              (source: MediaSourceInfo) => (
-                                <DropdownMenuItem
-                                  key={source.Id}
-                                  onSelect={() => {
-                                    setSelectedVersion(source);
-                                    setCurrentStreamUrl(null); // Clear stream URL when changing version
-                                  }}
-                                  className="fill-foreground gap-3 flex justify-between"
-                                >
-                                  {getMediaDetailsFromName(source.Name!)}
-                                  <Badge
-                                    variant="outline"
-                                    className="bg-sidebar"
-                                  >
-                                    {source.Size
-                                      ? `${(source.Size / 1024 ** 3).toFixed(2)} GB`
-                                      : "Unknown size"}
-                                  </Badge>
-                                </DropdownMenuItem>
-                              )
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() =>
-                            window.open(
-                              getDownloadUrl(movie.Id!, selectedVersion.Id!),
-                              "_blank"
-                            )
-                          }
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={async () => {
-                            // Generate a new stream URL each time play is clicked
-                            const streamUrl = getStreamUrl(
-                              movie.Id!,
-                              selectedVersion.Id!
-                            );
-                            setCurrentStreamUrl(streamUrl);
-
-                            // Fetch subtitle tracks
-                            try {
-                              const tracks = await getSubtitleTracks(
-                                movie.Id!,
-                                selectedVersion.Id!
-                              );
-                              console.log("Fetched subtitle tracks:", tracks);
-                              setSubtitleTracks(tracks);
-                            } catch (error) {
-                              console.error(
-                                "Failed to fetch subtitle tracks:",
-                                error
-                              );
-                            }
-
-                            setIsFullScreen(true);
-                          }}
-                        >
-                          <Play className="h-4 w-4" />
-                        </Button>
-
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="icon">
-                              <Info className="h-4 w-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Media Info</DialogTitle>
-                            </DialogHeader>
-                            <MediaInfoDialog mediaSource={selectedVersion} />
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                    )}
+                  <MediaActions
+                    movie={movie}
+                    onStreamUrlChange={setCurrentStreamUrl}
+                    onSubtitleTracksChange={setSubtitleTracks}
+                    onFullScreenToggle={() => setIsFullScreen(true)}
+                    getMediaDetailsFromName={getMediaDetailsFromName}
+                  />
 
                   {/* Cast Information */}
                   <div>
