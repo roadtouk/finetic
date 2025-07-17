@@ -38,8 +38,7 @@ import {
   MediaPlaybackRateMenu,
   MediaCaptionsMenu,
   MediaSettingsMenuButton,
-  // @ts-ignore
-} from "media-chrome/react/menu";
+} from "media-chrome/dist/react/menu";
 import { useAuthStore } from "@/lib/auth-store";
 import { Slider } from "@/components/ui/slider"; // Import your Slider component
 
@@ -224,6 +223,39 @@ export function VideoPlayer({
             className="w-full h-full object-contain"
           />
 
+          <MediaSettingsMenu
+            className=" z-[99] "
+          >
+            <MediaSettingsMenuItem>
+              Speed
+              <MediaPlaybackRateMenu slot="submenu">
+                <div slot="title">Speed</div>
+              </MediaPlaybackRateMenu>
+            </MediaSettingsMenuItem>
+
+            <MediaSettingsMenuItem>
+              Quality
+              <MediaRenditionMenu slot="submenu">
+                <div slot="title">Quality</div>
+                {availableQualities.map((quality) => (
+                  <MediaSettingsMenuItem
+                    key={quality}
+                    onClick={() => setCurrentQuality(quality)}
+                  >
+                    {quality}
+                  </MediaSettingsMenuItem>
+                ))}
+              </MediaRenditionMenu>
+            </MediaSettingsMenuItem>
+
+            <MediaSettingsMenuItem>
+              Captions
+              <MediaCaptionsMenu slot="submenu">
+                <div slot="title">Captions</div>
+              </MediaCaptionsMenu>
+            </MediaSettingsMenuItem>
+          </MediaSettingsMenu>
+
           <div
             className={`absolute flex flex-col justify-end z-50 h-16 bottom-0 w-full pb-8 px-8 transition-opacity duration-300 ${
               hovered ? "opacity-100" : "opacity-0"
@@ -261,36 +293,6 @@ export function VideoPlayer({
                 <MediaDurationDisplay className="text-white text-sm font-sans font-medium px-0"></MediaDurationDisplay>
               </div>
             </div>
-            <MediaSettingsMenu anchor="auto" hidden>
-              <MediaSettingsMenuItem>
-                Speed
-                <MediaPlaybackRateMenu slot="submenu" hidden>
-                  <div slot="title">Speed</div>
-                </MediaPlaybackRateMenu>
-              </MediaSettingsMenuItem>
-
-              <MediaSettingsMenuItem>
-                Quality
-                <MediaRenditionMenu slot="submenu" hidden>
-                  <div slot="title">Quality</div>
-                  {availableQualities.map((quality) => (
-                    <MediaSettingsMenuItem
-                      key={quality}
-                      onClick={() => setCurrentQuality(quality)}
-                    >
-                      {quality}
-                    </MediaSettingsMenuItem>
-                  ))}
-                </MediaRenditionMenu>
-              </MediaSettingsMenuItem>
-
-              <MediaSettingsMenuItem>
-                Captions
-                <MediaCaptionsMenu slot="submenu" hidden>
-                  <div slot="title">Captions</div>
-                </MediaCaptionsMenu>
-              </MediaSettingsMenuItem>
-            </MediaSettingsMenu>
 
             <MediaControlBar className="w-full items-center justify-between gap-x-6 bg-black/50 mt-4">
               {/* Left group of controls */}
