@@ -1219,7 +1219,7 @@ function MediaPlayerVolumeIndicator(props: MediaPlayerVolumeIndicatorProps) {
         className
       )}
     >
-      <div className="fade-in-0 zoom-in-95 flex animate-in flex-col items-center gap-3 rounded-lg bg-black/30 px-6 py-4 text-white backdrop-blur-xs duration-200">
+      <div className="fade-in-0 zoom-in-95 flex animate-in flex-col items-center gap-3 rounded-lg bg-black/30 px-6 py-4 text-white backdrop-blur-xl duration-200">
         <div className="flex items-center gap-2">
           {mediaVolumeLevel === "off" || mediaMuted ? (
             <VolumeXIcon className="size-6" />
