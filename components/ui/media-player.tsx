@@ -1961,30 +1961,18 @@ function MediaPlayerSeek(props: MediaPlayerSeekProps) {
       if (!store.getState().dragging) {
         store.setState("dragging", true);
       }
-
-      if (seekThrottleRef.current) {
-        cancelAnimationFrame(seekThrottleRef.current);
-      }
-
-      seekThrottleRef.current = requestAnimationFrame(() => {
-        dispatch({
-          type: MediaActionTypes.MEDIA_SEEK_REQUEST,
-          detail: time,
-        });
-        seekThrottleRef.current = null;
-      });
     },
-    [dispatch, store.getState, store.setState]
+    [store.getState, store.setState]
   );
 
   const onSeekCommit = React.useCallback(
     (value: number[]) => {
       const time = value[0] ?? 0;
 
-      if (seekThrottleRef.current) {
-        cancelAnimationFrame(seekThrottleRef.current);
-        seekThrottleRef.current = null;
-      }
+      dispatch({
+        type: MediaActionTypes.MEDIA_SEEK_REQUEST,
+        detail: time,
+      });
 
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
@@ -1998,6 +1986,8 @@ function MediaPlayerSeek(props: MediaPlayerSeekProps) {
         cancelAnimationFrame(previewDebounceRef.current);
         previewDebounceRef.current = null;
       }
+
+      lastSeekCommitTimeRef.current = Date.now();
 
       setSeekState((prev) => ({
         ...prev,
