@@ -21,7 +21,7 @@ export default async function Home() {
       />
 
       <div className="relative z-[9999] mb-8">
-        <div className="max-w-2xl mb-6">
+        <div className="mb-6">
           <SearchBar />
         </div>
       </div>

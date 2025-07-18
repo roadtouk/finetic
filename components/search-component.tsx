@@ -131,10 +131,13 @@ export function SearchBar({ className = "" }: SearchBarProps) {
   };
 
   return (
-    <div className={`relative z-[9999] ${className}`} ref={suggestionsRef}>
+    <div
+      className={`relative z-[9999] max-w-xl ${className}`}
+      ref={suggestionsRef}
+    >
       <form onSubmit={handleSearch} className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             type="text"
             placeholder="Search movies, TV shows, and episodes..."
@@ -146,23 +149,14 @@ export function SearchBar({ className = "" }: SearchBarProps) {
                 setShowSuggestions(true);
               }
             }}
-            className="pl-9 bg-background/10 border-border text-foreground placeholder:text-muted-foreground focus:border-ring"
+            className="pl-10 bg-background/10 border-border text-foreground placeholder:text-muted-foreground focus:border-ring rounded-full h-11"
           />
         </div>
-        <Button
-          type="submit"
-          size="sm"
-          variant={"outline"}
-          className="px-4 h-9"
-          disabled={!searchQuery.trim()}
-        >
-          Search
-        </Button>
       </form>
 
       {/* Search Suggestions Dropdown */}
       {(showSuggestions || isLoading) && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-background/90 backdrop-blur-md border border-border rounded-lg shadow-xl z-[9999] max-h-96 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-background/90 backdrop-blur-md rounded-lg shadow-xl z-[9999] max-h-96 overflow-y-auto">
           {isLoading && (
             <div className="p-4">
               <div className="text-sm text-muted-foreground mb-3">
@@ -172,7 +166,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
               {[...Array(3)].map((_, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-3 p-3 border-b border-border last:border-b-0"
+                  className="flex items-center gap-3 p-3 last:border-b-0"
                 >
                   <Skeleton className="w-12 h-16 bg-muted rounded" />
                   <div className="flex-1">

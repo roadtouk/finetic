@@ -65,17 +65,20 @@ export function AppSidebar() {
           getUser(),
           getServerUrl(),
         ]);
-        
+
         setUser(userData);
         setServerUrl(serverUrlData);
-        
+
         // Fetch libraries if we have both user and server URL
         if (userData && serverUrlData) {
-          const response = await fetch(`${serverUrlData}/Library/VirtualFolders`, {
-            headers: {
-              "X-Emby-Authorization": `MediaBrowser Client="Jellyfin Web Client", Device="Browser", DeviceId="web-client", Version="1.0.0", Token="${userData.AccessToken}"`,
-            },
-          });
+          const response = await fetch(
+            `${serverUrlData}/Library/VirtualFolders`,
+            {
+              headers: {
+                "X-Emby-Authorization": `MediaBrowser Client="Jellyfin Web Client", Device="Browser", DeviceId="web-client", Version="1.0.0", Token="${userData.AccessToken}"`,
+              },
+            }
+          );
 
           if (response.ok) {
             const data = await response.json();
@@ -205,7 +208,9 @@ export function AppSidebar() {
                   size="lg"
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
-                  <User className="h-4 w-4" />
+                  <div className="text-foreground flex aspect-square size-8 items-center justify-center rounded-lg bg-primary p-2">
+                    <User className="size-6 text-white" />
+                  </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">{user?.Name}</span>
                     <span className="truncate text-xs">User Account</span>

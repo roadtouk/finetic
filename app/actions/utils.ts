@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { Jellyfin } from "@jellyfin/sdk";
 import { UserLibraryApi } from "@jellyfin/sdk/lib/generated-client/api/user-library-api";
+import { LibraryApi } from "@jellyfin/sdk/lib/generated-client/api/library-api";
 
 // Create global Jellyfin SDK instance
 const jellyfin = new Jellyfin({
@@ -43,12 +44,10 @@ export async function getImageUrl(
   return url;
 }
 
-export async function getDownloadUrl(
-  itemId: string,
-  mediaSourceId: string
-): Promise<string> {
+export async function getDownloadUrl(itemId: string): Promise<string> {
   const { serverUrl, user } = await getAuthData();
-  return `${serverUrl}/Items/${itemId}/Download?api_key=${user.AccessToken}&MediaSourceId=${mediaSourceId}`;
+
+  return `${serverUrl}/Items/${itemId}/Download?api_key=${user.AccessToken}`;
 }
 
 export async function getStreamUrl(

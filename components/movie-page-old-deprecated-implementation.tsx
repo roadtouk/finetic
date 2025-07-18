@@ -220,7 +220,7 @@ export function MoviePage({ movieId }: MoviePageProps) {
           blend={0.4}
         />
         <div className="relative z-[9999] mb-4">
-          <div className="max-w-2xl mb-2">
+          <div className="mb-2">
             <SearchBar />
           </div>
         </div>
@@ -375,7 +375,7 @@ export function MoviePage({ movieId }: MoviePageProps) {
             blend={0.4}
           />
           <div className="relative z-[9999] mb-4">
-            <div className="max-w-2xl mb-2">
+            <div className="mb-2">
               <SearchBar />
             </div>
           </div>

@@ -72,7 +72,7 @@ export function LoginForm({ onSuccess, onBack }: LoginFormProps) {
           </div>
           <CardTitle className="text-2xl">Sign In</CardTitle>
           <CardDescription>
-            Connect to your Jellyfin server
+            Enter your Jellyfin credentials to continue
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -113,7 +113,12 @@ export function LoginForm({ onSuccess, onBack }: LoginFormProps) {
                   autoComplete="current-password"
                   className={error ? "border-red-500" : ""}
                 />
-                {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
+                {error && (
+                  <p className="text-sm text-red-500 mt-2 flex items-start gap-2">
+                    <span className="text-red-500 mt-0.5">⚠</span>
+                    <span>{error}</span>
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>

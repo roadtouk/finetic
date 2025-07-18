@@ -13,17 +13,58 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { checkServerHealth, setServerUrl } from "@/app/actions";
-import { Loader2, Server } from "lucide-react";
+import { Loader2, Server, CheckCircle, Globe, Shield } from "lucide-react";
 
 interface ServerSetupProps {
   onNext: () => void;
 }
 
+type ConnectionStatus = 'idle' | 'connecting' | 'trying-http' | 'trying-https' | 'success' | 'error';
+
 export function ServerSetup({ onNext }: ServerSetupProps) {
   const [url, setUrl] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('idle');
   const [error, setError] = useState("");
-  // Server actions are imported directly
+  const [detectedUrl, setDetectedUrl] = useState("");
+  
+  const isLoading = connectionStatus !== 'idle' && connectionStatus !== 'success' && connectionStatus !== 'error';
+
+  const cleanUrl = (inputUrl: string): string => {
+    let cleaned = inputUrl.trim();
+    // Remove trailing slash
+    cleaned = cleaned.replace(/\/$/, '');
+    // Remove common prefixes that users might accidentally include
+    cleaned = cleaned.replace(/^(jellyfin\.|www\.)/, '');
+    return cleaned;
+  };
+
+  const getConnectionMessage = (): string => {
+    switch (connectionStatus) {
+      case 'connecting':
+        return 'Connecting to server...';
+      case 'trying-http':
+        return 'Trying HTTP connection...';
+      case 'trying-https':
+        return 'Trying HTTPS connection...';
+      case 'success':
+        return 'Connected successfully!';
+      default:
+        return 'Connect to Server';
+    }
+  };
+
+  const getConnectionIcon = () => {
+    switch (connectionStatus) {
+      case 'trying-http':
+        return <Globe className="h-4 w-4 animate-pulse" />;
+      case 'trying-https':
+        return <Shield className="h-4 w-4 animate-pulse" />;
+      case 'success':
+        return <CheckCircle className="h-4 w-4" />;
+      default:
+        return isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,32 +73,30 @@ export function ServerSetup({ onNext }: ServerSetupProps) {
       return;
     }
 
-    setIsLoading(true);
+    setConnectionStatus('connecting');
     setError("");
+    setDetectedUrl("");
 
     try {
-      // Clean up URL - add protocol if missing
-      let cleanUrl = url.trim();
-      if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
-        cleanUrl = `https://${cleanUrl}`;
-      }
+      const cleanedUrl = cleanUrl(url);
+      const result = await checkServerHealth(cleanedUrl);
 
-      const isValid = await checkServerHealth(cleanUrl);
-
-      if (isValid) {
-        await setServerUrl(cleanUrl);
-        onNext();
+      if (result.success && result.finalUrl) {
+        setConnectionStatus('success');
+        setDetectedUrl(result.finalUrl);
+        await setServerUrl(result.finalUrl);
+        
+        // Small delay to show success state
+        setTimeout(() => {
+          onNext();
+        }, 800);
       } else {
-        setError(
-          "Unable to connect to Jellyfin server. Please check the URL and try again."
-        );
+        setConnectionStatus('error');
+        setError(result.error || "Unable to connect to Jellyfin server. Please check the URL and try again.");
       }
     } catch {
-      setError(
-        "Unable to connect to Jellyfin server. Please check the URL and try again."
-      );
-    } finally {
-      setIsLoading(false);
+      setConnectionStatus('error');
+      setError("An unexpected error occurred. Please try again.");
     }
   };
 
@@ -81,29 +120,64 @@ export function ServerSetup({ onNext }: ServerSetupProps) {
               </label>
               <Input
                 id="server-url"
-                type="url"
-                placeholder="https://jellyfin.example.com"
+                type="text"
+                placeholder="jellyfin.example.com or 192.168.1.100:8096"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 disabled={isLoading}
-                className={error ? "border-red-500" : ""}
+                className={`${
+                  error ? "border-red-500" : 
+                  connectionStatus === 'success' ? "border-green-500" : ""
+                }`}
               />
-              {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
-              <p className="text-xs text-muted-foreground mt-2">
-                Enter the full URL including http:// or https://
-              </p>
+              
+              {/* Connection Status */}
+              {(connectionStatus === 'connecting' || connectionStatus === 'trying-http' || connectionStatus === 'trying-https') && (
+                <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                  {getConnectionIcon()}
+                  <span>{getConnectionMessage()}</span>
+                </div>
+              )}
+              
+              {/* Success State */}
+              {connectionStatus === 'success' && detectedUrl && (
+                <div className="flex items-center gap-2 mt-2 text-sm text-green-600">
+                  <CheckCircle className="h-4 w-4" />
+                  <span>Connected to {detectedUrl}</span>
+                </div>
+              )}
+              
+              {/* Error State */}
+              {error && (
+                <p className="text-sm text-red-500 mt-2 flex items-start gap-2">
+                  <span className="text-red-500 mt-0.5">⚠</span>
+                  <span>{error}</span>
+                </p>
+              )}
+              
+              {/* Help Text */}
+              <div className="mt-3 space-y-1">
+                <p className="text-xs text-muted-foreground">
+                  No need to include http:// or https:// - we'll try HTTPS first, then HTTP
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Examples: <code className="text-xs bg-muted px-1 py-0.5 rounded">jellyfin.mydomain.com</code>, <code className="text-xs bg-muted px-1 py-0.5 rounded">192.168.1.100:8096</code>
+                </p>
+              </div>
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit" className="w-full mt-8" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Connecting...
-                </>
-              ) : (
-                "Connect to Server"
-              )}
+            <Button 
+              type="submit" 
+              className={`w-full mt-4 ${
+                connectionStatus === 'success' ? 'bg-green-600 hover:bg-green-700' : ''
+              }`}
+              disabled={isLoading}
+            >
+              <span className="flex items-center gap-2">
+                {getConnectionIcon()}
+                <span>{getConnectionMessage()}</span>
+              </span>
             </Button>
           </CardFooter>
         </form>

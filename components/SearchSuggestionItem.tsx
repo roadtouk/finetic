@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { getImageUrl } from "@/app/actions";
 import { Film, PlayCircle, Tv, Calendar, Star } from "lucide-react";
 import { Badge } from "./ui/badge";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Item {
   Id: string;
@@ -30,22 +31,9 @@ export function SearchSuggestionItem({
   onClick,
   formatRuntime,
 }: SearchSuggestionItemProps) {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const { serverUrl } = useAuth();
 
-  useEffect(() => {
-    const fetchImageUrl = async () => {
-      if (item.ImageTags?.Primary) {
-        const url = await getImageUrl(
-          item.Id,
-          "Primary",
-          item.ImageTags.Primary
-        );
-        setImageUrl(url);
-      }
-    };
-
-    fetchImageUrl();
-  }, [item]);
+  const imageUrl = `${serverUrl}/Items/${item.Id}/Images/Primary`;
 
   return (
     <div
@@ -82,22 +70,20 @@ export function SearchSuggestionItem({
       {/* Content Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <h4 className="text-foreground font-medium truncate">
-            {item.Name}
-          </h4>
+          <h4 className="text-foreground font-medium truncate">{item.Name}</h4>
           {item.Type === "Movie" ? (
-            <Badge className="text-white bg-blue-600">
-              <Film className="h-3 w-3 mr-0.5" />
+            <Badge variant={"outline"}>
+              <Film className="h-3 w-3 mr-0.5 text-blue-400" />
               Movie
             </Badge>
           ) : item.Type === "Series" ? (
-            <Badge className="text-white bg-emerald-600">
-              <Tv className="h-3 w-3 mr-0.5" />
+            <Badge variant={"outline"}>
+              <Tv className="h-3 w-3 mr-0.5 text-emerald-400" />
               Series
             </Badge>
           ) : item.Type === "Episode" ? (
-            <Badge className="text-white bg-amber-600">
-              <PlayCircle className="h-3 w-3 mr-0.5" />
+            <Badge variant={"outline"}>
+              <PlayCircle className="h-3 w-3 mr-0.5 text-orange-400" />
               Episode
             </Badge>
           ) : null}
@@ -111,18 +97,16 @@ export function SearchSuggestionItem({
             </div>
           )}
 
-          {item.RunTimeTicks &&
-            formatRuntime(item.RunTimeTicks) && (
-              <div className="flex items-center gap-1">
-                <PlayCircle className="h-3 w-3" />
-                {formatRuntime(item.RunTimeTicks)}
-              </div>
-            )}
+          {item.RunTimeTicks && formatRuntime(item.RunTimeTicks) && (
+            <div className="flex items-center gap-1">
+              <PlayCircle className="h-3 w-3" />
+              {formatRuntime(item.RunTimeTicks)}
+            </div>
+          )}
 
           {item.CommunityRating && (
             <div className="flex items-center gap-1">
-              <Star className="h-3 w-3" />{" "}
-              {item.CommunityRating.toFixed(1)}
+              <Star className="h-3 w-3" /> {item.CommunityRating.toFixed(1)}
             </div>
           )}
 
@@ -155,4 +139,3 @@ export function SearchSuggestionItem({
     </div>
   );
 }
-

@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import { getImageUrl } from "@/app/actions";
-import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function MediaCard({
   item,
@@ -17,17 +16,24 @@ export function MediaCard({
 
   const imageUrl = `${serverUrl}/Items/${item.Id}/Images/Primary`;
 
+  const [imageLoading, setImageLoading] = useState(true); // State to track image loading
+
   return (
     <Link href={linkHref} draggable={false}>
-      <div className="cursor-pointer group overflow-hidden w-36 transition active:scale-[0.98] select-none">
+      <div className="cursor-pointer group overflow-hidden w-36 transition select-none">
         <div className="relative aspect-[2/3] w-full">
+          {/* {imageLoading && (
+            <Skeleton className="absolute inset-0 w-full h-full rounded-md border shadow-sm" />
+          )} */}
           {serverUrl ? (
             <img
               src={imageUrl}
-              alt={item.Name}
-              className="w-full h-full object-cover transition duration-300 shadow-lg hover:brightness-85 rounded-md border shadow-sm group-hover:shadow-md"
+              className="w-full h-full object-cover transition duration-200 shadow-lg hover:brightness-85 rounded-md border shadow-sm group-hover:shadow-md active:scale-[0.98]"
               onError={(e) => {
                 e.currentTarget.style.display = "none";
+              }}
+              onLoad={() => {
+                setImageLoading(false); // Hide skeleton when image loads
               }}
               draggable="false"
             />

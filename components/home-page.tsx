@@ -75,7 +75,7 @@ export function HomePage({ serverUrl }: { serverUrl: string }) {
 
       {/* Search Component - Moved to top */}
       <div className="relative z-[9999] mb-8">
-        <div className="max-w-2xl mb-6">
+        <div className="mb-6">
           <SearchBar />
         </div>
       </div>
