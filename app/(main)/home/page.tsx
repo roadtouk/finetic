@@ -5,6 +5,7 @@ import { AuthErrorHandler } from "@/app/components/auth-error-handler";
 import { AuroraBackground } from "@/components/aurora-background";
 import { MediaSection } from "@/components/media-section";
 import { SearchBar } from "@/components/search-component";
+import { AISearch } from "@/components/ai-search";
 import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models/base-item-dto";
 
 export default async function Home() {
@@ -24,8 +25,6 @@ export default async function Home() {
       fetchMovies(12),
       fetchTVShows(12),
     ]);
-
-    console.log(resumeItems);
   } catch (error) {
     if ((error as any).isAuthError) {
       authError = error;

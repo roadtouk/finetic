@@ -1,5 +1,6 @@
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import AIAsk from "@/components/ai-ask";
 
 export default function MainLayout({
   children,
@@ -14,6 +15,7 @@ export default function MainLayout({
           <div className="flex-1 overflow-y-auto no-scrollbar">{children}</div>
         </SidebarInset>
       </SidebarProvider>
+      <AIAsk />
     </div>
   );
 }

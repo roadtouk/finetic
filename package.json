@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ai-sdk/google": "^1.2.22",
+    "@ai-sdk/react": "^1.2.12",
     "@jellyfin/sdk": "^0.11.0",
     "@mux/mux-video-react": "^0.26.1",
     "@radix-ui/react-dialog": "^1.1.14",
@@ -20,6 +22,7 @@
     "@radix-ui/react-slider": "^1.3.5",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tooltip": "^1.2.7",
+    "ai": "^4.3.19",
     "axios": "^1.10.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -29,14 +32,18 @@
     "hls-video-element": "^1.5.6",
     "lucide-react": "^0.525.0",
     "media-chrome": "^4.12.0",
+    "motion": "^12.23.6",
     "next": "15.4.1",
     "next-themes": "^0.4.6",
     "node-vibrant": "^4.0.3",
     "ogl": "^1.0.11",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-markdown": "^10.1.0",
     "react-player": "^3.2.1",
+    "sonner": "^2.0.6",
     "tailwind-merge": "^3.3.1",
+    "zod": "^3.25.76",
     "zustand": "^4.4.1"
   },
   "devDependencies": {
