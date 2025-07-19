@@ -34,7 +34,7 @@ export function CastScrollArea({ people, mediaId }: CastScrollAreaProps) {
         <div className="flex w-max space-x-4 mb-8">
           {people.map((person, index) => (
             <figure key={`${person.Id}-${index}`} className="shrink-0">
-              <div className="overflow-hidden rounded-full">
+              <div className="overflow-hidden rounded-full shadow-lg">
                 {person.PrimaryImageTag ? (
                   <img
                     src={`${serverUrl}/Items/${person.Id}/Images/Primary?fillHeight=759&fillWidth=506&quality=96&tag=be01a54a72ffd71ded99d2268c8bc258`}
@@ -49,7 +49,7 @@ export function CastScrollArea({ people, mediaId }: CastScrollAreaProps) {
                   </div>
                 )}
               </div>
-              <figcaption className="pt-2 text-xs text-center text-muted-foreground max-w-24">
+              <figcaption className="pt-3 text-xs text-center text-muted-foreground max-w-24">
                 <p
                   className="font-semibold text-foreground truncate"
                   title={person.Name!}

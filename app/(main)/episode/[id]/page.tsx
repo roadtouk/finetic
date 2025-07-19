@@ -123,7 +123,7 @@ export default async function Episode({
               <MediaActions episode={episode} />
 
               {/* Additional Info */}
-              <div className="mt-8 space-y-4">
+              <div className="mt-4 space-y-4">
                 {episode.Genres && episode.Genres.length > 0 && (
                   <div>
                     <h3 className="text-sm font-medium mb-2">Genres</h3>

@@ -107,12 +107,38 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
 
   return (
     <div className="mb-6 flex items-center gap-2">
+      <Button
+        variant="default"
+        onClick={async () => {
+          // Generate a new stream URL each time play is clicked
+          const streamUrl = await getStreamUrl(media!.Id!, selectedVersion.Id!);
+          setStreamUrl(streamUrl);
+          setIsPlayerVisible(true);
+          console.log("Stream URL:", streamUrl);
+
+          // Fetch subtitle tracks
+          try {
+            const tracks = await getSubtitleTracks(
+              media!.Id!,
+              selectedVersion.Id!
+            );
+            console.log("Fetched subtitle tracks:", tracks);
+            setSubtitleTracks(tracks);
+          } catch (error) {
+            console.error("Failed to fetch subtitle tracks:", error);
+          }
+        }}
+      >
+        <Play className="h-4 w-4" />
+        Play
+      </Button>
+
       {media.MediaSources.length > 1 ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild className="truncate">
             <Button
               variant="outline"
-              className="overflow-hidden whitespace-nowrap text-ellipsis fill-foreground gap-1.5"
+              className="overflow-hidden whitespace-nowrap text-ellipsis fill-foreground gap-1.5 px-4"
             >
               {getMediaDetailsFromName(selectedVersion.Name!)}
             </Button>
@@ -148,32 +174,6 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
 
       <Button variant="outline" size="icon" onClick={download}>
         <Download className="h-4 w-4" />
-      </Button>
-
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={async () => {
-          // Generate a new stream URL each time play is clicked
-          const streamUrl = await getStreamUrl(media!.Id!, selectedVersion.Id!);
-          setStreamUrl(streamUrl);
-          setIsPlayerVisible(true);
-          console.log("Stream URL:", streamUrl);
-
-          // Fetch subtitle tracks
-          try {
-            const tracks = await getSubtitleTracks(
-              media!.Id!,
-              selectedVersion.Id!
-            );
-            console.log("Fetched subtitle tracks:", tracks);
-            setSubtitleTracks(tracks);
-          } catch (error) {
-            console.error("Failed to fetch subtitle tracks:", error);
-          }
-        }}
-      >
-        <Play className="h-4 w-4" />
       </Button>
 
       <Dialog>

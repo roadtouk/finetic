@@ -44,7 +44,7 @@ interface Episode {
   Overview?: string;
   RunTimeTicks?: number;
   ProductionYear?: number;
-  DateCreated?: string;
+  PremiereDate?: string;
   SeriesId?: string;
   SeasonId?: string;
   ParentIndexNumber?: number;
@@ -352,11 +352,11 @@ const EpisodeCard = React.memo(function EpisodeCard({
       <Link href={`/episode/${episode.Id}`} className="block" draggable={false}>
         <div className="space-y-3 py-2">
           {/* Episode Thumbnail */}
-          <div className={`relative aspect-video rounded-lg overflow-hidden bg-muted shadow-lg group-hover:shadow-xl transition-all duration-300 ${isCurrentEpisode ? 'ring-2 ring-primary rounded-lg' : ''}`}>
+          <div className={`relative aspect-video rounded-lg overflow-hidden bg-muted shadow-lg group-hover:shadow-xl transition-all duration-300 ${isCurrentEpisode ? 'ring-2 ring-primary rounded-lg shadow-xl shadow-primary/20' : ''}`}>
             {imageUrl ? (
               <img
                 src={imageUrl}
-                alt={episode.Name || "Episode"}
+                // alt={episode.Name || "Episode"}
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
             ) : (
@@ -401,12 +401,12 @@ const EpisodeCard = React.memo(function EpisodeCard({
 
             {/* Metadata */}
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs bg-sidebar">
                 S{episode.ParentIndexNumber || 1} • E{episode.IndexNumber || 1}
               </Badge>
-              {formatDate(episode.DateCreated) && (
+              {formatDate(episode.PremiereDate) && (
                 <span className="text-xs text-muted-foreground">
-                  {formatDate(episode.DateCreated)}
+                  {formatDate(episode.PremiereDate)}
                 </span>
               )}
             </div>
