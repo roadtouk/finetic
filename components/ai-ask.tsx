@@ -11,6 +11,7 @@ import Markdown from "react-markdown";
 import { toast } from "sonner";
 import { Input } from "./ui/input";
 import { useRouter } from "next/navigation";
+import { ToolInvocation } from "ai";
 
 const AIAsk = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -32,7 +33,33 @@ const AIAsk = () => {
     setInput,
   } = useChat({
     api: "/api/chat",
+    onFinish: (message) => {
+      // Check if the message contains navigation instructions
+      if (message.toolInvocations) {
+        for (const toolInvocation of message.toolInvocations) {
+          if (toolInvocation.toolName === "navigateToMedia") {
+            navigateToMedia(toolInvocation);
+          }
+        }
+      }
+    },
   });
+
+  const navigateToMedia = (toolInvocation: ToolInvocation) => {
+    if (
+      "result" in toolInvocation &&
+      toolInvocation.toolName === "navigateToMedia"
+    ) {
+      console.log("Tool invocation result:", toolInvocation.result);
+      const result = toolInvocation.result;
+      if (result.success && result.action === "navigate" && result.url) {
+        router.push(result.url);
+        setTimeout(() => {
+          setIsAskOpen(false);
+        }, 500);
+      }
+    }
+  };
 
   const handleCloseAsk = () => {
     setIsAskOpen(false);
@@ -70,25 +97,6 @@ const AIAsk = () => {
       // });
     }
   };
-
-  useEffect(() => {
-    const toolInvocations = messages?.[messages.length - 1]?.toolInvocations;
-
-    if (toolInvocations) {
-      const navigateToMedia = toolInvocations.find(
-        (invocation) => invocation.toolName === "navigateToMedia"
-      );
-
-      console.log("Navigate to Media Tool Invocation:", navigateToMedia);
-
-      if (navigateToMedia) {
-        const { mediaId, mediaType } = navigateToMedia?.args;
-        router.push(
-          mediaType === "Movie" ? `/movie/${mediaId}` : `/show/${mediaId}`
-        );
-      }
-    }
-  }, [messages]);
 
   return (
     <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 flex flex-col items-center px-4 w-full">
@@ -206,7 +214,7 @@ const AIAsk = () => {
       >
         <Button
           variant="outline"
-          className="shadow-sm px-4 py-2 h-auto rounded-full flex items-center gap-2 bg-card/90 backdrop-blur-[6px] border"
+          className="shadow-sm px-4 py-2 h-auto rounded-full flex items-center gap-2 bg-card/90 backdrop-blur-[6px] border bg-background/70!"
           onClick={() => setIsAskOpen(!isAskOpen)}
         >
           <MessageCircle className="h-4 w-4" />

@@ -51,19 +51,28 @@ export async function POST(req: Request) {
         }),
 
         navigateToMedia: tool({
-          description: "Navigate to a specific movie or TV show page",
+          description: "Navigate to a specific movie, TV show, or episode page",
           parameters: z.object({
             mediaId: z.string().describe("The unique ID of the media item"),
             mediaType: z
-              .enum(["Movie", "Series"])
-              .describe("The type of media - Movie or Series (TV Show)"),
+              .enum(["Movie", "Series", "Episode"])
+              .describe(
+                "The type of media - Movie, Series (TV Show), or Episode"
+              ),
           }),
           execute: async ({ mediaId, mediaType }) => {
             console.log("🎯 [navigateToMedia] Tool called with:", {
               mediaId,
               mediaType,
             });
-            const basePath = mediaType === "Movie" ? "/movie" : "/show";
+            let basePath: string;
+            if (mediaType === "Movie") {
+              basePath = "/movie";
+            } else if (mediaType === "Series") {
+              basePath = "/show";
+            } else {
+              basePath = "/episode";
+            }
             const url = `${basePath}/${mediaId}`;
             return {
               success: true,
@@ -192,7 +201,7 @@ export async function POST(req: Request) {
       2. If found, use navigateToMedia to provide the navigation URL
       3. Be helpful and conversational
 
-      When you use the navigateToMedia tool, make sure to mention that you're navigating to the content and include the URL in your response.`,
+      When you use the navigateToMedia tool, make sure to mention that you're navigating to the content by name only, without including the URL.`,
       onFinish: async ({ usage, finishReason, text, toolResults }) => {
         // Handle navigation logic here if needed
         console.log("Chat finished:", {
