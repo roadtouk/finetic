@@ -13,12 +13,27 @@ import { Input } from "./ui/input";
 import { useRouter } from "next/navigation";
 import { ToolInvocation } from "ai";
 
-const AIAsk = () => {
+interface AIAskProps {
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [searchSummary, setSearchSummary] = useState<string>("");
   const [summaryLoading, setSummaryLoading] = useState(false);
-  const [isAskOpen, setIsAskOpen] = useState<boolean>(false);
+  const [internalIsOpen, setInternalIsOpen] = useState<boolean>(false);
+  
+  // Use external state if provided, otherwise use internal state
+  const isAskOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+  const setIsAskOpen = (open: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(open);
+    } else {
+      setInternalIsOpen(open);
+    }
+  };
 
   const router = useRouter();
 
