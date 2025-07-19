@@ -34,4 +34,15 @@ export const getMediaDetailsFromName = (name: string) => {
 export const cutOffText = (text: string, maxLength: number): string => {
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength) + "...";
-}
+};
+
+export const formatRuntime = (runTimeTicks?: number) => {
+  if (!runTimeTicks) return null;
+  const totalMinutes = Math.round(runTimeTicks / 600000000); // Convert from ticks to minutes
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
+};

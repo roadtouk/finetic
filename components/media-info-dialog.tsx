@@ -51,7 +51,7 @@ export function MediaInfoDialog({ mediaSource }: MediaInfoDialogProps) {
 
             <dt className="font-semibold">Path</dt>
 
-            <div className="overflow-x-scroll h-8 whitespace-nowrap">
+            <div className="overflow-x-scroll h-8 whitespace-nowrap font-mono">
               <dd>{mediaSource.Path}</dd>
             </div>
           </dl>

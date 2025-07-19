@@ -105,7 +105,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
       router.push(`/movie/${item.Id}`);
     } else if (item.Type === "Series") {
       // Assuming a series page exists at /series/[id]
-      router.push(`/series/${item.Id}`);
+      router.push(`/show/${item.Id}`);
     } else if (item.Type === "Episode") {
       // For episodes, navigate to the search page for now as SeriesId is not directly available
       router.push(`/search?q=${encodeURIComponent(item.Name)}`);
@@ -156,7 +156,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
 
       {/* Search Suggestions Dropdown */}
       {(showSuggestions || isLoading) && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-background/90 backdrop-blur-md rounded-lg shadow-xl z-[9999] max-h-96 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-background/95 backdrop-blur-md rounded-lg border shadow-xl shadow-accent/30 z-[9999] max-h-96 overflow-y-auto">
           {isLoading && (
             <div className="p-4">
               <div className="text-sm text-muted-foreground mb-3">

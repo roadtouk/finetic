@@ -79,6 +79,7 @@ export async function fetchEpisodes(seasonId: string): Promise<JellyfinItem[]> {
         ItemFields.PrimaryImageAspectRatio,
         ItemFields.Overview,
         ItemFields.MediaSources,
+        ItemFields.DateCreated,
       ],
     });
     return data.Items || [];
@@ -102,6 +103,37 @@ export async function fetchTVShowDetails(tvShowId: string): Promise<JellyfinItem
     return data;
   } catch (error) {
     console.error("Failed to fetch TV show details:", error);
+    return null;
+  }
+}
+
+export async function fetchEpisodeDetails(episodeId: string): Promise<JellyfinItem | null> {
+  const { serverUrl, user } = await getAuthData();
+  const api = jellyfin.createApi(serverUrl);
+  api.accessToken = user.AccessToken;
+
+  try {
+    const userLibraryApi = new UserLibraryApi(api.configuration);
+    const { data } = await userLibraryApi.getItem({
+      userId: user.Id,
+      itemId: episodeId,
+      fields: [
+        ItemFields.CanDelete,
+        ItemFields.PrimaryImageAspectRatio,
+        ItemFields.Overview,
+        ItemFields.MediaSources,
+        ItemFields.People,
+        ItemFields.Studios,
+        ItemFields.Genres,
+        ItemFields.ProductionYear,
+        ItemFields.ParentId,
+        ItemFields.SeriesId,
+        ItemFields.SeasonId,
+      ],
+    });
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch episode details:", error);
     return null;
   }
 }

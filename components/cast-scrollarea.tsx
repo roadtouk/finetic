@@ -5,6 +5,11 @@ import { getImageUrl } from "@/app/actions";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/useAuth";
 
+// Utility function to format role names by adding spaces before capital letters
+function formatRole(role: string): string {
+  return role.replace(/([a-z])([A-Z])/g, '$1 $2');
+}
+
 interface CastScrollAreaProps {
   people?: BaseItemPerson[];
   mediaId: string;
@@ -25,8 +30,8 @@ export function CastScrollArea({ people, mediaId }: CastScrollAreaProps) {
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-4">Cast & Crew</h2>
-      <ScrollArea className="w-full whitespace-nowrap rounded-md border">
-        <div className="flex w-max space-x-4 p-4">
+      <ScrollArea className="w-full whitespace-nowrap rounded-md">
+        <div className="flex w-max space-x-4 mb-8">
           {people.map((person, index) => (
             <figure key={`${person.Id}-${index}`} className="shrink-0">
               <div className="overflow-hidden rounded-full">
@@ -35,7 +40,6 @@ export function CastScrollArea({ people, mediaId }: CastScrollAreaProps) {
                     src={`${serverUrl}/Items/${person.Id}/Images/Primary?fillHeight=759&fillWidth=506&quality=96&tag=be01a54a72ffd71ded99d2268c8bc258`}
                     alt={person.Name || "Cast member"}
                     className="aspect-square h-fit w-24 object-cover"
-                    loading="lazy"
                   />
                 ) : (
                   <div className="aspect-square h-24 w-24 bg-muted rounded-full flex items-center justify-center">
@@ -53,16 +57,16 @@ export function CastScrollArea({ people, mediaId }: CastScrollAreaProps) {
                   {person.Name}
                 </p>
                 {person.Role && (
-                  <p className="text-sm truncate" title={person.Role}>
-                    {person.Role}
+                  <p className="text-sm truncate" title={formatRole(person.Role)}>
+                    {formatRole(person.Role)}
                   </p>
                 )}
                 {person.Type && (
                   <p
                     className="text-xs text-muted-foreground/70 truncate"
-                    title={person.Type}
+                    title={formatRole(person.Type)}
                   >
-                    {person.Type}
+                    {formatRole(person.Type)}
                   </p>
                 )}
               </figcaption>

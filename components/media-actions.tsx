@@ -40,10 +40,13 @@ import MuxVideo from "@mux/mux-video-react";
 import HlsVideoElement from "hls-video-element/react";
 
 interface MediaActionsProps {
-  movie: JellyfinItem;
+  movie?: JellyfinItem;
+  show?: JellyfinItem;
+  episode?: JellyfinItem;
 }
 
-export function MediaActions({ movie }: MediaActionsProps) {
+export function MediaActions({ movie, show, episode }: MediaActionsProps) {
+  const media = movie || show || episode;
   const [selectedVersion, setSelectedVersion] =
     useState<MediaSourceInfo | null>(null);
   const [isPlayerVisible, setIsPlayerVisible] = useState(false);
@@ -58,18 +61,42 @@ export function MediaActions({ movie }: MediaActionsProps) {
     }>
   >([]);
 
-  // Initialize selectedVersion when movie changes
+  // Initialize selectedVersion when media changes
   useEffect(() => {
-    if (movie?.MediaSources && movie.MediaSources.length > 0) {
-      setSelectedVersion(movie.MediaSources[0]);
+    console.log("MediaActions - media:", media);
+    console.log("MediaActions - MediaSources:", media?.MediaSources);
+    if (media?.MediaSources && media.MediaSources.length > 0) {
+      setSelectedVersion(media.MediaSources[0]);
     }
-  }, [movie]);
+  }, [media]);
 
-  if (
-    !movie.MediaSources ||
-    movie.MediaSources.length <= 1 ||
-    !selectedVersion
-  ) {
+  if (!media) {
+    return null;
+  }
+
+  // If episode doesn't have MediaSources but has an Id, show basic play button
+  if (!media.MediaSources || media.MediaSources.length === 0) {
+    if (episode && media.Id) {
+      return (
+        <div className="mb-6 flex items-center gap-2">
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => {
+              console.log("Play episode:", media.Name);
+              // Could redirect to a streaming service or handle differently
+            }}
+          >
+            <Play className="h-4 w-4" />
+            Play Episode
+          </Button>
+        </div>
+      );
+    }
+    return null;
+  }
+
+  if (!selectedVersion) {
     return null;
   }
 
@@ -80,35 +107,44 @@ export function MediaActions({ movie }: MediaActionsProps) {
 
   return (
     <div className="mb-6 flex items-center gap-2">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild className="truncate">
-          <Button
-            variant="outline"
-            className="overflow-hidden whitespace-nowrap text-ellipsis fill-foreground gap-1.5"
-          >
-            {getMediaDetailsFromName(selectedVersion.Name!)}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          {movie.MediaSources.map((source: MediaSourceInfo) => (
-            <DropdownMenuItem
-              key={source.Id}
-              onSelect={() => {
-                setSelectedVersion(source);
-                // onStreamUrlChange(null); // Clear stream URL when changing version
-              }}
-              className="fill-foreground gap-3 flex justify-between"
+      {media.MediaSources.length > 1 ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild className="truncate">
+            <Button
+              variant="outline"
+              className="overflow-hidden whitespace-nowrap text-ellipsis fill-foreground gap-1.5"
             >
-              {cutOffText(source.Name!, 64)}
-              <Badge variant="outline" className="bg-sidebar">
-                {source.Size
-                  ? `${(source.Size / 1024 ** 3).toFixed(2)} GB`
-                  : "Unknown size"}
-              </Badge>
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+              {getMediaDetailsFromName(selectedVersion.Name!)}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            {media.MediaSources.map((source: MediaSourceInfo) => (
+              <DropdownMenuItem
+                key={source.Id}
+                onSelect={() => {
+                  setSelectedVersion(source);
+                  // onStreamUrlChange(null); // Clear stream URL when changing version
+                }}
+                className="fill-foreground gap-3 flex justify-between"
+              >
+                {cutOffText(source.Name!, 64)}
+                <Badge variant="outline" className="bg-sidebar">
+                  {source.Size
+                    ? `${(source.Size / 1024 ** 3).toFixed(2)} GB`
+                    : "Unknown size"}
+                </Badge>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <Button
+          variant="outline"
+          className="overflow-hidden whitespace-nowrap text-ellipsis fill-foreground gap-1.5"
+        >
+          {getMediaDetailsFromName(selectedVersion.Name!)}
+        </Button>
+      )}
 
       <Button variant="outline" size="icon" onClick={download}>
         <Download className="h-4 w-4" />
@@ -119,7 +155,7 @@ export function MediaActions({ movie }: MediaActionsProps) {
         size="icon"
         onClick={async () => {
           // Generate a new stream URL each time play is clicked
-          const streamUrl = await getStreamUrl(movie.Id!, selectedVersion.Id!);
+          const streamUrl = await getStreamUrl(media!.Id!, selectedVersion.Id!);
           setStreamUrl(streamUrl);
           setIsPlayerVisible(true);
           console.log("Stream URL:", streamUrl);
@@ -127,7 +163,7 @@ export function MediaActions({ movie }: MediaActionsProps) {
           // Fetch subtitle tracks
           try {
             const tracks = await getSubtitleTracks(
-              movie.Id!,
+              media!.Id!,
               selectedVersion.Id!
             );
             console.log("Fetched subtitle tracks:", tracks);
@@ -146,7 +182,7 @@ export function MediaActions({ movie }: MediaActionsProps) {
             <Info className="h-4 w-4" />
           </Button>
         </DialogTrigger>
-        <DialogContent>
+        <DialogContent className="max-w-2xl bg-background/30 backdrop-blur-md">
           <DialogHeader>
             <DialogTitle>Media Info</DialogTitle>
           </DialogHeader>
@@ -200,7 +236,7 @@ export function MediaActions({ movie }: MediaActionsProps) {
               <MediaPlayerControlsOverlay />
               <div className="flex w-full items-center justify-between">
                 <h2 className="text-2xl font-semibold text-white truncate pb-2">
-                  {movie.Name}
+                  {media!.Name}
                 </h2>
                 <div className="w-8" /> {/* Spacer for centering */}
               </div>

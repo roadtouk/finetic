@@ -1,11 +1,13 @@
-import { fetchMediaDetails, getImageUrl } from "@/app/actions";
+import { fetchTVShowDetails } from "@/app/actions/tv-shows";
+import { getImageUrl } from "@/app/actions/utils";
 import { MediaActions } from "@/components/media-actions";
 import { SearchBar } from "@/components/search-component";
 import { Badge } from "@/components/ui/badge";
 import { CastScrollArea } from "@/components/cast-scrollarea";
+import { SeasonEpisodes } from "@/components/season-episodes";
 import { redirect } from "next/navigation";
 
-export default async function Movie({
+export default async function Show({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -13,10 +15,10 @@ export default async function Movie({
   const { id } = await params;
 
   try {
-    const movie = await fetchMediaDetails(id);
+    const show = await fetchTVShowDetails(id);
 
-    if (!movie) {
-      return <div className="p-4">Movie not found</div>;
+    if (!show) {
+      return <div className="p-4">Show not found</div>;
     }
 
     const image = await getImageUrl(id, "Primary");
@@ -32,40 +34,36 @@ export default async function Movie({
               <img
                 className="w-full h-auto rounded-lg shadow-lg"
                 src={image}
-                alt={movie.Name || "Movie Poster"}
+                alt={show.Name || "Show Poster"}
                 width={500}
                 height={750}
               />
             </div>
-            {/* Movie Info */}
+            {/* Show Info */}
             <div className="w-full md:w-2/3 lg:w-3/4 mt-4">
               <h1 className="text-4xl font-semibold mb-2 font-poppins">
-                {movie.Name}
+                {show.Name}
               </h1>
               <div className="flex items-center gap-2 mb-4 mt-4">
-                {movie.ProductionYear && (
+                {show.ProductionYear && (
                   <Badge variant="outline" className="bg-sidebar">
-                    {movie.ProductionYear}
+                    {show.ProductionYear}
                   </Badge>
                 )}
-                {movie.OfficialRating && (
+                {show.OfficialRating && (
                   <Badge variant="outline" className="bg-sidebar">
-                    {movie.OfficialRating}
-                  </Badge>
-                )}
-                {movie.RunTimeTicks && (
-                  <Badge variant="outline" className="bg-sidebar">
-                    {Math.round(movie.RunTimeTicks / 600000000)} min
+                    {show.OfficialRating}
                   </Badge>
                 )}
               </div>
-              <p className="mb-6">{movie.Overview}</p>{" "}
-              <MediaActions movie={movie} />
+              <p className="mb-6">{show.Overview}</p>{" "}
+              <MediaActions show={show} />
             </div>
           </div>
 
+          <SeasonEpisodes showId={id} />
           <div className="mt-8">
-            <CastScrollArea people={movie.People!} mediaId={id} />
+            <CastScrollArea people={show.People!} mediaId={id} />
           </div>
         </div>
       </div>
@@ -77,7 +75,7 @@ export default async function Movie({
     }
 
     // For other errors, show an error page
-    console.error("Error loading movie:", error);
-    return <div className="p-4">Error loading movie. Please try again.</div>;
+    console.error("Error loading show:", error);
+    return <div className="p-4">Error loading show. Please try again.</div>;
   }
 }

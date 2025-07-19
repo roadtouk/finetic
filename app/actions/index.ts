@@ -21,6 +21,7 @@ export {
   fetchSeasons,
   fetchEpisodes,
   fetchTVShowDetails,
+  fetchEpisodeDetails,
 } from './tv-shows';
 
 // Search actions

@@ -116,7 +116,7 @@ export function SearchSuggestionItem({
               {typeof item.ParentIndexNumber === "number" &&
                 typeof item.IndexNumber === "number" && (
                   <span>
-                    S{item.ParentIndexNumber}E{item.IndexNumber}
+                    S{item.ParentIndexNumber} • E{item.IndexNumber}
                   </span>
                 )}
               {/* Show name of parent show if available */}
