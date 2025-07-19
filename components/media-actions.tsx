@@ -182,7 +182,7 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
             <Info className="h-4 w-4" />
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-w-2xl bg-background/30 backdrop-blur-md">
+        <DialogContent className="max-w-2xl dark:bg-background/30 backdrop-blur-md z-[9999999999]">
           <DialogHeader>
             <DialogTitle>Media Info</DialogTitle>
           </DialogHeader>

@@ -20,53 +20,83 @@ export default async function Movie({
       return <div className="p-4">Movie not found</div>;
     }
 
-    const image = await getImageUrl(id, "Primary");
+    const primaryImage = await getImageUrl(id, "Primary");
+    const backdropImage = await getImageUrl(id, "Backdrop");
 
     return (
-      <div className="relative px-6 py-6 max-w-full mr-8">
-        <AuroraBackground imageUrl={image} />
-        <div className="relative z-[9999] mb-4">
-          <div className="mb-2">
+      <div className="min-h-screen overflow-hidden md:pr-1">
+        {/* Backdrop section */}
+        <div className="relative">
+          {/* Backdrop image with gradient overlay */}
+          <div className="relative h-[50vh] md:h-[60vh] overflow-hidden">
+            <img
+              className="w-full h-full object-cover md:mt-2.5 md:rounded-t-xl"
+              src={backdropImage}
+              alt={`${movie.Name} backdrop`}
+              width={1920}
+              height={1080}
+            />
+            {/* Gradient overlay for better text readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+          </div>
+          
+          {/* Search bar positioned over backdrop */}
+          <div className="absolute top-8 left-0 right-0 z-20 px-6">
             <SearchBar />
           </div>
-          <div className="flex flex-col md:flex-row gap-8 mt-12">
-            <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0">
+        </div>
+
+        {/* Content section */}
+        <div className="relative z-10 -mt-54 px-6">
+          <div className="flex flex-col md:flex-row gap-8 max-w-7xl mx-auto">
+            {/* Movie poster */}
+            <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 justify-center flex md:block">
               <img
-                className="w-full h-auto rounded-lg shadow-lg"
-                src={image}
+                className="w-full h-auto rounded-lg shadow-2xl border-2 border-border/20 max-w-1/2 md:max-w-full"
+                src={primaryImage}
                 alt={movie.Name || "Movie Poster"}
                 width={500}
                 height={750}
               />
             </div>
-            {/* Movie Info */}
-            <div className="w-full md:w-2/3 lg:w-3/4 mt-4">
-              <h1 className="text-4xl font-semibold mb-2 font-poppins">
+            
+            {/* Movie information */}
+            <div className="w-full md:w-2/3 lg:w-3/4 pt-4 md:pt-4 text-center md:text-start">
+              <h1 className="text-4xl md:text-5xl font-semibold mb-4 font-poppins text-foreground">
                 {movie.Name}
               </h1>
-              <div className="flex items-center gap-2 mb-4 mt-4">
+              
+              {/* Movie badges */}
+              <div className="flex flex-wrap items-center gap-2 mb-6 justify-center md:justify-start">
                 {movie.ProductionYear && (
-                  <Badge variant="outline" className="bg-sidebar">
+                  <Badge variant="outline" className="bg-sidebar/80 backdrop-blur-sm">
                     {movie.ProductionYear}
                   </Badge>
                 )}
                 {movie.OfficialRating && (
-                  <Badge variant="outline" className="bg-sidebar">
+                  <Badge variant="outline" className="bg-sidebar/80 backdrop-blur-sm">
                     {movie.OfficialRating}
                   </Badge>
                 )}
                 {movie.RunTimeTicks && (
-                  <Badge variant="outline" className="bg-sidebar">
+                  <Badge variant="outline" className="bg-sidebar/80 backdrop-blur-sm">
                     {Math.round(movie.RunTimeTicks / 600000000)} min
                   </Badge>
                 )}
               </div>
-              <p className="mb-6">{movie.Overview}</p>{" "}
+              
+              {/* Movie overview */}
+              <p className="text-lg leading-relaxed mb-8 text-muted-foreground max-w-4xl">
+                {movie.Overview}
+              </p>
+              
+              {/* Media actions */}
               <MediaActions movie={movie} />
             </div>
           </div>
-
-          <div className="mt-8">
+          
+          {/* Cast section */}
+          <div className="mt-16 max-w-7xl mx-auto">
             <CastScrollArea people={movie.People!} mediaId={id} />
           </div>
         </div>

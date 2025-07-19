@@ -22,49 +22,89 @@ export default async function Show({
       return <div className="p-4">Show not found</div>;
     }
 
-    const image = await getImageUrl(id, "Primary");
+    const primaryImage = await getImageUrl(id, "Primary");
+    const backdropImage = await getImageUrl(id, "Backdrop");
 
     return (
-      <div className="relative px-6 py-6 max-w-full mr-8">
-        <AuroraBackground imageUrl={image} />
-        <div className="relative z-[9999] mb-4">
-          <div className="mb-2">
+      <div className="min-h-screen overflow-hidden md:pr-1">
+        {/* Backdrop section */}
+        <div className="relative">
+          {/* Backdrop image with gradient overlay */}
+          <div className="relative h-[50vh] md:h-[60vh] overflow-hidden">
+            <img
+              className="w-full h-full object-cover md:mt-2.5 md:rounded-t-xl"
+              src={backdropImage}
+              alt={`${show.Name} backdrop`}
+              width={1920}
+              height={1080}
+            />
+            {/* Gradient overlay for better text readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+          </div>
+
+          {/* Search bar positioned over backdrop */}
+          <div className="absolute top-8 left-0 right-0 z-20 px-6">
             <SearchBar />
           </div>
-          <div className="flex flex-col md:flex-row gap-8 mt-12">
-            <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0">
+        </div>
+
+        {/* Content section */}
+        <div className="relative z-10 -mt-54 px-6">
+          <div className="flex flex-col md:flex-row gap-8 max-w-7xl mx-auto">
+            {/* Show poster */}
+            <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 justify-center flex md:block">
               <img
-                className="w-full h-auto rounded-lg shadow-lg"
-                src={image}
+                className="w-full h-auto rounded-lg shadow-2xl border-2 border-border/20 max-w-1/2 md:max-w-full"
+                src={primaryImage}
                 alt={show.Name || "Show Poster"}
                 width={500}
                 height={750}
               />
             </div>
-            {/* Show Info */}
-            <div className="w-full md:w-2/3 lg:w-3/4 mt-4">
-              <h1 className="text-4xl font-semibold mb-2 font-poppins">
+
+            {/* Show information */}
+            <div className="w-full md:w-2/3 lg:w-3/4 pt-4 md:pt-4 text-center md:text-start">
+              <h1 className="text-4xl md:text-5xl font-semibold mb-4 font-poppins text-foreground">
                 {show.Name}
               </h1>
-              <div className="flex items-center gap-2 mb-4 mt-4">
+
+              {/* Show badges */}
+              <div className="flex flex-wrap items-center gap-2 mb-6 justify-center md:justify-start">
                 {show.ProductionYear && (
-                  <Badge variant="outline" className="bg-sidebar">
+                  <Badge
+                    variant="outline"
+                    className="bg-sidebar/80 backdrop-blur-sm"
+                  >
                     {show.ProductionYear}
                   </Badge>
                 )}
                 {show.OfficialRating && (
-                  <Badge variant="outline" className="bg-sidebar">
+                  <Badge
+                    variant="outline"
+                    className="bg-sidebar/80 backdrop-blur-sm"
+                  >
                     {show.OfficialRating}
                   </Badge>
                 )}
               </div>
-              <p className="mb-6">{show.Overview}</p>{" "}
+
+              {/* Show overview */}
+              <p className="text-lg leading-relaxed mb-8 text-muted-foreground max-w-4xl">
+                {show.Overview}
+              </p>
+
+              {/* Media actions */}
               <MediaActions show={show} />
             </div>
           </div>
 
-          <SeasonEpisodes showId={id} />
-          <div className="mt-8">
+          {/* Season Episodes section */}
+          <div className="mt-16 max-w-7xl mx-auto">
+            <SeasonEpisodes showId={id} />
+          </div>
+
+          {/* Cast section */}
+          <div className="mt-16 max-w-7xl mx-auto">
             <CastScrollArea people={show.People!} mediaId={id} />
           </div>
         </div>

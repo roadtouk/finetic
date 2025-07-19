@@ -214,7 +214,7 @@ export const SeasonEpisodes = React.memo(function SeasonEpisodes({
     }
   }, [selectedSeasonId, loadEpisodes]);
 
-  // Scroll to current episode when episodes load
+  // Scroll to current episode within the ScrollArea only (not the page)
   useEffect(() => {
     if (currentEpisodeId && episodes.length > 0 && !episodesLoading) {
       // Use setTimeout to ensure DOM is fully rendered
@@ -223,9 +223,10 @@ export const SeasonEpisodes = React.memo(function SeasonEpisodes({
           `[data-episode-id="${currentEpisodeId}"]`
         );
         if (currentEpisodeElement) {
+          // Only scroll horizontally within the scroll area, not the entire page
           currentEpisodeElement.scrollIntoView({
             behavior: "smooth",
-            block: "nearest",
+            block: "nearest", // This prevents vertical scrolling of the page
             inline: "center",
           });
         }

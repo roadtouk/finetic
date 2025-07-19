@@ -34,70 +34,79 @@ export function AuroraBackground({
     setMounted(true);
   }, []);
 
-  const extractColors = useCallback(async (url: string) => {
-    // Check cache first
-    if (colorCache.has(url)) {
-      setExtractedColors(colorCache.get(url)!);
-      return;
-    }
-
-    // Prevent multiple simultaneous extractions
-    if (isExtracting) {
-      return;
-    }
-
-    setIsExtracting(true);
-    currentImageRef.current = url;
-
-    try {
-      // Use a timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Color extraction timeout')), 3000);
-      });
-
-      const extractionPromise = Vibrant.from(url).getPalette();
-
-      const palette = await Promise.race([extractionPromise, timeoutPromise]) as any;
-      
-      // Check if this is still the current image (prevents race conditions)
-      if (currentImageRef.current !== url) {
+  const extractColors = useCallback(
+    async (url: string) => {
+      // Check cache first
+      if (colorCache.has(url)) {
+        setExtractedColors(colorCache.get(url)!);
         return;
       }
-        
-      // Extract colors in order of preference: Vibrant, DarkVibrant, Muted
-      const colors: string[] = [];
-      
-      if (palette.Vibrant) colors.push(palette.Vibrant.hex);
-      if (palette.DarkVibrant) colors.push(palette.DarkVibrant.hex);
-      if (palette.Muted) colors.push(palette.Muted.hex);
-      if (palette.DarkMuted) colors.push(palette.DarkMuted.hex);
-      if (palette.LightVibrant) colors.push(palette.LightVibrant.hex);
-      if (palette.LightMuted) colors.push(palette.LightMuted.hex);
-      
-      // Ensure we have at least 3 colors for the aurora
-      while (colors.length < 3) {
-        colors.push(colors[colors.length - 1] || colorStops[0]);
+
+      // Prevent multiple simultaneous extractions
+      if (isExtracting) {
+        return;
       }
-      
-      // Use the first 3 colors for aurora
-      const finalColors = colors.slice(0, 3);
-      
-      // Cache the result
-      colorCache.set(url, finalColors);
-      
-      // Only update if this is still the current image
-      if (currentImageRef.current === url) {
-        setExtractedColors(finalColors);
+
+      setIsExtracting(true);
+      currentImageRef.current = url;
+
+      try {
+        // Use a timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error("Color extraction timeout")), 3000);
+        });
+
+        const extractionPromise = Vibrant.from(url).getPalette();
+
+        const palette = (await Promise.race([
+          extractionPromise,
+          timeoutPromise,
+        ])) as any;
+
+        // Check if this is still the current image (prevents race conditions)
+        if (currentImageRef.current !== url) {
+          return;
+        }
+
+        // Extract colors in order of preference: Vibrant, DarkVibrant, Muted
+        const colors: string[] = [];
+
+        if (palette.Vibrant) colors.push(palette.Vibrant.hex);
+        if (palette.DarkVibrant) colors.push(palette.DarkVibrant.hex);
+        if (palette.Muted) colors.push(palette.Muted.hex);
+        if (palette.DarkMuted) colors.push(palette.DarkMuted.hex);
+        if (palette.LightVibrant) colors.push(palette.LightVibrant.hex);
+        if (palette.LightMuted) colors.push(palette.LightMuted.hex);
+
+        // Ensure we have at least 3 colors for the aurora
+        while (colors.length < 3) {
+          colors.push(colors[colors.length - 1] || colorStops[0]);
+        }
+
+        // Use the first 3 colors for aurora
+        const finalColors = colors.slice(0, 3);
+
+        // Cache the result
+        colorCache.set(url, finalColors);
+
+        // Only update if this is still the current image
+        if (currentImageRef.current === url) {
+          setExtractedColors(finalColors);
+        }
+      } catch (error) {
+        console.warn(
+          "Failed to extract colors from image, using default colors:",
+          error
+        );
+        if (currentImageRef.current === url) {
+          setExtractedColors(colorStops);
+        }
+      } finally {
+        setIsExtracting(false);
       }
-    } catch (error) {
-      console.warn("Failed to extract colors from image, using default colors:", error);
-      if (currentImageRef.current === url) {
-        setExtractedColors(colorStops);
-      }
-    } finally {
-      setIsExtracting(false);
-    }
-  }, [colorStops, isExtracting]);
+    },
+    [colorStops, isExtracting]
+  );
 
   // Extract colors from image when imageUrl changes
   useEffect(() => {
@@ -153,11 +162,11 @@ export function AuroraBackground({
 
   return (
     <div className={className}>
-      <Aurora 
-        key={extractedColors.join('-')} // Force re-render when colors change
-        colorStops={extractedColors} 
-        amplitude={amplitude} 
-        blend={blend} 
+      <Aurora
+        key={extractedColors.join("-")} // Force re-render when colors change
+        colorStops={extractedColors}
+        amplitude={amplitude}
+        blend={blend}
       />
     </div>
   );

@@ -137,7 +137,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
     >
       <form onSubmit={handleSearch} className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
           <Input
             type="text"
             placeholder="Search movies, TV shows, and episodes..."
@@ -149,7 +149,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
                 setShowSuggestions(true);
               }
             }}
-            className="pl-10 bg-background/10 border-border text-foreground placeholder:text-muted-foreground focus:border-ring rounded-full h-11"
+            className="pl-10 border-border text-foreground placeholder:text-muted-foreground focus:border-ring rounded-full h-11 bg-background/80! backdrop-blur-sm"
           />
         </div>
       </form>
