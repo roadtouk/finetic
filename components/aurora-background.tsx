@@ -55,10 +55,7 @@ export function AuroraBackground({
         setTimeout(() => reject(new Error('Color extraction timeout')), 3000);
       });
 
-      const extractionPromise = Vibrant.from(url, {
-        quality: 1,
-        colorCount: 32, // Reduce color count for faster processing
-      }).getPalette();
+      const extractionPromise = Vibrant.from(url).getPalette();
 
       const palette = await Promise.race([extractionPromise, timeoutPromise]) as any;
       
