@@ -4,11 +4,23 @@ import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Film, Tv, Calendar, PlayCircle, Star } from "lucide-react";
+import { Search, Film, Tv, Calendar, PlayCircle, Star, Menu, User, Home, Library, Sun, Moon, Monitor, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { searchItems, getImageUrl } from "@/app/actions";
+import { searchItems, getImageUrl, getUser, logout, getServerUrl } from "@/app/actions";
 import { Badge } from "./ui/badge";
 import { SearchSuggestionItem } from "./SearchSuggestionItem";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useTheme } from "next-themes";
+import Link from "next/link";
 
 interface SearchBarProps {
   className?: string;
@@ -19,7 +31,10 @@ export function SearchBar({ className = "" }: SearchBarProps) {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [libraries, setLibraries] = useState<any[]>([]);
   const router = useRouter();
+  const { setTheme } = useTheme();
   // Server actions are imported directly
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
@@ -66,6 +81,45 @@ export function SearchBar({ className = "" }: SearchBarProps) {
     };
   }, [searchQuery, searchItems]);
 
+  // Load user data and libraries for mobile nav
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const userData = await getUser();
+        setUser(userData);
+        
+        // Fetch libraries if we have both user and server URL
+        const serverUrlData = await getServerUrl();
+        if (userData && serverUrlData) {
+          const response = await fetch(
+            `${serverUrlData}/Library/VirtualFolders`,
+            {
+              headers: {
+                "X-Emby-Authorization": `MediaBrowser Client="Jellyfin Web Client", Device="Browser", DeviceId="web-client", Version="1.0.0", Token="${userData.AccessToken}"`,
+              },
+            }
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            // Only show movie and TV show libraries
+            const supportedLibraries = (data || []).filter(
+              (library: any) => {
+                const type = library.CollectionType?.toLowerCase();
+                return type === "movies" || type === "tvshows";
+              }
+            );
+            setLibraries(supportedLibraries);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load user data:", error);
+      }
+    };
+    
+    loadUserData();
+  }, []);
+  
   // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -129,6 +183,22 @@ export function SearchBar({ className = "" }: SearchBarProps) {
     }
     return `${minutes}m`;
   };
+  
+  const handleLogout = async () => {
+    await logout();
+    // logout() already handles the redirect
+  };
+  
+  const getLibraryIcon = (collectionType: string) => {
+    switch (collectionType?.toLowerCase()) {
+      case "movies":
+        return <Film className="h-4 w-4" />;
+      case "tvshows":
+        return <Tv className="h-4 w-4" />;
+      default:
+        return <Film className="h-4 w-4" />;
+    }
+  };
 
   return (
     <div
@@ -151,6 +221,89 @@ export function SearchBar({ className = "" }: SearchBarProps) {
             }}
             className="pl-10 border-border text-foreground placeholder:text-muted-foreground focus:border-ring rounded-full h-11 bg-background/80! backdrop-blur-sm"
           />
+        </div>
+        
+        {/* Mobile Navigation Buttons - Only visible on mobile */}
+        <div className="flex gap-2 md:hidden">
+          {/* Hamburger Menu - Navigation */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-background/80 border-border text-foreground hover:bg-accent rounded-full h-11 w-11 p-0 backdrop-blur-sm"
+              >
+                <Menu className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-56 rounded-lg"
+            >
+              <DropdownMenuItem asChild>
+                <Link href="/home" className="gap-2">
+                  <Home className="h-4 w-4" />
+                  <span>Home</span>
+                </Link>
+              </DropdownMenuItem>
+              {libraries.length > 0 && (
+                <div key="libraries-section">
+                  <DropdownMenuSeparator />
+                  {libraries.map((library) => (
+                    <DropdownMenuItem key={library.Id} asChild>
+                      <Link href={`/library/${library.Id}`} className="gap-2">
+                        {getLibraryIcon(library.CollectionType)}
+                        <span>{library.Name}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          {/* Profile Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-background/80 border-border text-foreground hover:bg-accent rounded-full h-11 w-11 p-0 backdrop-blur-sm"
+              >
+                <User className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-56 rounded-lg"
+            >
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="gap-2">
+                  <Monitor className="h-4 w-4" />
+                  <span>Theme</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <DropdownMenuItem onClick={() => setTheme("light")}>
+                    <Sun className="h-4 w-4" />
+                    <span>Light</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setTheme("dark")}>
+                    <Moon className="h-4 w-4" />
+                    <span>Dark</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setTheme("system")}>
+                    <Monitor className="h-4 w-4" />
+                    <span>System</span>
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} className="gap-2">
+                <LogOut className="h-4 w-4 text-red-600 dark:text-red-500" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </form>
 
