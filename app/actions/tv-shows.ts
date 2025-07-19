@@ -117,19 +117,6 @@ export async function fetchEpisodeDetails(episodeId: string): Promise<JellyfinIt
     const { data } = await userLibraryApi.getItem({
       userId: user.Id,
       itemId: episodeId,
-      fields: [
-        ItemFields.CanDelete,
-        ItemFields.PrimaryImageAspectRatio,
-        ItemFields.Overview,
-        ItemFields.MediaSources,
-        ItemFields.People,
-        ItemFields.Studios,
-        ItemFields.Genres,
-        ItemFields.ProductionYear,
-        ItemFields.ParentId,
-        ItemFields.SeriesId,
-        ItemFields.SeasonId,
-      ],
     });
     return data;
   } catch (error) {

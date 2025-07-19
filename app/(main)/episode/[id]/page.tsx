@@ -1,3 +1,4 @@
+import React from "react";
 import { fetchEpisodeDetails } from "@/app/actions/tv-shows";
 import { getImageUrl } from "@/app/actions/utils";
 import { MediaActions } from "@/components/media-actions";
