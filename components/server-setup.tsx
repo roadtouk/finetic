@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { AuroraBackground } from "@/components/aurora-background";
 import { checkServerHealth, setServerUrl } from "@/app/actions";
 import { Loader2, Server, CheckCircle, Globe, Shield } from "lucide-react";
 
@@ -102,7 +103,12 @@ export function ServerSetup({ onNext }: ServerSetupProps) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 relative w-full">
-      <Card className="w-full max-w-md">
+      <AuroraBackground
+        colorStops={["#AA5CC3", "#00A4DC", "#AA5CC3"]}
+        amplitude={0.8}
+        blend={0.4}
+      />
+      <Card className="w-full max-w-md relative z-10">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 p-3 bg-primary/10 rounded-full w-fit">
             <Server className="h-8 w-8 text-primary" />
