@@ -79,7 +79,6 @@ export async function fetchEpisodes(seasonId: string): Promise<JellyfinItem[]> {
         ItemFields.PrimaryImageAspectRatio,
         ItemFields.Overview,
         ItemFields.MediaSources,
-        ItemFields.PremiereDate,
       ],
     });
     return data.Items || [];
