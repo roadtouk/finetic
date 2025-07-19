@@ -3,25 +3,53 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 
 export function MediaCard({
   item,
   serverUrl,
+  percentageWatched = 0,
+  continueWatching = false,
 }: {
-  item: any;
+  item: BaseItemDto;
   serverUrl: string;
+  percentageWatched?: number;
+  continueWatching?: boolean;
 }) {
-  const linkHref =
-    item.Type === "Movie" ? `/movie/${item.Id}` : `/show/${item.Id}`;
+  let linkHref = "";
+  if (item.Type === "Movie") {
+    linkHref = `/movie/${item.Id}`;
+  } else if (item.Type === "Episode") {
+    linkHref = `/episode/${item.Id}`;
+  } else {
+    linkHref = `/show/${item.Id}`;
+  }
 
-  const imageUrl = `${serverUrl}/Items/${item.Id}/Images/Primary`;
+  // Determine image type based on continueWatching
+  const imageType = continueWatching ? "Thumb" : "Primary";
+
+  // Determine item ID based on type and continueWatching
+  let imageItemId = item.Id;
+  if (item.Type === "Episode" && continueWatching) {
+    imageItemId = item.ParentThumbItemId || item.Id;
+  }
+
+  const imageUrl = `${serverUrl}/Items/${imageItemId}/Images/${imageType}`;
 
   const [imageLoading, setImageLoading] = useState(true); // State to track image loading
 
   return (
     <Link href={linkHref} draggable={false}>
-      <div className="cursor-pointer group overflow-hidden w-36 transition select-none">
-        <div className="relative aspect-[2/3] w-full">
+      <div
+        className={`cursor-pointer group overflow-hidden transition select-none ${
+          continueWatching ? "w-64" : "w-36"
+        }`}
+      >
+        <div
+          className={`relative w-full ${
+            continueWatching ? "aspect-video" : "aspect-[2/3]"
+          }`}
+        >
           {/* {imageLoading && (
             <Skeleton className="absolute inset-0 w-full h-full rounded-md border shadow-sm" />
           )} */}
@@ -44,6 +72,17 @@ export function MediaCard({
           )}
         </div>
         <div className="px-1">
+          {/* Progress bar for watched percentage */}
+          {percentageWatched > 0 && (
+            <div className="w-full h-1 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden mt-2">
+              <div
+                className="h-full bg-blue-500 transition-all duration-300"
+                style={{
+                  width: `${Math.min(Math.max(percentageWatched, 0), 100)}%`,
+                }}
+              ></div>
+            </div>
+          )}
           <div className="mt-2.5 text-sm font-medium text-foreground truncate group-hover:underline">
             {item.Name}
           </div>

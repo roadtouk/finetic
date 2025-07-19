@@ -5,6 +5,7 @@ import { SearchBar } from "@/components/search-component";
 import { Badge } from "@/components/ui/badge";
 import { CastScrollArea } from "@/components/cast-scrollarea";
 import { SeasonEpisodes } from "@/components/season-episodes";
+import { AuroraBackground } from "@/components/aurora-background";
 import { redirect } from "next/navigation";
 
 export default async function Show({
@@ -25,6 +26,7 @@ export default async function Show({
 
     return (
       <div className="relative px-6 py-6 max-w-full mr-8">
+        <AuroraBackground imageUrl={image} />
         <div className="relative z-[9999] mb-4">
           <div className="mb-2">
             <SearchBar />

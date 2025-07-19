@@ -11,6 +11,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CastScrollArea } from "@/components/cast-scrollarea";
 import { SeasonEpisodes } from "@/components/season-episodes";
+import { AuroraBackground } from "@/components/aurora-background";
 
 export default async function Episode({
   params,
@@ -33,6 +34,7 @@ export default async function Episode({
 
     return (
       <div className="relative px-6 py-6 max-w-full mr-8">
+        <AuroraBackground imageUrl={image} />
         <div className="relative mb-4">
           <div className="mb-2">
             <SearchBar />
@@ -83,7 +85,7 @@ export default async function Episode({
               </h1>
 
               {/* Episode Metadata */}
-              <div className="flex flex-wrap items-center gap-2 mb-4 mt-2">
+              <div className="flex flex-wrap items-center gap-2 mb-4 mt-4">
                 <Badge variant="outline" className="bg-sidebar">
                   S{episode.ParentIndexNumber || 1} • E
                   {episode.IndexNumber || 1}

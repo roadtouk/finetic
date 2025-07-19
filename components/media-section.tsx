@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MediaCard } from "@/components/media-card";
 import { Play, ChevronLeft, ChevronRight } from "lucide-react";
+import { ScrollArea, ScrollBar } from "./ui/scroll-area";
 
 interface MediaSectionProps {
   sectionName: string;
@@ -12,6 +13,7 @@ interface MediaSectionProps {
   serverUrl: string;
   onViewAll?: () => void;
   isLoading?: boolean;
+  continueWatching?: boolean;
 }
 
 export function MediaSection({
@@ -20,18 +22,30 @@ export function MediaSection({
   serverUrl,
   onViewAll,
   isLoading = false,
+  continueWatching = false,
 }: MediaSectionProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Find the ScrollArea viewport after component mounts
+    if (scrollRef.current) {
+      const viewport = scrollRef.current.closest('[data-slot="scroll-area"]')?.querySelector('[data-slot="scroll-area-viewport"]') as HTMLDivElement;
+      if (viewport) {
+        viewportRef.current = viewport;
+      }
+    }
+  }, []);
 
   const scrollLeft = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -300, behavior: "smooth" });
+    if (viewportRef.current) {
+      viewportRef.current.scrollBy({ left: -300, behavior: "smooth" });
     }
   };
 
   const scrollRight = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 300, behavior: "smooth" });
+    if (viewportRef.current) {
+      viewportRef.current.scrollBy({ left: 300, behavior: "smooth" });
     }
   };
 
@@ -69,15 +83,21 @@ export function MediaSection({
         </div>
       </div>
       {mediaItems.length > 0 ? (
-        <div className="overflow-x-auto pb-4" ref={scrollRef}>
-          <div className="flex gap-4 w-max">
+        <ScrollArea className="w-full pb-6">
+          <div className="flex gap-4 w-max" ref={scrollRef}>
             {mediaItems.map((item) => (
               <div key={item.Id} className="flex-shrink-0">
-                <MediaCard item={item} serverUrl={serverUrl} />
+                <MediaCard
+                  item={item}
+                  serverUrl={serverUrl}
+                  percentageWatched={item.UserData?.PlayedPercentage || 0}
+                  continueWatching={continueWatching}
+                />
               </div>
             ))}
           </div>
-        </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
       ) : (
         <Card className="bg-card border-border text-foreground">
           <CardContent className="p-8 text-center">

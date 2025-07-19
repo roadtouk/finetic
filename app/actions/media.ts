@@ -42,11 +42,16 @@ async function getAuthData() {
 
 // Helper function to check if an error is authentication-related
 function isAuthError(error: any): boolean {
-  return error?.response?.status === 401 || error?.response?.status === 403 || error?.status === 401 || error?.status === 403;
+  return (
+    error?.response?.status === 401 ||
+    error?.response?.status === 403 ||
+    error?.status === 401 ||
+    error?.status === 403
+  );
 }
 
-// Helper function to clear invalid auth data
-async function clearAuthData() {
+// Server Action to clear invalid auth data
+export async function clearAuthData() {
   const cookieStore = await cookies();
   cookieStore.delete("jellyfin-auth");
   cookieStore.delete("jellyfin-server-url");
@@ -76,14 +81,17 @@ export async function fetchMovies(limit: number = 20): Promise<JellyfinItem[]> {
     return data.Items || [];
   } catch (error) {
     console.error("Failed to fetch movies:", error);
-    
-    // If it's an authentication error, clear the invalid auth data
+
+    // If it's an authentication error, throw an error with a special flag
     if (isAuthError(error)) {
       console.log("Authentication error detected, clearing auth data");
-      await clearAuthData();
-      throw new Error("Authentication expired. Please sign in again.");
+      const authError = new Error(
+        "Authentication expired. Please sign in again."
+      );
+      (authError as any).isAuthError = true;
+      throw authError;
     }
-    
+
     return [];
   }
 }
@@ -112,14 +120,17 @@ export async function fetchTVShows(
     return data.Items || [];
   } catch (error) {
     console.error("Failed to fetch TV shows:", error);
-    
-    // If it's an authentication error, clear the invalid auth data
+
+    // If it's an authentication error, throw an error with a special flag
     if (isAuthError(error)) {
       console.log("Authentication error detected, clearing auth data");
-      await clearAuthData();
-      throw new Error("Authentication expired. Please sign in again.");
+      const authError = new Error(
+        "Authentication expired. Please sign in again."
+      );
+      (authError as any).isAuthError = true;
+      throw authError;
     }
-    
+
     return [];
   }
 }
@@ -140,14 +151,41 @@ export async function fetchMediaDetails(
     return data;
   } catch (error) {
     console.error("Failed to fetch media details:", error);
-    
-    // If it's an authentication error, clear the invalid auth data
+
+    // If it's an authentication error, throw an error with a special flag
     if (isAuthError(error)) {
       console.log("Authentication error detected, clearing auth data");
-      await clearAuthData();
-      throw new Error("Authentication expired. Please sign in again.");
+      const authError = new Error(
+        "Authentication expired. Please sign in again."
+      );
+      (authError as any).isAuthError = true;
+      throw authError;
     }
-    
+
     return null;
+  }
+}
+
+export async function fetchResumeItems() {
+  try {
+    const { serverUrl, user } = await getAuthData();
+    const api = jellyfin.createApi(serverUrl);
+
+    api.accessToken = user.AccessToken;
+
+    const itemsApi = getItemsApi(api);
+
+    const { data } = await itemsApi.getResumeItems({
+      userId: user.Id,
+      fields: [
+        ItemFields.CanDelete,
+        ItemFields.PrimaryImageAspectRatio,
+        ItemFields.Overview,
+      ],
+    });
+    return data.Items || [];
+  } catch (error) {
+    console.error("Failed to fetch resume items:", error);
+    return [];
   }
 }

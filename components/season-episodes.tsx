@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -18,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { formatRuntime } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
+import { usePathname } from "next/navigation";
 
 interface SeasonEpisodesProps {
   showId: string;
@@ -43,57 +50,188 @@ interface Episode {
   ParentIndexNumber?: number;
 }
 
-export function SeasonEpisodes({ showId }: SeasonEpisodesProps) {
+// Global cache for episodes and seasons data to prevent refetching when switching between episodes
+const episodesCache = new Map<string, Episode[]>();
+const seasonsCache = new Map<string, Season[]>();
+
+// Helper function to find which season contains a specific episode
+const findSeasonForEpisode = async (episodeId: string, seasons: Season[]): Promise<string | null> => {
+  // First, try to find the episode in already cached season episodes
+  for (const [seasonId, cachedEpisodes] of episodesCache.entries()) {
+    const foundEpisode = cachedEpisodes.find(ep => ep.Id === episodeId);
+    if (foundEpisode) {
+      return seasonId;
+    }
+  }
+  
+  // If not found in cache, search through all seasons
+  for (const season of seasons) {
+    try {
+      const seasonEpisodes = await fetchEpisodes(season.Id);
+      const typedEpisodes = seasonEpisodes as Episode[];
+      
+      // Cache the episodes for this season
+      episodesCache.set(season.Id, typedEpisodes);
+      
+      // Check if our target episode is in this season
+      const foundEpisode = typedEpisodes.find(ep => ep.Id === episodeId);
+      if (foundEpisode) {
+        return season.Id;
+      }
+    } catch (error) {
+      console.error(`Failed to fetch episodes for season ${season.Id}:`, error);
+      continue;
+    }
+  }
+  
+  return null;
+};
+
+export const SeasonEpisodes = React.memo(function SeasonEpisodes({
+  showId,
+}: SeasonEpisodesProps) {
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [episodesLoading, setEpisodesLoading] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const { serverUrl } = useAuth();
+  const pathname = usePathname();
 
-  // Fetch seasons on mount
-  useEffect(() => {
-    async function loadSeasons() {
-      try {
-        const seasonsData = await fetchSeasons(showId);
-        setSeasons(seasonsData as Season[]);
+  // Extract current episode ID from pathname if we're on an episode page
+  const currentEpisodeId = pathname.startsWith("/episode/")
+    ? pathname.split("/")[2]
+    : null;
 
-        // Auto-select season 1 if available
-        const season1 = seasonsData.find((s: any) => s.IndexNumber === 1);
+  // Memoized function to load seasons with caching
+  const loadSeasons = useCallback(async () => {
+    // Check cache first
+    if (seasonsCache.has(showId)) {
+      const cachedSeasons = seasonsCache.get(showId)!;
+      setSeasons(cachedSeasons);
+      
+      // If we have a current episode, try to find its season
+      if (currentEpisodeId && !selectedSeasonId) {
+        const currentEpisodeSeasonId = await findSeasonForEpisode(currentEpisodeId, cachedSeasons);
+        if (currentEpisodeSeasonId) {
+          setSelectedSeasonId(currentEpisodeSeasonId);
+        } else {
+          // Fallback to season 1 or first season
+          const season1 = cachedSeasons.find((s: any) => s.IndexNumber === 1);
+          if (season1) {
+            setSelectedSeasonId(season1.Id!);
+          } else if (cachedSeasons.length > 0) {
+            setSelectedSeasonId(cachedSeasons[0].Id!);
+          }
+        }
+      } else if (!selectedSeasonId) {
+        // Auto-select season 1 if available and no season is selected
+        const season1 = cachedSeasons.find((s: any) => s.IndexNumber === 1);
         if (season1) {
           setSelectedSeasonId(season1.Id!);
-        } else if (seasonsData.length > 0) {
-          setSelectedSeasonId(seasonsData[0].Id!);
+        } else if (cachedSeasons.length > 0) {
+          setSelectedSeasonId(cachedSeasons[0].Id!);
         }
-      } catch (error) {
-        console.error("Failed to fetch seasons:", error);
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
+      return;
     }
 
+    try {
+      const seasonsData = await fetchSeasons(showId);
+      const typedSeasons = seasonsData as Season[];
+      
+      // Cache the seasons data
+      seasonsCache.set(showId, typedSeasons);
+      setSeasons(typedSeasons);
+
+      // If we have a current episode, try to find its season
+      if (currentEpisodeId) {
+        const currentEpisodeSeasonId = await findSeasonForEpisode(currentEpisodeId, typedSeasons);
+        if (currentEpisodeSeasonId) {
+          setSelectedSeasonId(currentEpisodeSeasonId);
+        } else {
+          // Fallback to season 1 or first season
+          const season1 = typedSeasons.find((s: any) => s.IndexNumber === 1);
+          if (season1) {
+            setSelectedSeasonId(season1.Id!);
+          } else if (typedSeasons.length > 0) {
+            setSelectedSeasonId(typedSeasons[0].Id!);
+          }
+        }
+      } else {
+        // Auto-select season 1 if available
+        const season1 = typedSeasons.find((s: any) => s.IndexNumber === 1);
+        if (season1) {
+          setSelectedSeasonId(season1.Id!);
+        } else if (typedSeasons.length > 0) {
+          setSelectedSeasonId(typedSeasons[0].Id!);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch seasons:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [showId, selectedSeasonId, currentEpisodeId]);
+
+  // Memoized function to load episodes with caching
+  const loadEpisodes = useCallback(async (seasonId: string) => {
+    if (!seasonId) return;
+
+    // Check cache first
+    if (episodesCache.has(seasonId)) {
+      setEpisodes(episodesCache.get(seasonId)!);
+      return;
+    }
+
+    setEpisodesLoading(true);
+    try {
+      const episodesData = await fetchEpisodes(seasonId);
+      const typedEpisodes = episodesData as Episode[];
+
+      // Cache the episodes data
+      episodesCache.set(seasonId, typedEpisodes);
+      setEpisodes(typedEpisodes);
+    } catch (error) {
+      console.error("Failed to fetch episodes:", error);
+    } finally {
+      setEpisodesLoading(false);
+    }
+  }, []);
+
+  // Fetch seasons on mount or when showId changes
+  useEffect(() => {
     loadSeasons();
-  }, [showId]);
+  }, [loadSeasons]);
 
   // Fetch episodes when season changes
   useEffect(() => {
-    async function loadEpisodes() {
-      if (!selectedSeasonId) return;
-
-      setEpisodesLoading(true);
-      try {
-        const episodesData = await fetchEpisodes(selectedSeasonId);
-        setEpisodes(episodesData as Episode[]);
-      } catch (error) {
-        console.error("Failed to fetch episodes:", error);
-      } finally {
-        setEpisodesLoading(false);
-      }
+    if (selectedSeasonId) {
+      loadEpisodes(selectedSeasonId);
     }
+  }, [selectedSeasonId, loadEpisodes]);
 
-    loadEpisodes();
-  }, [selectedSeasonId]);
+  // Scroll to current episode when episodes load
+  useEffect(() => {
+    if (currentEpisodeId && episodes.length > 0 && !episodesLoading) {
+      // Use setTimeout to ensure DOM is fully rendered
+      setTimeout(() => {
+        const currentEpisodeElement = document.querySelector(
+          `[data-episode-id="${currentEpisodeId}"]`
+        );
+        if (currentEpisodeElement) {
+          currentEpisodeElement.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+            inline: "center",
+          });
+        }
+      }, 100);
+    }
+  }, [currentEpisodeId, episodes, episodesLoading]);
 
   if (loading) {
     return (
@@ -172,6 +310,7 @@ export function SeasonEpisodes({ showId }: SeasonEpisodesProps) {
                 episode={episode}
                 showId={showId}
                 serverUrl={serverUrl!}
+                currentEpisodeId={currentEpisodeId}
               />
             ))}
           </div>
@@ -180,37 +319,40 @@ export function SeasonEpisodes({ showId }: SeasonEpisodesProps) {
       )}
     </div>
   );
-}
+});
 
-function EpisodeCard({
+const EpisodeCard = React.memo(function EpisodeCard({
   episode,
   showId,
   serverUrl,
+  currentEpisodeId,
 }: {
   episode: Episode;
   showId: string;
   serverUrl: string;
+  currentEpisodeId: string | null;
 }) {
   const imageUrl = `${serverUrl}/Items/${episode.Id}/Images/Primary`;
-  
-  // Format the date to "Jan 1, 2025" format
-  const formatDate = (dateString: string | undefined) => {
+  const isCurrentEpisode = currentEpisodeId === episode.Id;
+
+  // Memoize the date formatting function
+  const formatDate = useCallback((dateString: string | undefined) => {
     if (!dateString) return null;
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return null;
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
-  };
+  }, []);
 
   return (
-    <div className="shrink-0 w-72 group">
+    <div className={`shrink-0 w-72 group`} data-episode-id={episode.Id}>
       <Link href={`/episode/${episode.Id}`} className="block" draggable={false}>
-        <div className="space-y-3">
+        <div className="space-y-3 py-2">
           {/* Episode Thumbnail */}
-          <div className="relative aspect-video rounded-lg overflow-hidden bg-muted shadow-lg group-hover:shadow-xl transition-all duration-300">
+          <div className={`relative aspect-video rounded-lg overflow-hidden bg-muted shadow-lg group-hover:shadow-xl transition-all duration-300 ${isCurrentEpisode ? 'ring-2 ring-primary rounded-lg' : ''}`}>
             {imageUrl ? (
               <img
                 src={imageUrl}
@@ -273,4 +415,4 @@ function EpisodeCard({
       </Link>
     </div>
   );
-}
+});
