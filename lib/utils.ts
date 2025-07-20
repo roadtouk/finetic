@@ -1,8 +1,28 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { Jellyfin } from "@jellyfin/sdk";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+// Function to get or create a unique device ID
+function getDeviceId(): string {
+  return crypto.randomUUID();
+}
+
+// Create Jellyfin SDK instance with unique device ID
+export function createJellyfinInstance() {
+  return new Jellyfin({
+    clientInfo: {
+      name: "Finetic",
+      version: "1.0.0",
+    },
+    deviceInfo: {
+      name: "Finetic Web Client",
+      id: getDeviceId(),
+    },
+  });
 }
 
 export const getMediaDetailsFromName = (name: string) => {

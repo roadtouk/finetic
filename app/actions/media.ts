@@ -11,21 +11,11 @@ import { ItemSortBy } from "@jellyfin/sdk/lib/generated-client/models/item-sort-
 import { SortOrder } from "@jellyfin/sdk/lib/generated-client/models/sort-order";
 import { UserLibraryApi } from "@jellyfin/sdk/lib/generated-client/api/user-library-api";
 import { getItemsApi } from "@jellyfin/sdk/lib/utils/api/items-api";
+import { createJellyfinInstance } from "@/lib/utils";
 
 // Type aliases for easier use
 type JellyfinItem = BaseItemDto;
 
-// Create global Jellyfin SDK instance
-const jellyfin = new Jellyfin({
-  clientInfo: {
-    name: "Finetic",
-    version: "1.0.0",
-  },
-  deviceInfo: {
-    name: "Finetic Web Client",
-    id: "finetic-web-client",
-  },
-});
 
 // Helper function to get auth data from cookies
 async function getAuthData() {
@@ -60,7 +50,8 @@ export async function clearAuthData() {
 export async function fetchMovies(limit: number = 20): Promise<JellyfinItem[]> {
   try {
     const { serverUrl, user } = await getAuthData();
-    const api = jellyfin.createApi(serverUrl);
+    const jellyfinInstance = createJellyfinInstance();
+    const api = jellyfinInstance.createApi(serverUrl);
     api.accessToken = user.AccessToken;
 
     console.log(serverUrl, api.accessToken, user.Id);
@@ -101,7 +92,8 @@ export async function fetchTVShows(
 ): Promise<JellyfinItem[]> {
   try {
     const { serverUrl, user } = await getAuthData();
-    const api = jellyfin.createApi(serverUrl);
+    const jellyfinInstance = createJellyfinInstance();
+    const api = jellyfinInstance.createApi(serverUrl);
     api.accessToken = user.AccessToken;
 
     const { data } = await getItemsApi(api).getItems({
@@ -140,7 +132,8 @@ export async function fetchMediaDetails(
 ): Promise<JellyfinItem | null> {
   try {
     const { serverUrl, user } = await getAuthData();
-    const api = jellyfin.createApi(serverUrl);
+    const jellyfinInstance = createJellyfinInstance();
+    const api = jellyfinInstance.createApi(serverUrl);
     api.accessToken = user.AccessToken;
 
     const userLibraryApi = new UserLibraryApi(api.configuration);
@@ -169,7 +162,8 @@ export async function fetchMediaDetails(
 export async function fetchResumeItems() {
   try {
     const { serverUrl, user } = await getAuthData();
-    const api = jellyfin.createApi(serverUrl);
+    const jellyfinInstance = createJellyfinInstance();
+    const api = jellyfinInstance.createApi(serverUrl);
 
     api.accessToken = user.AccessToken;
 

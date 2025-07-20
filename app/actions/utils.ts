@@ -4,18 +4,8 @@ import { cookies } from "next/headers";
 import { Jellyfin } from "@jellyfin/sdk";
 import { UserLibraryApi } from "@jellyfin/sdk/lib/generated-client/api/user-library-api";
 import { LibraryApi } from "@jellyfin/sdk/lib/generated-client/api/library-api";
+import { createJellyfinInstance } from "@/lib/utils";
 
-// Create global Jellyfin SDK instance
-const jellyfin = new Jellyfin({
-  clientInfo: {
-    name: "Finetic",
-    version: "1.0.0",
-  },
-  deviceInfo: {
-    name: "Finetic Web Client",
-    id: "finetic-web-client",
-  },
-});
 
 // Helper function to get auth data from cookies
 export async function getAuthData() {
@@ -92,7 +82,8 @@ export async function getSubtitleTracks(
   }>
 > {
   const { serverUrl, user } = await getAuthData();
-  const api = jellyfin.createApi(serverUrl);
+  const jellyfinInstance = createJellyfinInstance();
+  const api = jellyfinInstance.createApi(serverUrl);
   api.accessToken = user.AccessToken;
 
   try {

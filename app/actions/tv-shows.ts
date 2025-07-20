@@ -9,21 +9,11 @@ import { BaseItemKind } from "@jellyfin/sdk/lib/generated-client/models/base-ite
 import { ItemFields } from "@jellyfin/sdk/lib/generated-client/models/item-fields";
 import { ItemSortBy } from "@jellyfin/sdk/lib/generated-client/models/item-sort-by";
 import { SortOrder } from "@jellyfin/sdk/lib/generated-client/models/sort-order";
+import { createJellyfinInstance } from "@/lib/utils";
 
 // Type aliases for easier use
 type JellyfinItem = BaseItemDto;
 
-// Create global Jellyfin SDK instance
-const jellyfin = new Jellyfin({
-  clientInfo: {
-    name: "Finetic",
-    version: "1.0.0",
-  },
-  deviceInfo: {
-    name: "Finetic Web Client",
-    id: "finetic-web-client",
-  },
-});
 
 // Helper function to get auth data from cookies
 async function getAuthData() {
@@ -40,7 +30,8 @@ async function getAuthData() {
 
 export async function fetchSeasons(tvShowId: string): Promise<JellyfinItem[]> {
   const { serverUrl, user } = await getAuthData();
-  const api = jellyfin.createApi(serverUrl);
+  const jellyfinInstance = createJellyfinInstance();
+  const api = jellyfinInstance.createApi(serverUrl);
   api.accessToken = user.AccessToken;
 
   try {
@@ -62,7 +53,8 @@ export async function fetchSeasons(tvShowId: string): Promise<JellyfinItem[]> {
 
 export async function fetchEpisodes(seasonId: string): Promise<JellyfinItem[]> {
   const { serverUrl, user } = await getAuthData();
-  const api = jellyfin.createApi(serverUrl);
+  const jellyfinInstance = createJellyfinInstance();
+  const api = jellyfinInstance.createApi(serverUrl);
   api.accessToken = user.AccessToken;
 
   try {
@@ -90,7 +82,8 @@ export async function fetchEpisodes(seasonId: string): Promise<JellyfinItem[]> {
 
 export async function fetchTVShowDetails(tvShowId: string): Promise<JellyfinItem | null> {
   const { serverUrl, user } = await getAuthData();
-  const api = jellyfin.createApi(serverUrl);
+  const jellyfinInstance = createJellyfinInstance();
+  const api = jellyfinInstance.createApi(serverUrl);
   api.accessToken = user.AccessToken;
 
   try {
@@ -108,7 +101,8 @@ export async function fetchTVShowDetails(tvShowId: string): Promise<JellyfinItem
 
 export async function fetchEpisodeDetails(episodeId: string): Promise<JellyfinItem | null> {
   const { serverUrl, user } = await getAuthData();
-  const api = jellyfin.createApi(serverUrl);
+  const jellyfinInstance = createJellyfinInstance();
+  const api = jellyfinInstance.createApi(serverUrl);
   api.accessToken = user.AccessToken;
 
   try {

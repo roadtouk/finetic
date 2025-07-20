@@ -6,21 +6,15 @@ import { Jellyfin } from "@jellyfin/sdk";
 import { SystemApi } from "@jellyfin/sdk/lib/generated-client/api/system-api";
 import { Configuration } from "@jellyfin/sdk/lib/generated-client/configuration";
 import { UserDto } from "@jellyfin/sdk/lib/generated-client/models/user-dto";
+import { createJellyfinInstance } from "@/lib/utils";
 
 // Type aliases for easier use
 type JellyfinUserWithToken = UserDto & { AccessToken?: string };
 
-// Create global Jellyfin SDK instance
-const jellyfin = new Jellyfin({
-  clientInfo: {
-    name: "Finetic",
-    version: "1.0.0",
-  },
-  deviceInfo: {
-    name: "Finetic Web Client",
-    id: "finetic-web-client",
-  },
-});
+// Function to get or create a unique device ID for fallback auth
+function getDeviceId(): string {
+  return crypto.randomUUID();
+}
 
 export async function setServerUrl(url: string) {
   const cookieStore = await cookies();
@@ -99,14 +93,15 @@ export async function authenticateUser(
 
   // First try with the SDK
   try {
-    const api = jellyfin.createApi(serverUrl);
+    const jellyfinInstance = createJellyfinInstance();
+    const api = jellyfinInstance.createApi(serverUrl);
     
     // Log the request details for debugging
     console.log("Authentication request details:", {
       serverUrl,
       username: username,
-      clientInfo: jellyfin.clientInfo,
-      deviceInfo: jellyfin.deviceInfo
+      clientInfo: jellyfinInstance.clientInfo,
+      deviceInfo: jellyfinInstance.deviceInfo
     });
     
     const { data: result } = await api.authenticateUserByName(
@@ -172,7 +167,7 @@ export async function authenticateUser(
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Emby-Authorization': `MediaBrowser Client="Finetic", Device="finetic-web-client", DeviceId="finetic-web-client", Version="1.0.0"`
+          'X-Emby-Authorization': `MediaBrowser Client="Finetic", Device="Finetic Web Client", DeviceId="${getDeviceId()}", Version="1.0.0"`
         },
         body: JSON.stringify({
           Username: username,
@@ -286,7 +281,7 @@ export async function debugServerConnection(): Promise<void> {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `MediaBrowser Client="Finetic", Device="finetic-web-client", DeviceId="finetic-web-client", Version="1.0.0"`
+        'Authorization': `MediaBrowser Client="Finetic", Device="Finetic Web Client", DeviceId="${getDeviceId()}", Version="1.0.0"`
       },
       body: JSON.stringify({
         Username: "test",
