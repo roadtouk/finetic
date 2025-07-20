@@ -36,8 +36,6 @@ export function MediaCard({
 
   const imageUrl = `${serverUrl}/Items/${imageItemId}/Images/${imageType}`;
 
-  const [imageLoading, setImageLoading] = useState(true); // State to track image loading
-
   return (
     <Link href={linkHref} draggable={false}>
       <div
@@ -50,18 +48,12 @@ export function MediaCard({
             continueWatching ? "aspect-video" : "aspect-[2/3]"
           }`}
         >
-          {/* {imageLoading && (
-            <Skeleton className="absolute inset-0 w-full h-full rounded-md border shadow-sm" />
-          )} */}
           {serverUrl ? (
             <img
               src={imageUrl}
               className="w-full h-full object-cover transition duration-200 shadow-lg hover:brightness-85 rounded-md border shadow-sm group-hover:shadow-md active:scale-[0.98]"
               onError={(e) => {
                 e.currentTarget.style.display = "none";
-              }}
-              onLoad={() => {
-                setImageLoading(false); // Hide skeleton when image loads
               }}
               draggable="false"
             />
