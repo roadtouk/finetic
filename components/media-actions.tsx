@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/media-player";
 import MuxVideo from "@mux/mux-video-react";
 import HlsVideoElement from "hls-video-element/react";
+import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 
 interface MediaActionsProps {
   movie?: JellyfinItem;
@@ -47,9 +48,9 @@ interface MediaActionsProps {
 
 export function MediaActions({ movie, show, episode }: MediaActionsProps) {
   const media = movie || show || episode;
+  const { isPlayerVisible, setIsPlayerVisible } = useMediaPlayer();
   const [selectedVersion, setSelectedVersion] =
     useState<MediaSourceInfo | null>(null);
-  const [isPlayerVisible, setIsPlayerVisible] = useState(false);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [subtitleTracks, setSubtitleTracks] = useState<
     Array<{
@@ -192,7 +193,7 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
 
       {/* Media Player */}
       {isPlayerVisible && streamUrl && (
-        <div className="fixed inset-0 z-[99999] bg-black flex items-center justify-center">
+        <div className="fixed inset-0 z-[999999] bg-black flex items-center justify-center">
           <MediaPlayer
             autoHide
             onEnded={() => setIsPlayerVisible(false)}

@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Input } from "./ui/input";
 import { useRouter } from "next/navigation";
 import { ToolInvocation } from "ai";
+import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 
 interface AIAskProps {
   isOpen?: boolean;
@@ -24,6 +25,7 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
   const [searchSummary, setSearchSummary] = useState<string>("");
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [internalIsOpen, setInternalIsOpen] = useState<boolean>(false);
+  const { isPlayerVisible } = useMediaPlayer();
   
   // Use external state if provided, otherwise use internal state
   const isAskOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
@@ -114,7 +116,7 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
   };
 
   return (
-    <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 flex flex-col items-center px-4 w-full">
+    <div className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 flex flex-col items-center px-4 w-full ${isAskOpen ? 'z-[9999999]' : 'z-50'}`}>
       {/* Ask question expanded panel */}
       <AnimatePresence>
         {isAskOpen && (
@@ -220,22 +222,24 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
         )}
       </AnimatePresence>
 
-      {/* Ask button */}
-      <motion.div
-        initial={false}
-        animate={isAskOpen ? { scale: 1.05 } : { scale: 1 }}
-        transition={{ duration: 0.2 }}
-        className="flex items-center gap-2 w-full max-w-md justify-center"
-      >
-        <Button
-          variant="outline"
-          className="shadow-sm px-4 py-2 h-auto rounded-full flex items-center gap-2 bg-card/90 backdrop-blur-[6px] border bg-background/70!"
-          onClick={() => setIsAskOpen(!isAskOpen)}
+{/* Ask button */}
+      {!isPlayerVisible && (
+        <motion.div
+          initial={false}
+          animate={isAskOpen ? { scale: 1.05 } : { scale: 1 }}
+          transition={{ duration: 0.2 }}
+          className="flex items-center gap-2 w-full max-w-md justify-center"
         >
-          <MessageCircle className="h-4 w-4" />
-          <span className="text-sm">Ask your server</span>
-        </Button>
-      </motion.div>
+          <Button
+            variant="outline"
+            className="shadow-sm px-4 py-2 h-auto rounded-full flex items-center gap-2 bg-card/90 backdrop-blur-[6px] border bg-background/70!"
+            onClick={() => setIsAskOpen(!isAskOpen)}
+          >
+            <MessageCircle className="h-4 w-4" />
+            <span className="text-sm">Ask your server</span>
+          </Button>
+        </motion.div>
+      )}
     </div>
   );
 };

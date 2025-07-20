@@ -5,6 +5,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import AIAsk from "@/components/ai-ask";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 import { useState } from "react";
+import { MediaPlayerProvider } from "@/contexts/MediaPlayerContext";
 
 export default function MainLayout({
   children,
@@ -49,14 +50,16 @@ export default function MainLayout({
   );
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
-      <SidebarProvider>
-        <AppSidebar />
-        <SidebarInset className="flex-1 overflow-hidden">
-          <div className="flex-1 overflow-y-auto no-scrollbar">{children}</div>
-        </SidebarInset>
-      </SidebarProvider>
-      <AIAsk isOpen={isAIAskOpen} onOpenChange={setIsAIAskOpen} />
-    </div>
+    <MediaPlayerProvider>
+      <div className="flex flex-col h-screen overflow-hidden">
+        <SidebarProvider>
+          <AppSidebar />
+          <SidebarInset className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-y-auto no-scrollbar">{children}</div>
+          </SidebarInset>
+        </SidebarProvider>
+        <AIAsk isOpen={isAIAskOpen} onOpenChange={setIsAIAskOpen} />
+      </div>
+    </MediaPlayerProvider>
   );
 }

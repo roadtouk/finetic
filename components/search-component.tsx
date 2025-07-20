@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "next-themes";
 import Link from "next/link";
+import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 
 interface SearchBarProps {
   className?: string;
@@ -35,6 +36,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
   const [libraries, setLibraries] = useState<any[]>([]);
   const router = useRouter();
   const { setTheme } = useTheme();
+  const { isPlayerVisible } = useMediaPlayer();
   // Server actions are imported directly
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
@@ -199,6 +201,11 @@ export function SearchBar({ className = "" }: SearchBarProps) {
         return <Film className="h-4 w-4" />;
     }
   };
+
+  // Hide the search bar when media player is visible
+  if (isPlayerVisible) {
+    return null;
+  }
 
   return (
     <div
