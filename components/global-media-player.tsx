@@ -20,7 +20,7 @@ import {
   MediaPlayerSettings,
 } from "@/components/ui/media-player";
 // import MuxVideo from "@mux/mux-video-react";
-import { ArrowLeft, RotateCcw, RotateCw } from "lucide-react";
+import { ArrowLeft, RotateCcw, RotateCw, Users } from "lucide-react";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 import {
   getStreamUrl,
@@ -32,6 +32,12 @@ import {
 } from "@/app/actions";
 import HlsVideoElement from "hls-video-element/react";
 import { formatRuntime } from "@/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useAuth } from "@/hooks/useAuth";
 
 export function GlobalMediaPlayer() {
   const { isPlayerVisible, setIsPlayerVisible, currentMedia } =
@@ -64,6 +70,8 @@ export function GlobalMediaPlayer() {
 
   // Helper function to convert Jellyfin ticks to seconds
   const ticksToSeconds = (ticks: number) => ticks / 10000000;
+
+  const { serverUrl } = useAuth();
 
   // Helper function to format time to HH:MM AM/PM
   const formatEndTime = (currentSeconds: number, durationSeconds: number) => {
@@ -377,6 +385,50 @@ export function GlobalMediaPlayer() {
               <MediaPlayerTime />
             </div>
             <div className="flex items-center gap-2">
+              {/* People button with cast and crew popover */}
+              {mediaDetails?.People && mediaDetails.People.length > 0 && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                      <Users className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 bg-black/90 border-white/20 text-white z-[1000000]" side="top">
+                    <div className="space-y-3">
+                      <h3 className="font-semibold text-lg">Cast & Crew</h3>
+                      <div className="max-h-64 overflow-y-auto space-y-2">
+                        {mediaDetails.People.map((person, index) => (
+                          <div key={`${person.Id}-${index}`} className="flex items-center space-x-3 p-2 rounded hover:bg-white/10">
+                            <div className="flex-shrink-0">
+                              {person.PrimaryImageTag ? (
+                                <img
+                                  src={`${serverUrl}/Items/${person.Id}/Images/Primary?fillHeight=759&fillWidth=506&quality=96`}
+                                  alt={person.Name!}
+                                  className="w-8 h-8 rounded-full object-cover"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    target.nextElementSibling!.classList.remove('hidden');
+                                  }}
+                                />
+                              ) : null}
+                              <div className={`w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-xs ${person.PrimaryImageTag ? 'hidden' : ''}`}>
+                                {person.Name?.charAt(0) || '?'}
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">{person.Name}</p>
+                              {person.Role && (
+                                <p className="text-xs text-white/70 truncate">{person.Role}</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
               <MediaPlayerSettings />
               <MediaPlayerPiP />
               <MediaPlayerFullscreen />
