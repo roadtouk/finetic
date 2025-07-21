@@ -2110,7 +2110,7 @@ function MediaPlayerSeek(props: MediaPlayerSeekProps) {
         max={seekableEnd}
         step={0.01}
         className={cn(
-          "relative flex w-full touch-none select-none items-center data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+          "relative flex w-full touch-none select-none items-center data-[disabled]:pointer-events-none data-[disabled]:opacity-50 group",
           className
         )}
         value={[displayValue]}
@@ -2120,19 +2120,19 @@ function MediaPlayerSeek(props: MediaPlayerSeekProps) {
         onPointerLeave={onPointerLeave}
         onPointerMove={onPointerMove}
       >
-        <SliderPrimitive.Track className="relative h-1 w-full grow overflow-hidden rounded-full bg-primary/40">
+        <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-white/20 transition-all duration-500 delay-50 group-hover:h-2.5">
           <div
             data-slot="media-player-seek-buffered"
-            className="absolute h-full bg-primary/70 will-change-[width]"
+            className="absolute h-full bg-white/30 will-change-[width]"
             style={{
               width: `${bufferedProgress * 100}%`,
             }}
           />
-          <SliderPrimitive.Range className="absolute h-full bg-primary will-change-[width]" />
+          <SliderPrimitive.Range className="absolute h-full bg-white will-change-[width]" />
           {seekState.isHovering && seekableEnd > 0 && (
             <div
               data-slot="media-player-seek-hover-range"
-              className="absolute h-full bg-primary/70 will-change-[width,opacity]"
+              className="absolute h-full bg-white/70 will-change-[width,opacity]"
               style={{
                 width: `var(${SEEK_HOVER_PERCENT}, 0%)`,
                 transition: "opacity 150ms ease-out",
@@ -2141,7 +2141,6 @@ function MediaPlayerSeek(props: MediaPlayerSeekProps) {
           )}
           {chapterSeparators}
         </SliderPrimitive.Track>
-        <SliderPrimitive.Thumb className="relative z-10 block size-2.5 shrink-0 rounded-full bg-primary shadow-sm ring-ring/50 transition-[color,box-shadow] will-change-transform hover:ring-4 focus-visible:outline-hidden focus-visible:ring-4 disabled:pointer-events-none disabled:opacity-50" />
       </SliderPrimitive.Root>
       {!withoutTooltip &&
         !context.withoutTooltip &&
@@ -2357,9 +2356,9 @@ function MediaPlayerVolume(props: MediaPlayerVolumeProps) {
         onValueCommit={onVolumeCommit}
       >
         <SliderPrimitive.Track className="relative h-1 w-full grow overflow-hidden rounded-full bg-zinc-500">
-          <SliderPrimitive.Range className="absolute h-full bg-primary will-change-[width]" />
+          <SliderPrimitive.Range className="absolute h-full bg-purple-500 will-change-[width]" />
         </SliderPrimitive.Track>
-        <SliderPrimitive.Thumb className="block size-2.5 shrink-0 rounded-full bg-primary shadow-sm ring-ring/50 transition-[color,box-shadow] will-change-transform hover:ring-4 focus-visible:outline-hidden focus-visible:ring-4 disabled:pointer-events-none disabled:opacity-50" />
+        <SliderPrimitive.Thumb className="block size-2.5 shrink-0 rounded-full bg-purple-500 shadow-sm ring-ring/50 transition-[color,box-shadow] will-change-transform hover:ring-4 focus-visible:outline-hidden focus-visible:ring-4 disabled:pointer-events-none disabled:opacity-50" />
       </SliderPrimitive.Root>
     </div>
   );
