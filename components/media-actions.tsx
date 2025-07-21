@@ -49,7 +49,7 @@ interface MediaActionsProps {
 
 export function MediaActions({ movie, show, episode }: MediaActionsProps) {
   const media = movie || show || episode;
-  const { isPlayerVisible, setIsPlayerVisible, setCurrentMedia } = useMediaPlayer();
+  const { isPlayerVisible, setIsPlayerVisible, playMedia } = useMediaPlayer();
   const [selectedVersion, setSelectedVersion] =
     useState<MediaSourceInfo | null>(null);
 
@@ -104,7 +104,12 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
         onClick={async () => {
           // Set the current media in context, GlobalMediaPlayer will handle the rest
           if (media) {
-            setCurrentMedia(media);
+            console.log("Playing media:", media.Name);
+            await playMedia({
+              id: media.Id!,
+              name: media.Name!,
+              type: media.Type as "Movie" | "Series" | "Episode",
+            });
             setIsPlayerVisible(true);
           }
         }}
@@ -169,9 +174,6 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
           <MediaInfoDialog mediaSource={selectedVersion} />
         </DialogContent>
       </Dialog>
-
-{/* GlobalMediaPlayer is rendered globally through the context */}
-      <GlobalMediaPlayer />
     </div>
   );
 }

@@ -19,10 +19,11 @@ import {
   MediaPlayerVolume,
   MediaPlayerSettings,
 } from "@/components/ui/media-player";
-import MuxVideo from "@mux/mux-video-react";
+// import MuxVideo from "@mux/mux-video-react";
 import { ArrowLeft } from "lucide-react";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 import { getStreamUrl, getSubtitleTracks, fetchMediaDetails } from "@/app/actions";
+import HlsVideoElement from "hls-video-element/react";
 
 export function GlobalMediaPlayer() {
   const { isPlayerVisible, setIsPlayerVisible, currentMedia } = useMediaPlayer();
@@ -111,12 +112,12 @@ export function GlobalMediaPlayer() {
           </MediaPlayerLoading>
         ) : (
           <MediaPlayerVideo asChild>
-            <MuxVideo
+            <HlsVideoElement
               src={streamUrl}
               crossOrigin=""
               playsInline
               preload="auto"
-              autoPlay
+              autoplay
               className="w-full h-screen bg-black"
               onError={(event) => {
                 console.warn("Video error caught:", event);
@@ -132,7 +133,7 @@ export function GlobalMediaPlayer() {
                   default={track.default}
                 />
               ))}
-            </MuxVideo>
+            </HlsVideoElement>
           </MediaPlayerVideo>
         )}
         <MediaPlayerControls className="flex-col items-start gap-2.5 px-6 pb-4 z-[9999]">
