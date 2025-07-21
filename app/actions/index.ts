@@ -14,6 +14,10 @@ export {
   fetchMovies,
   fetchTVShows,
   fetchMediaDetails,
+  fetchResumeItems,
+  reportPlaybackStart,
+  reportPlaybackProgress,
+  reportPlaybackStopped,
 } from './media';
 
 // TV show actions

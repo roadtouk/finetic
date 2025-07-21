@@ -183,3 +183,108 @@ export async function fetchResumeItems() {
     return [];
   }
 }
+
+// Progress tracking functions
+export async function reportPlaybackStart(
+  itemId: string,
+  mediaSourceId: string,
+  playSessionId: string
+): Promise<boolean> {
+  try {
+    const { serverUrl, user } = await getAuthData();
+    const jellyfinInstance = createJellyfinInstance();
+    const api = jellyfinInstance.createApi(serverUrl);
+    api.accessToken = user.AccessToken;
+
+    const response = await fetch(`${serverUrl}/Sessions/Playing`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `MediaBrowser Token="${user.AccessToken}"`
+      },
+      body: JSON.stringify({
+        ItemId: itemId,
+        MediaSourceId: mediaSourceId,
+        PlaySessionId: playSessionId,
+        CanSeek: true,
+        QueueableMediaTypes: ['Video', 'Audio'],
+        PlayMethod: 'Transcode'
+      })
+    });
+
+    return response.ok;
+  } catch (error) {
+    console.error('Failed to report playback start:', error);
+    return false;
+  }
+}
+
+export async function reportPlaybackProgress(
+  itemId: string,
+  mediaSourceId: string,
+  playSessionId: string,
+  positionTicks: number,
+  isPaused: boolean = false
+): Promise<boolean> {
+  try {
+    const { serverUrl, user } = await getAuthData();
+    const jellyfinInstance = createJellyfinInstance();
+    const api = jellyfinInstance.createApi(serverUrl);
+    api.accessToken = user.AccessToken;
+
+    const response = await fetch(`${serverUrl}/Sessions/Playing/Progress`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `MediaBrowser Token="${user.AccessToken}"`
+      },
+      body: JSON.stringify({
+        ItemId: itemId,
+        MediaSourceId: mediaSourceId,
+        PlaySessionId: playSessionId,
+        PositionTicks: positionTicks,
+        IsPaused: isPaused,
+        PlayMethod: 'Transcode'
+      })
+    });
+
+    return response.ok;
+  } catch (error) {
+    console.error('Failed to report playback progress:', error);
+    return false;
+  }
+}
+
+export async function reportPlaybackStopped(
+  itemId: string,
+  mediaSourceId: string,
+  playSessionId: string,
+  positionTicks: number
+): Promise<boolean> {
+  try {
+    const { serverUrl, user } = await getAuthData();
+    const jellyfinInstance = createJellyfinInstance();
+    const api = jellyfinInstance.createApi(serverUrl);
+    api.accessToken = user.AccessToken;
+
+    const response = await fetch(`${serverUrl}/Sessions/Playing/Stopped`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `MediaBrowser Token="${user.AccessToken}"`
+      },
+      body: JSON.stringify({
+        ItemId: itemId,
+        MediaSourceId: mediaSourceId,
+        PlaySessionId: playSessionId,
+        PositionTicks: positionTicks,
+        PlayMethod: 'Transcode'
+      })
+    });
+
+    return response.ok;
+  } catch (error) {
+    console.error('Failed to report playback stopped:', error);
+    return false;
+  }
+}

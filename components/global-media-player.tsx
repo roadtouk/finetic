@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { JellyfinItem, MediaSourceInfo } from "@/types/jellyfin";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +22,7 @@ import {
 // import MuxVideo from "@mux/mux-video-react";
 import { ArrowLeft } from "lucide-react";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
-import { getStreamUrl, getSubtitleTracks, fetchMediaDetails } from "@/app/actions";
+import { getStreamUrl, getSubtitleTracks, fetchMediaDetails, reportPlaybackStart, reportPlaybackProgress, reportPlaybackStopped } from "@/app/actions";
 import HlsVideoElement from "hls-video-element/react";
 
 export function GlobalMediaPlayer() {
@@ -40,6 +40,118 @@ export function GlobalMediaPlayer() {
     }>
   >([]);
   const [loading, setLoading] = useState(false);
+
+  // Progress tracking state
+  const [playSessionId, setPlaySessionId] = useState<string | null>(null);
+  const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Helper function to convert seconds to Jellyfin ticks (1 tick = 100 nanoseconds)
+  const secondsToTicks = (seconds: number) => Math.floor(seconds * 10000000);
+
+  // Helper function to convert Jellyfin ticks to seconds
+  const ticksToSeconds = (ticks: number) => ticks / 10000000;
+
+  // Start progress tracking
+  const startProgressTracking = useCallback(async () => {
+    if (!currentMedia || !selectedVersion || !videoRef.current) return;
+
+    const sessionId = crypto.randomUUID();
+    setPlaySessionId(sessionId);
+
+    // Report playback start
+    await reportPlaybackStart(currentMedia.id, selectedVersion.Id!, sessionId);
+    setHasStartedPlayback(true);
+
+    // Set up progress reporting interval (every 10 seconds)
+    progressIntervalRef.current = setInterval(async () => {
+      if (videoRef.current && !videoRef.current.paused) {
+        const currentTime = videoRef.current.currentTime;
+        const positionTicks = secondsToTicks(currentTime);
+        
+        await reportPlaybackProgress(
+          currentMedia.id,
+          selectedVersion.Id!,
+          sessionId,
+          positionTicks,
+          videoRef.current.paused
+        );
+      }
+    }, 10000); // Report every 10 seconds
+  }, [currentMedia, selectedVersion]);
+
+  // Stop progress tracking
+  const stopProgressTracking = useCallback(async () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+
+    if (playSessionId && currentMedia && selectedVersion && videoRef.current) {
+      const currentTime = videoRef.current.currentTime;
+      const positionTicks = secondsToTicks(currentTime);
+      
+      await reportPlaybackStopped(
+        currentMedia.id,
+        selectedVersion.Id!,
+        playSessionId,
+        positionTicks
+      );
+    }
+
+    setPlaySessionId(null);
+    setHasStartedPlayback(false);
+  }, [playSessionId, currentMedia, selectedVersion]);
+
+  // Handle video events
+  const handleVideoPlay = useCallback(() => {
+    if (!hasStartedPlayback) {
+      startProgressTracking();
+    }
+  }, [hasStartedPlayback, startProgressTracking]);
+
+  const handleVideoPause = useCallback(async () => {
+    if (playSessionId && currentMedia && selectedVersion && videoRef.current) {
+      const currentTime = videoRef.current.currentTime;
+      const positionTicks = secondsToTicks(currentTime);
+      
+      await reportPlaybackProgress(
+        currentMedia.id,
+        selectedVersion.Id!,
+        playSessionId,
+        positionTicks,
+        true // isPaused = true
+      );
+    }
+  }, [playSessionId, currentMedia, selectedVersion]);
+
+  // Set video to resume position if provided
+  const handleVideoLoadedMetadata = useCallback(() => {
+    if (videoRef.current && currentMedia?.resumePositionTicks) {
+      const resumeTime = ticksToSeconds(currentMedia.resumePositionTicks);
+      videoRef.current.currentTime = resumeTime;
+      // Only start playing after we've set the correct position
+      videoRef.current.play();
+    }
+  }, [currentMedia]);
+
+  // Define handleClose first to avoid circular dependency
+  const handleClose = useCallback(async () => {
+    // Stop progress tracking before closing
+    await stopProgressTracking();
+    
+    setIsPlayerVisible(false);
+    setStreamUrl(null);
+    setMediaDetails(null);
+    setSelectedVersion(null);
+    setSubtitleTracks([]);
+  }, [stopProgressTracking]);
+
+  const handleVideoEnded = useCallback(async () => {
+    await stopProgressTracking();
+    handleClose();
+  }, [stopProgressTracking, handleClose]);
 
   useEffect(() => {
     if (currentMedia && isPlayerVisible) {
@@ -85,13 +197,14 @@ export function GlobalMediaPlayer() {
     }
   };
 
-  const handleClose = () => {
-    setIsPlayerVisible(false);
-    setStreamUrl(null);
-    setMediaDetails(null);
-    setSelectedVersion(null);
-    setSubtitleTracks([]);
-  };
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    };
+  }, []);
 
   if (!isPlayerVisible || !currentMedia) {
     return null;
@@ -113,12 +226,18 @@ export function GlobalMediaPlayer() {
         ) : (
           <MediaPlayerVideo asChild>
             <HlsVideoElement
+            // @ts-ignore
+              ref={videoRef}
               src={streamUrl}
               crossOrigin=""
               playsInline
               preload="auto"
-              autoplay
+              autoPlay={!currentMedia?.resumePositionTicks}
               className="w-full h-screen bg-black"
+              onPlay={handleVideoPlay}
+              onPause={handleVideoPause}
+              onEnded={handleVideoEnded}
+              onLoadedMetadata={handleVideoLoadedMetadata}
               onError={(event) => {
                 console.warn("Video error caught:", event);
               }}

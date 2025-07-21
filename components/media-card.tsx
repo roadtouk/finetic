@@ -10,11 +10,15 @@ export function MediaCard({
   serverUrl,
   percentageWatched = 0,
   continueWatching = false,
+  showProgress = false,
+  resumePosition,
 }: {
   item: BaseItemDto;
   serverUrl: string;
   percentageWatched?: number;
   continueWatching?: boolean;
+  showProgress?: boolean;
+  resumePosition?: number;
 }) {
   let linkHref = "";
   if (item.Type === "Movie") {
@@ -35,6 +39,15 @@ export function MediaCard({
   }
 
   const imageUrl = `${serverUrl}/Items/${imageItemId}/Images/${imageType}`;
+
+  // Calculate progress percentage from resume position
+  let progressPercentage = percentageWatched;
+  if (showProgress && resumePosition && item.RunTimeTicks) {
+    progressPercentage = (resumePosition / item.RunTimeTicks) * 100;
+  }
+
+  // For continue watching, use landscape aspect ratio and larger width
+  const isResumeItem = showProgress && resumePosition;
 
   return (
     <Link href={linkHref} draggable={false}>
@@ -65,12 +78,12 @@ export function MediaCard({
         </div>
         <div className="px-1">
           {/* Progress bar for watched percentage */}
-          {percentageWatched > 0 && (
+          {progressPercentage > 0 && (
             <div className="w-full h-1 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden mt-2">
               <div
                 className="h-full bg-primary transition-all duration-300"
                 style={{
-                  width: `${Math.min(Math.max(percentageWatched, 0), 100)}%`,
+                  width: `${Math.min(Math.max(progressPercentage, 0), 100)}%`,
                 }}
               ></div>
             </div>

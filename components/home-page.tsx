@@ -6,16 +6,19 @@ import { Button } from "@/components/ui/button";
 import { MediaCard } from "@/components/media-card";
 import { MediaSection } from "@/components/media-section";
 import { SearchBar } from "@/components/search-component";
-import { getUser, fetchMovies, fetchTVShows, getImageUrl } from "@/app/actions";
+import { getUser, fetchMovies, fetchTVShows, fetchResumeItems, getImageUrl } from "@/app/actions";
 import { Play, ChevronLeft, ChevronRight } from "lucide-react";
 import { AuroraBackground } from "@/components/aurora-background";
+import { ContinueWatchingCard } from "@/components/continue-watching-card";
 
 export function HomePage({ serverUrl }: { serverUrl: string }) {
   const [user, setUser] = useState<any>(null);
   const [movies, setMovies] = useState<any[]>([]);
   const [tvShows, setTVShows] = useState<any[]>([]);
+  const [resumeItems, setResumeItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const resumeScrollRef = useRef<HTMLDivElement>(null);
   const moviesScrollRef = useRef<HTMLDivElement>(null);
   const tvShowsScrollRef = useRef<HTMLDivElement>(null);
 
@@ -35,14 +38,16 @@ export function HomePage({ serverUrl }: { serverUrl: string }) {
     const loadContent = async () => {
       setIsLoading(true);
       try {
-        const [userData, moviesData, tvShowsData] = await Promise.all([
+        const [userData, moviesData, tvShowsData, resumeData] = await Promise.all([
           getUser(),
           fetchMovies(12),
           fetchTVShows(12),
+          fetchResumeItems(),
         ]);
         setUser(userData);
         setMovies(moviesData);
         setTVShows(tvShowsData);
+        setResumeItems(resumeData);
       } catch (error) {
         console.error("Failed to load content:", error);
       } finally {
@@ -88,6 +93,47 @@ export function HomePage({ serverUrl }: { serverUrl: string }) {
           Continue watching or discover something new
         </p>
       </div>
+
+      {/* Continue Watching Section */}
+      {resumeItems.length > 0 && (
+        <section className="relative z-10 mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-2xl font-semibold text-foreground font-poppins">
+              Continue Watching
+            </h3>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-background/10 border-border text-foreground hover:bg-accent p-2"
+                onClick={() => scrollLeft(resumeScrollRef)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-background/10 border-border text-foreground hover:bg-accent p-2"
+                onClick={() => scrollRight(resumeScrollRef)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          <div className="overflow-x-auto pb-4" ref={resumeScrollRef}>
+            <div className="flex gap-4 w-max">
+              {resumeItems.map((item) => (
+                <div key={item.Id} className="flex-shrink-0">
+                  <ContinueWatchingCard 
+                    item={item} 
+                    serverUrl={serverUrl} 
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Movies Section */}
       <section className="relative z-10 mb-12">

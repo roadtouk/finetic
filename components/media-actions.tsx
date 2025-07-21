@@ -109,6 +109,7 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
               id: media.Id!,
               name: media.Name!,
               type: media.Type as "Movie" | "Series" | "Episode",
+              resumePositionTicks: media.UserData?.PlaybackPositionTicks,
             });
             setIsPlayerVisible(true);
           }

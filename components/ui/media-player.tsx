@@ -2972,7 +2972,7 @@ function MediaPlayerSettings(props: MediaPlayerSettingsProps) {
         side="top"
         sideOffset={sideOffset}
         container={context.portalContainer}
-        className="w-56 data-[side=top]:mb-3.5"
+        className="w-56 data-[side=top]:mb-3.5 z-[1000000]"
       >
         <DropdownMenuLabel className="sr-only">Settings</DropdownMenuLabel>
         <DropdownMenuSub>

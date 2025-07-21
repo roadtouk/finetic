@@ -6,6 +6,7 @@ interface MediaToPlay {
   id: string;
   name: string;
   type: 'Movie' | 'Series' | 'Episode';
+  resumePositionTicks?: number;
 }
 
 interface MediaPlayerContextType {
