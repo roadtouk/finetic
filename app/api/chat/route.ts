@@ -6,7 +6,12 @@ import {
   fetchMovies,
   fetchTVShows,
   fetchMediaDetails,
+  fetchResumeItems,
 } from "@/app/actions/media";
+import {
+  fetchSeasons,
+  fetchEpisodes,
+} from "@/app/actions/tv-shows";
 
 export async function POST(req: Request) {
   try {
@@ -175,6 +180,123 @@ export async function POST(req: Request) {
           },
         }),
 
+continueWatching: tool({
+          description: "Fetch list of media items that are currently being watched/continued",
+          parameters: z.object({
+            limit: z.number().optional().describe("Number of items, default is 20"),
+          }),
+          execute: async ({ limit = 20 }) => {
+            console.log("🕒 [continueWatching] Tool called with limit:", limit);
+            try {
+              const items = await fetchResumeItems();
+              return {
+                success: true,
+                resumeItems: items.slice(0, limit).map((item) => ({
+                  id: item.Id,
+                  name: item.Name,
+                  type: item.Type,
+                  year: item.ProductionYear,
+                  overview: item.Overview?.substring(0, 200) + "...",
+                  userProgress: item.UserData?.PlayedPercentage,
+                })),
+                count: items.length,
+              };
+            } catch (error) {
+              return {
+                success: false,
+                error: "Failed to fetch continue-watching items",
+                resumeItems: [],
+              };
+            }
+          },
+        }),
+        
+        getPeople: tool({
+          description: "Search for people (e.g., directors, actors) related to media",
+          parameters: z.object({
+            query: z.string().describe("The search term or person name to look for"),
+          }),
+          execute: async ({ query }) => {
+            console.log("🔍 [getPeople] Tool called with query:", query);
+            try {
+              // Search for media first, then extract people from results
+              const results = await searchItems(query);
+              const people: Array<{id: string, name: string, role?: string}> = [];
+              
+              // Extract people from search results
+              results.forEach(item => {
+                if (item.People) {
+                  item.People.forEach(person => {
+                    if (person.Name && person.Name.toLowerCase().includes(query.toLowerCase())) {
+                      people.push({
+                        id: person.Id || '',
+                        name: person.Name,
+                        role: person.Type! || person.Role,
+                      });
+                    }
+                  });
+                }
+              });
+              
+              return {
+                success: true,
+                people: people.slice(0, 10), // Limit results
+                count: people.length,
+              };
+            } catch (error) {
+              return {
+                success: false,
+                error: "Failed to search people",
+                people: [],
+              };
+            }
+          },
+        }),
+        
+        getGenres: tool({
+          description: "Get list of all genres available in the library",
+          parameters: z.object({
+            mediaType: z.enum(["Movie", "Series", "All"]).optional().describe("Filter by media type, default is All"),
+          }),
+          execute: async ({ mediaType = "All" }) => {
+            console.log("🎭 [getGenres] Tool called with mediaType:", mediaType);
+            try {
+              // Get movies and/or TV shows to extract genres
+              let items = [];
+              if (mediaType === "Movie" || mediaType === "All") {
+                const movies = await fetchMovies(50);
+                items.push(...movies);
+              }
+              if (mediaType === "Series" || mediaType === "All") {
+                const shows = await fetchTVShows(50);
+                items.push(...shows);
+              }
+              
+              // Extract unique genres
+              const genreSet = new Set<string>();
+              items.forEach(item => {
+                if (item.Genres) {
+                  item.Genres.forEach((genre: string) => genreSet.add(genre));
+                }
+              });
+              
+              const genres = Array.from(genreSet).sort();
+              
+              return {
+                success: true,
+                genres,
+                count: genres.length,
+              };
+            } catch (error) {
+              return {
+                success: false,
+                error: "Failed to fetch genres",
+                genres: [],
+              };
+            }
+          },
+        }),
+        
         getMediaDetails: tool({
           description:
             "Get detailed information about a specific movie or TV show",
@@ -220,9 +342,133 @@ export async function POST(req: Request) {
             }
           },
         }),
+        
+        getSeasons: tool({
+          description: "Get seasons for a TV show",
+          parameters: z.object({
+            tvShowId: z.string().describe("The unique ID of the TV show"),
+          }),
+          execute: async ({ tvShowId }) => {
+            console.log("📺 [getSeasons] Tool called with tvShowId:", tvShowId);
+            try {
+              const seasons = await fetchSeasons(tvShowId);
+              return {
+                success: true,
+                seasons: seasons.map((season) => ({
+                  id: season.Id,
+                  name: season.Name,
+                  seasonNumber: season.IndexNumber,
+                  episodeCount: season.ChildCount,
+                  overview: season.Overview,
+                })),
+                count: seasons.length,
+              };
+            } catch (error) {
+              return {
+                success: false,
+                error: "Failed to fetch seasons",
+                seasons: [],
+              };
+            }
+          },
+        }),
+        
+        getEpisodes: tool({
+          description: "Get episodes for a TV show season",
+          parameters: z.object({
+            seasonId: z.string().describe("The unique ID of the season"),
+          }),
+          execute: async ({ seasonId }) => {
+            console.log("📺 [getEpisodes] Tool called with seasonId:", seasonId);
+            try {
+              const episodes = await fetchEpisodes(seasonId);
+              return {
+                success: true,
+                episodes: episodes.map((episode) => ({
+                  id: episode.Id,
+                  name: episode.Name,
+                  episodeNumber: episode.IndexNumber,
+                  seasonNumber: episode.ParentIndexNumber,
+                  overview: episode.Overview,
+                  runtime: episode.RunTimeTicks
+                    ? Math.round(episode.RunTimeTicks / 600000000)
+                    : null,
+                })),
+                count: episodes.length,
+              };
+            } catch (error) {
+              return {
+                success: false,
+                error: "Failed to fetch episodes",
+                episodes: [],
+              };
+            }
+          },
+        }),
+        
+        getWatchlist: tool({
+          description: "Get user's watchlist or favorites (simulated with highly-rated content)",
+          parameters: z.object({
+            limit: z.number().optional().describe("Number of items, default is 20"),
+          }),
+          execute: async ({ limit = 20 }) => {
+            console.log("⭐ [getWatchlist] Tool called with limit:", limit);
+            try {
+              // Since there's no direct watchlist API, we'll get popular/recent content
+              const [movies, shows] = await Promise.all([
+                fetchMovies(Math.ceil(limit / 2)),
+                fetchTVShows(Math.ceil(limit / 2))
+              ]);
+              
+              const allItems = [...movies, ...shows].slice(0, limit);
+              
+              return {
+                success: true,
+                watchlist: allItems.map((item) => ({
+                  id: item.Id,
+                  name: item.Name,
+                  type: item.Type,
+                  year: item.ProductionYear,
+                  overview: item.Overview?.substring(0, 200) + "...",
+                  rating: item.CommunityRating,
+                })),
+                count: allItems.length,
+              };
+            } catch (error) {
+              return {
+                success: false,
+                error: "Failed to fetch watchlist",
+                watchlist: [],
+              };
+            }
+          },
+        }),
       },
       system: `You are Finetic, an AI assistant for a media library application (similar to Plex/Jellyfin). 
       Help users navigate to movies and TV shows, search for content, and provide information about media.
+      
+      AVAILABLE TOOLS AND CAPABILITIES:
+      - searchMedia: Search for movies, TV shows, or episodes by name or keyword
+      - navigateToMedia: Navigate to a specific movie, TV show, or episode page
+      - playMedia: Play a specific movie, TV show, or episode directly in the media player
+      - getMovies: Get a list of recent movies from the library
+      - getTVShows: Get a list of recent TV shows from the library  
+      - continueWatching: Fetch list of media items that are currently being watched/continued
+      - getPeople: Search for people (directors, actors) related to media content
+      - getGenres: Get list of all genres available in the library
+      - getMediaDetails: Get detailed information about a specific movie or TV show
+      - getSeasons: Get seasons for a TV show
+      - getEpisodes: Get episodes for a TV show season
+      - getWatchlist: Get user's watchlist or favorites (popular/highly-rated content)
+      
+      USAGE EXAMPLES:
+      - "Show me my continue watching list" → Use continueWatching tool
+      - "What genres are available?" → Use getGenres tool
+      - "Find movies with Tom Hanks" → Use getPeople tool with query "Tom Hanks"
+      - "Show me seasons of Breaking Bad" → Search for the show first, then use getSeasons
+      - "What's in my watchlist?" → Use getWatchlist tool
+      - "Show me recent movies" → Use getMovies tool
+      - "Play Inception" → Search for it, then use playMedia tool
 
       SEARCH CORRECTION: Before searching, automatically correct common abbreviations and shorthand terms to their full proper names:
       - "b99" → "Brooklyn Nine-Nine"

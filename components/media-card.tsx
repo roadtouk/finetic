@@ -23,7 +23,7 @@ export function MediaCard({
   resumePosition?: number;
 }) {
   const { playMedia, setIsPlayerVisible } = useMediaPlayer();
-  
+
   let linkHref = "";
   if (item.Type === "Movie") {
     linkHref = `/movie/${item.Id}`;
@@ -42,7 +42,7 @@ export function MediaCard({
     imageItemId = item.ParentThumbItemId || item.Id;
   }
 
-  const imageUrl = `${serverUrl}/Items/${imageItemId}/Images/${imageType}`;
+  const imageUrl = `${serverUrl}/Items/${imageItemId}/Images/${imageType}?fillHeight=760&fillWidth=506&quality=50`;
 
   // Calculate progress percentage from resume position
   let progressPercentage = percentageWatched;
@@ -56,13 +56,14 @@ export function MediaCard({
   const handlePlayClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (item) {
       await playMedia({
         id: item.Id!,
         name: item.Name!,
         type: item.Type as "Movie" | "Series" | "Episode",
-        resumePositionTicks: resumePosition || item.UserData?.PlaybackPositionTicks,
+        resumePositionTicks:
+          resumePosition || item.UserData?.PlaybackPositionTicks,
       });
       setIsPlayerVisible(true);
     }
@@ -75,7 +76,7 @@ export function MediaCard({
       }`}
     >
       <div
-        className={`relative w-full ${
+        className={`relative w-full border rounded-md overflow-hidden ${
           continueWatching ? "aspect-video" : "aspect-[2/3]"
         }`}
       >
@@ -83,7 +84,9 @@ export function MediaCard({
           {serverUrl ? (
             <img
               src={imageUrl}
-              className="w-full h-full object-cover transition duration-200 shadow-lg hover:brightness-85 rounded-md border shadow-sm group-hover:shadow-md active:scale-[0.98]"
+              className={`w-full h-full object-cover transition duration-200 shadow-lg hover:brightness-85 shadow-sm group-hover:shadow-md active:scale-[0.98] ${
+                progressPercentage > 0 ? "rounded-t-md" : "rounded-md"
+              }`}
               onError={(e) => {
                 e.currentTarget.style.display = "none";
               }}
@@ -95,32 +98,43 @@ export function MediaCard({
             </div>
           )}
         </Link>
-        
+
         {/* Play button overlay */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center rounded-md pointer-events-none">
+        <div
+          className={`absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center pointer-events-none ${
+            progressPercentage > 0 ? "rounded-t-md" : "rounded-md"
+          }`}
+        >
           <div className="invisible group-hover:visible transition-opacity duration-300 pointer-events-auto">
-            <button 
+            <button
               onClick={handlePlayClick}
-              className="bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
+              className="bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition active:scale-[0.97] hover:cursor-pointer"
             >
               <Play className="h-6 w-6 text-white fill-white" />
             </button>
           </div>
         </div>
+
+        {/* Progress bar overlay at bottom of image */}
+        {progressPercentage > 0 && (
+          <div
+            className="absolute bottom-0 left-0 right-0 h-1 bg-black/10 overflow-hidden"
+            style={{
+              borderBottomLeftRadius: "6px",
+              borderBottomRightRadius: "6px",
+            }}
+          >
+            <div
+              className="h-full bg-primary transition-all duration-300"
+              style={{
+                width: `${Math.min(Math.max(progressPercentage, 0), 100)}%`,
+              }}
+            ></div>
+          </div>
+        )}
       </div>
       <Link href={linkHref} draggable={false}>
         <div className="px-1">
-          {/* Progress bar for watched percentage */}
-          {progressPercentage > 0 && (
-            <div className="w-full h-1 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden mt-2">
-              <div
-                className="h-full bg-primary transition-all duration-300"
-                style={{
-                  width: `${Math.min(Math.max(progressPercentage, 0), 100)}%`,
-                }}
-              ></div>
-            </div>
-          )}
           <div className="mt-2.5 text-sm font-medium text-foreground truncate group-hover:underline">
             {item.Name}
           </div>
