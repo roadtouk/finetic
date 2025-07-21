@@ -20,17 +20,26 @@ import {
   MediaPlayerSettings,
 } from "@/components/ui/media-player";
 // import MuxVideo from "@mux/mux-video-react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, RotateCcw, RotateCw } from "lucide-react";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
-import { getStreamUrl, getSubtitleTracks, fetchMediaDetails, reportPlaybackStart, reportPlaybackProgress, reportPlaybackStopped } from "@/app/actions";
+import {
+  getStreamUrl,
+  getSubtitleTracks,
+  fetchMediaDetails,
+  reportPlaybackStart,
+  reportPlaybackProgress,
+  reportPlaybackStopped,
+} from "@/app/actions";
 import HlsVideoElement from "hls-video-element/react";
 import { formatRuntime } from "@/lib/utils";
 
 export function GlobalMediaPlayer() {
-  const { isPlayerVisible, setIsPlayerVisible, currentMedia } = useMediaPlayer();
+  const { isPlayerVisible, setIsPlayerVisible, currentMedia } =
+    useMediaPlayer();
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [mediaDetails, setMediaDetails] = useState<JellyfinItem | null>(null);
-  const [selectedVersion, setSelectedVersion] = useState<MediaSourceInfo | null>(null);
+  const [selectedVersion, setSelectedVersion] =
+    useState<MediaSourceInfo | null>(null);
   const [subtitleTracks, setSubtitleTracks] = useState<
     Array<{
       kind: string;
@@ -60,10 +69,10 @@ export function GlobalMediaPlayer() {
   const formatEndTime = (currentSeconds: number, durationSeconds: number) => {
     const remainingSeconds = durationSeconds - currentSeconds;
     const endTime = new Date(Date.now() + remainingSeconds * 1000);
-    return endTime.toLocaleTimeString([], { 
-      hour: 'numeric', 
-      minute: '2-digit',
-      hour12: true 
+    return endTime.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
     });
   };
 
@@ -83,7 +92,7 @@ export function GlobalMediaPlayer() {
       if (videoRef.current && !videoRef.current.paused) {
         const currentTime = videoRef.current.currentTime;
         const positionTicks = secondsToTicks(currentTime);
-        
+
         await reportPlaybackProgress(
           currentMedia.id,
           selectedVersion.Id!,
@@ -105,7 +114,7 @@ export function GlobalMediaPlayer() {
     if (playSessionId && currentMedia && selectedVersion && videoRef.current) {
       const currentTime = videoRef.current.currentTime;
       const positionTicks = secondsToTicks(currentTime);
-      
+
       await reportPlaybackStopped(
         currentMedia.id,
         selectedVersion.Id!,
@@ -129,7 +138,7 @@ export function GlobalMediaPlayer() {
     if (playSessionId && currentMedia && selectedVersion && videoRef.current) {
       const currentTime = videoRef.current.currentTime;
       const positionTicks = secondsToTicks(currentTime);
-      
+
       await reportPlaybackProgress(
         currentMedia.id,
         selectedVersion.Id!,
@@ -158,7 +167,7 @@ export function GlobalMediaPlayer() {
   const handleVideoLoadedMetadata = useCallback(() => {
     if (videoRef.current) {
       setDuration(videoRef.current.duration);
-      
+
       if (currentMedia?.resumePositionTicks) {
         const resumeTime = ticksToSeconds(currentMedia.resumePositionTicks);
         videoRef.current.currentTime = resumeTime;
@@ -173,7 +182,7 @@ export function GlobalMediaPlayer() {
   const handleClose = useCallback(async () => {
     // Stop progress tracking before closing
     await stopProgressTracking();
-    
+
     setIsPlayerVisible(false);
     setStreamUrl(null);
     setMediaDetails(null);
@@ -219,7 +228,10 @@ export function GlobalMediaPlayer() {
 
         // Fetch subtitle tracks
         try {
-          const tracks = await getSubtitleTracks(currentMedia.id, firstSource.Id!);
+          const tracks = await getSubtitleTracks(
+            currentMedia.id,
+            firstSource.Id!
+          );
           setSubtitleTracks(tracks);
         } catch (error) {
           console.error("Failed to fetch subtitle tracks:", error);
@@ -254,14 +266,16 @@ export function GlobalMediaPlayer() {
           console.warn("Media player error caught:", error);
         }}
       >
-        {(loading || !streamUrl || !mediaDetails) ? (
+        {loading || !streamUrl || !mediaDetails ? (
           <MediaPlayerLoading delayMs={200}>
-            <div className="text-white text-xl">Loading {currentMedia.name}...</div>
+            <div className="text-white text-xl">
+              Loading {currentMedia.name}...
+            </div>
           </MediaPlayerLoading>
         ) : (
           <MediaPlayerVideo asChild>
             <HlsVideoElement
-            // @ts-ignore
+              // @ts-ignore
               ref={videoRef}
               src={streamUrl}
               crossOrigin=""
@@ -302,23 +316,22 @@ export function GlobalMediaPlayer() {
             Go Back
           </Button>
           <MediaPlayerControlsOverlay />
-          <div className="flex flex-col w-full gap-1 pb-2">
+          <div className="flex flex-col w-full gap-1.5 pb-2">
             {/* Show name for episodes */}
             {mediaDetails?.SeriesName && (
-              <div className="text-sm text-white/70 truncate">
+              <div className="text-sm text-white/70 truncate font-medium">
                 {mediaDetails.SeriesName}
               </div>
             )}
-            
+
             {/* Episode/Movie title with episode number */}
             <div className="flex items-center justify-between w-full">
-              <h2 className="text-2xl font-semibold text-white truncate">
-                {mediaDetails?.Type === 'Episode' && mediaDetails?.IndexNumber 
+              <h2 className="text-3xl font-semibold text-white truncate font-poppins">
+                {mediaDetails?.Type === "Episode" && mediaDetails?.IndexNumber
                   ? `${mediaDetails.IndexNumber}. ${mediaDetails.Name || currentMedia.name}`
-                  : mediaDetails?.Name || currentMedia.name
-                }
+                  : mediaDetails?.Name || currentMedia.name}
               </h2>
-              
+
               {/* End time display */}
               {duration > 0 && currentTime >= 0 && (
                 <div className="text-sm text-white/70 ml-4 whitespace-nowrap">
@@ -326,24 +339,25 @@ export function GlobalMediaPlayer() {
                 </div>
               )}
             </div>
-            
+
             {/* Season and episode info + runtime */}
             <div className="flex items-center gap-3 text-sm text-white/60">
-              {mediaDetails?.Type === 'Episode' && (
-                <>
+              {mediaDetails?.Type === "Episode" && (
+                <div className="space-x-1">
                   {mediaDetails?.ParentIndexNumber && (
-                    <span>Season {mediaDetails.ParentIndexNumber}</span>
+                    <span>S{mediaDetails.ParentIndexNumber}</span>
                   )}
+                  <span>•</span>
                   {mediaDetails?.IndexNumber && (
-                    <span>Episode {mediaDetails.IndexNumber}</span>
+                    <span>E{mediaDetails.IndexNumber}</span>
                   )}
-                </>
+                </div>
               )}
-              
+
               {mediaDetails?.RunTimeTicks && (
                 <span>{formatRuntime(mediaDetails.RunTimeTicks)}</span>
               )}
-              
+
               {mediaDetails?.ProductionYear && (
                 <span>{mediaDetails.ProductionYear}</span>
               )}
@@ -353,8 +367,12 @@ export function GlobalMediaPlayer() {
           <div className="flex w-full items-center gap-2">
             <div className="flex flex-1 items-center gap-2">
               <MediaPlayerPlay />
-              <MediaPlayerSeekBackward />
-              <MediaPlayerSeekForward />
+              <MediaPlayerSeekBackward>
+                <RotateCcw />
+              </MediaPlayerSeekBackward>
+              <MediaPlayerSeekForward>
+                <RotateCw />
+              </MediaPlayerSeekForward>
               <MediaPlayerVolume expandable />
               <MediaPlayerTime />
             </div>
