@@ -83,6 +83,34 @@ export async function POST(req: Request) {
           },
         }),
 
+        playMedia: tool({
+          description: "Play a specific movie, TV show, or episode directly in the media player",
+          parameters: z.object({
+            mediaId: z.string().describe("The unique ID of the media item"),
+            mediaName: z.string().describe("The name of the media item"),
+            mediaType: z
+              .enum(["Movie", "Series", "Episode"])
+              .describe(
+                "The type of media - Movie, Series (TV Show), or Episode"
+              ),
+          }),
+          execute: async ({ mediaId, mediaName, mediaType }) => {
+            console.log("▶️ [playMedia] Tool called with:", {
+              mediaId,
+              mediaName,
+              mediaType,
+            });
+            return {
+              success: true,
+              action: "play",
+              mediaId,
+              mediaName,
+              mediaType,
+              message: `Playing ${mediaName}...`,
+            };
+          },
+        }),
+
         getMovies: tool({
           description: "Get a list of recent movies from the library",
           parameters: z.object({
@@ -241,13 +269,21 @@ export async function POST(req: Request) {
       
       Use character names, plot elements, memorable quotes, distinctive features, or other descriptive elements to identify content. If multiple possibilities exist, search for the most popular/well-known option first, then offer alternatives if needed.
 
+      COMMAND HANDLING:
       When users ask to "go to", "navigate to", "open", or "show me" a specific movie or TV show:
       1. First correct/expand any abbreviations in the user's query
       2. Search for the media using searchMedia with the corrected query
       3. If found, use navigateToMedia to provide the navigation URL
       4. Be helpful and conversational
 
-      When you use the navigateToMedia tool, make sure to mention that you're navigating to the content by name only, without including the URL.`,
+      When users ask to "play", "watch", "start", or similar playback commands for a specific movie or TV show:
+      1. First correct/expand any abbreviations in the user's query
+      2. Search for the media using searchMedia with the corrected query
+      3. If found, use playMedia to start playing the content directly in the media player
+      4. Be helpful and conversational
+
+      When you use the navigateToMedia tool, make sure to mention that you're navigating to the content by name only, without including the URL.
+      When you use the playMedia tool, make sure to mention that you're starting playback of the content.`,
       onFinish: async ({ usage, finishReason, text, toolResults }) => {
         // Handle navigation logic here if needed
         console.log("Chat finished:", {

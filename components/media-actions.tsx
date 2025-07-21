@@ -20,6 +20,7 @@ import {
 import { MediaInfoDialog } from "@/components/media-info-dialog";
 import { Info, Download, Play, ArrowLeft } from "lucide-react";
 import { getDownloadUrl, getStreamUrl, getSubtitleTracks } from "@/app/actions";
+import { GlobalMediaPlayer } from "./global-media-player";
 import { getMediaDetailsFromName, cutOffText } from "@/lib/utils";
 import {
   MediaPlayer,
@@ -48,19 +49,9 @@ interface MediaActionsProps {
 
 export function MediaActions({ movie, show, episode }: MediaActionsProps) {
   const media = movie || show || episode;
-  const { isPlayerVisible, setIsPlayerVisible } = useMediaPlayer();
+  const { isPlayerVisible, setIsPlayerVisible, setCurrentMedia } = useMediaPlayer();
   const [selectedVersion, setSelectedVersion] =
     useState<MediaSourceInfo | null>(null);
-  const [streamUrl, setStreamUrl] = useState<string | null>(null);
-  const [subtitleTracks, setSubtitleTracks] = useState<
-    Array<{
-      kind: string;
-      label: string;
-      language: string;
-      src: string;
-      default?: boolean;
-    }>
-  >([]);
 
   // Initialize selectedVersion when media changes
   useEffect(() => {
@@ -111,22 +102,10 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
       <Button
         variant="default"
         onClick={async () => {
-          // Generate a new stream URL each time play is clicked
-          const streamUrl = await getStreamUrl(media!.Id!, selectedVersion.Id!);
-          setStreamUrl(streamUrl);
-          setIsPlayerVisible(true);
-          console.log("Stream URL:", streamUrl);
-
-          // Fetch subtitle tracks
-          try {
-            const tracks = await getSubtitleTracks(
-              media!.Id!,
-              selectedVersion.Id!
-            );
-            console.log("Fetched subtitle tracks:", tracks);
-            setSubtitleTracks(tracks);
-          } catch (error) {
-            console.error("Failed to fetch subtitle tracks:", error);
+          // Set the current media in context, GlobalMediaPlayer will handle the rest
+          if (media) {
+            setCurrentMedia(media);
+            setIsPlayerVisible(true);
           }
         }}
       >
@@ -191,75 +170,8 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Media Player */}
-      {isPlayerVisible && streamUrl && (
-        <div className="fixed inset-0 z-[999999] bg-black flex items-center justify-center">
-          <MediaPlayer
-            autoHide
-            onEnded={() => setIsPlayerVisible(false)}
-            onMediaError={(error) => {
-              console.warn("Media player error caught:", error);
-            }}
-          >
-            <MediaPlayerVideo asChild>
-              <MuxVideo
-                src={streamUrl}
-                crossOrigin=""
-                playsInline
-                preload="auto"
-                autoPlay
-                className="w-full h-screen bg-black"
-                onError={(event) => {
-                  console.warn("Video error caught:", event);
-                }}
-              >
-                {subtitleTracks.map((track, index) => (
-                  <track
-                    key={`${track.language}-${index}`}
-                    kind={track.kind}
-                    label={track.label}
-                    src={track.src}
-                    srcLang={track.language}
-                    default={track.default}
-                  />
-                ))}
-              </MuxVideo>
-            </MediaPlayerVideo>
-            <MediaPlayerControls className="flex-col items-start gap-2.5 px-6 pb-4 z-[9999]">
-              <Button
-                variant="ghost"
-                className="fixed left-4 top-4 z-10"
-                onClick={() => setIsPlayerVisible(false)}
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Go Back
-              </Button>
-              <MediaPlayerControlsOverlay />
-              <div className="flex w-full items-center justify-between">
-                <h2 className="text-2xl font-semibold text-white truncate pb-2">
-                  {media!.Name}
-                </h2>
-                <div className="w-8" /> {/* Spacer for centering */}
-              </div>
-              <MediaPlayerSeek />
-              <div className="flex w-full items-center gap-2">
-                <div className="flex flex-1 items-center gap-2">
-                  <MediaPlayerPlay />
-                  <MediaPlayerSeekBackward />
-                  <MediaPlayerSeekForward />
-                  <MediaPlayerVolume expandable />
-                  <MediaPlayerTime />
-                </div>
-                <div className="flex items-center gap-2">
-                  <MediaPlayerSettings />
-                  <MediaPlayerPiP />
-                  <MediaPlayerFullscreen />
-                </div>
-              </div>
-            </MediaPlayerControls>
-          </MediaPlayer>
-        </div>
-      )}
+{/* GlobalMediaPlayer is rendered globally through the context */}
+      <GlobalMediaPlayer />
     </div>
   );
 }

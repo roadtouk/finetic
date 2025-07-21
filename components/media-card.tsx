@@ -68,7 +68,7 @@ export function MediaCard({
           {percentageWatched > 0 && (
             <div className="w-full h-1 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden mt-2">
               <div
-                className="h-full bg-blue-500 transition-all duration-300"
+                className="h-full bg-primary transition-all duration-300"
                 style={{
                   width: `${Math.min(Math.max(percentageWatched, 0), 100)}%`,
                 }}

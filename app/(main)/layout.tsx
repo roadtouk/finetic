@@ -3,6 +3,7 @@
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import AIAsk from "@/components/ai-ask";
+import { GlobalMediaPlayer } from "@/components/global-media-player";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 import { useState } from "react";
 import { MediaPlayerProvider } from "@/contexts/MediaPlayerContext";
@@ -59,6 +60,7 @@ export default function MainLayout({
           </SidebarInset>
         </SidebarProvider>
         <AIAsk isOpen={isAIAskOpen} onOpenChange={setIsAIAskOpen} />
+        <GlobalMediaPlayer />
       </div>
     </MediaPlayerProvider>
   );

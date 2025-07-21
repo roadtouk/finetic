@@ -39,6 +39,8 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
 
   const router = useRouter();
 
+  const { playMedia } = useMediaPlayer();
+  
   const {
     messages,
     input,
@@ -51,11 +53,13 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
   } = useChat({
     api: "/api/chat",
     onFinish: (message) => {
-      // Check if the message contains navigation instructions
+      // Check if the message contains navigation or play instructions
       if (message.toolInvocations) {
         for (const toolInvocation of message.toolInvocations) {
           if (toolInvocation.toolName === "navigateToMedia") {
             navigateToMedia(toolInvocation);
+          } else if (toolInvocation.toolName === "playMedia") {
+            handlePlayMedia(toolInvocation);
           }
         }
       }
@@ -71,6 +75,26 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
       const result = toolInvocation.result;
       if (result.success && result.action === "navigate" && result.url) {
         router.push(result.url);
+        setTimeout(() => {
+          setIsAskOpen(false);
+        }, 500);
+      }
+    }
+  };
+
+  const handlePlayMedia = (toolInvocation: ToolInvocation) => {
+    if (
+      "result" in toolInvocation &&
+      toolInvocation.toolName === "playMedia"
+    ) {
+      console.log("Play media tool invocation result:", toolInvocation.result);
+      const result = toolInvocation.result;
+      if (result.success && result.action === "play" && result.mediaId && result.mediaName && result.mediaType) {
+        playMedia({
+          id: result.mediaId,
+          name: result.mediaName,
+          type: result.mediaType,
+        });
         setTimeout(() => {
           setIsAskOpen(false);
         }, 500);
