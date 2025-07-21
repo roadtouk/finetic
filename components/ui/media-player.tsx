@@ -399,12 +399,12 @@ function MediaPlayerRootImpl(props: MediaPlayerRootProps) {
     (action: { type: string; detail?: any }) => {
       const now = Date.now();
       const timeSinceLastKeyPress = now - lastKeyPressTimeRef.current;
-      
+
       // Clear any existing throttle timeout
       if (keyboardActionThrottleRef.current) {
         clearTimeout(keyboardActionThrottleRef.current);
       }
-      
+
       // If it's been less than 100ms since last key press, throttle the action
       if (timeSinceLastKeyPress < 100) {
         keyboardActionThrottleRef.current = setTimeout(() => {
@@ -415,7 +415,7 @@ function MediaPlayerRootImpl(props: MediaPlayerRootProps) {
         // Execute immediately if enough time has passed
         dispatch(action);
       }
-      
+
       lastKeyPressTimeRef.current = now;
     },
     [dispatch]
@@ -2132,7 +2132,7 @@ function MediaPlayerSeek(props: MediaPlayerSeekProps) {
           {seekState.isHovering && seekableEnd > 0 && (
             <div
               data-slot="media-player-seek-hover-range"
-              className="absolute h-full bg-white/70 will-change-[width,opacity]"
+              className="absolute h-full bg-white/20 will-change-[width,opacity]"
               style={{
                 width: `var(${SEEK_HOVER_PERCENT}, 0%)`,
                 transition: "opacity 150ms ease-out",
@@ -2149,7 +2149,7 @@ function MediaPlayerSeek(props: MediaPlayerSeekProps) {
           <MediaPlayerPortal>
             <div
               ref={tooltipRef}
-              className="pointer-events-none z-50 [backface-visibility:hidden] [contain:layout_style] [transition:opacity_150ms_ease-in-out]"
+              className="pointer-events-none z-[1000001] [backface-visibility:hidden] [contain:layout_style] [transition:opacity_150ms_ease-in-out]"
               style={{
                 position: "fixed" as const,
                 left: `var(${SEEK_TOOLTIP_X}, 0rem)`,
@@ -2356,9 +2356,9 @@ function MediaPlayerVolume(props: MediaPlayerVolumeProps) {
         onValueCommit={onVolumeCommit}
       >
         <SliderPrimitive.Track className="relative h-1 w-full grow overflow-hidden rounded-full bg-zinc-500">
-          <SliderPrimitive.Range className="absolute h-full bg-purple-500 will-change-[width]" />
+          <SliderPrimitive.Range className="absolute h-full bg-primary will-change-[width]" />
         </SliderPrimitive.Track>
-        <SliderPrimitive.Thumb className="block size-2.5 shrink-0 rounded-full bg-purple-500 shadow-sm ring-ring/50 transition-[color,box-shadow] will-change-transform hover:ring-4 focus-visible:outline-hidden focus-visible:ring-4 disabled:pointer-events-none disabled:opacity-50" />
+        <SliderPrimitive.Thumb className="block size-2.5 shrink-0 rounded-full bg-primary shadow-sm ring-ring/50 transition-[color,box-shadow] will-change-transform hover:ring-4 focus-visible:outline-hidden focus-visible:ring-4 disabled:pointer-events-none disabled:opacity-50" />
       </SliderPrimitive.Root>
     </div>
   );
