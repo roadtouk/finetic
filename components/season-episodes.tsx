@@ -281,7 +281,7 @@ export const SeasonEpisodes = React.memo(function SeasonEpisodes({
 
       {episodesLoading ? (
         <ScrollArea className="w-full whitespace-nowrap">
-          <div className="flex w-max space-x-4 mb-8">
+          <div className="flex w-max space-x-4 mb-8 pl-1 pr-1">
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="shrink-0 w-72">
                 <div className="space-y-3">
@@ -304,7 +304,7 @@ export const SeasonEpisodes = React.memo(function SeasonEpisodes({
         </div>
       ) : (
         <ScrollArea className="w-full rounded-md">
-          <div className="flex w-max space-x-4 mb-8">
+          <div className="flex w-max space-x-4 mb-8 pl-1 pr-1">
             {episodes.map((episode) => (
               <EpisodeCard
                 key={episode.Id}

@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import { Play } from "lucide-react";
+import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 
 export function MediaCard({
   item,
@@ -20,6 +22,8 @@ export function MediaCard({
   showProgress?: boolean;
   resumePosition?: number;
 }) {
+  const { playMedia, setIsPlayerVisible } = useMediaPlayer();
+  
   let linkHref = "";
   if (item.Type === "Movie") {
     linkHref = `/movie/${item.Id}`;
@@ -49,18 +53,33 @@ export function MediaCard({
   // For continue watching, use landscape aspect ratio and larger width
   const isResumeItem = showProgress && resumePosition;
 
+  const handlePlayClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (item) {
+      await playMedia({
+        id: item.Id!,
+        name: item.Name!,
+        type: item.Type as "Movie" | "Series" | "Episode",
+        resumePositionTicks: resumePosition || item.UserData?.PlaybackPositionTicks,
+      });
+      setIsPlayerVisible(true);
+    }
+  };
+
   return (
-    <Link href={linkHref} draggable={false}>
+    <div
+      className={`cursor-pointer group overflow-hidden transition select-none ${
+        continueWatching ? "w-64" : "w-36"
+      }`}
+    >
       <div
-        className={`cursor-pointer group overflow-hidden transition select-none ${
-          continueWatching ? "w-64" : "w-36"
+        className={`relative w-full ${
+          continueWatching ? "aspect-video" : "aspect-[2/3]"
         }`}
       >
-        <div
-          className={`relative w-full ${
-            continueWatching ? "aspect-video" : "aspect-[2/3]"
-          }`}
-        >
+        <Link href={linkHref} draggable={false} className="block w-full h-full">
           {serverUrl ? (
             <img
               src={imageUrl}
@@ -75,7 +94,21 @@ export function MediaCard({
               <div className="text-white/60 text-sm">No Image</div>
             </div>
           )}
+        </Link>
+        
+        {/* Play button overlay */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center rounded-md pointer-events-none">
+          <div className="invisible group-hover:visible transition-opacity duration-300 pointer-events-auto">
+            <button 
+              onClick={handlePlayClick}
+              className="bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
+            >
+              <Play className="h-6 w-6 text-white fill-white" />
+            </button>
+          </div>
         </div>
+      </div>
+      <Link href={linkHref} draggable={false}>
         <div className="px-1">
           {/* Progress bar for watched percentage */}
           {progressPercentage > 0 && (
@@ -102,7 +135,7 @@ export function MediaCard({
               : ""}
           </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+    </div>
   );
 }
