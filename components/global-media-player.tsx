@@ -24,6 +24,7 @@ import { ArrowLeft } from "lucide-react";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 import { getStreamUrl, getSubtitleTracks, fetchMediaDetails, reportPlaybackStart, reportPlaybackProgress, reportPlaybackStopped } from "@/app/actions";
 import HlsVideoElement from "hls-video-element/react";
+import { formatRuntime } from "@/lib/utils";
 
 export function GlobalMediaPlayer() {
   const { isPlayerVisible, setIsPlayerVisible, currentMedia } = useMediaPlayer();
@@ -46,12 +47,25 @@ export function GlobalMediaPlayer() {
   const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
 
   // Helper function to convert seconds to Jellyfin ticks (1 tick = 100 nanoseconds)
   const secondsToTicks = (seconds: number) => Math.floor(seconds * 10000000);
 
   // Helper function to convert Jellyfin ticks to seconds
   const ticksToSeconds = (ticks: number) => ticks / 10000000;
+
+  // Helper function to format time to HH:MM AM/PM
+  const formatEndTime = (currentSeconds: number, durationSeconds: number) => {
+    const remainingSeconds = durationSeconds - currentSeconds;
+    const endTime = new Date(Date.now() + remainingSeconds * 1000);
+    return endTime.toLocaleTimeString([], { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
 
   // Start progress tracking
   const startProgressTracking = useCallback(async () => {
@@ -126,13 +140,32 @@ export function GlobalMediaPlayer() {
     }
   }, [playSessionId, currentMedia, selectedVersion]);
 
+  // Handle video time updates
+  const handleTimeUpdate = useCallback(() => {
+    if (videoRef.current) {
+      setCurrentTime(videoRef.current.currentTime);
+    }
+  }, []);
+
+  // Handle duration change
+  const handleDurationChange = useCallback(() => {
+    if (videoRef.current) {
+      setDuration(videoRef.current.duration);
+    }
+  }, []);
+
   // Set video to resume position if provided
   const handleVideoLoadedMetadata = useCallback(() => {
-    if (videoRef.current && currentMedia?.resumePositionTicks) {
-      const resumeTime = ticksToSeconds(currentMedia.resumePositionTicks);
-      videoRef.current.currentTime = resumeTime;
-      // Only start playing after we've set the correct position
-      videoRef.current.play();
+    if (videoRef.current) {
+      setDuration(videoRef.current.duration);
+      
+      if (currentMedia?.resumePositionTicks) {
+        const resumeTime = ticksToSeconds(currentMedia.resumePositionTicks);
+        videoRef.current.currentTime = resumeTime;
+        setCurrentTime(resumeTime);
+        // Only start playing after we've set the correct position
+        videoRef.current.play();
+      }
     }
   }, [currentMedia]);
 
@@ -146,6 +179,8 @@ export function GlobalMediaPlayer() {
     setMediaDetails(null);
     setSelectedVersion(null);
     setSubtitleTracks([]);
+    setCurrentTime(0);
+    setDuration(0);
   }, [stopProgressTracking]);
 
   const handleVideoEnded = useCallback(async () => {
@@ -238,6 +273,8 @@ export function GlobalMediaPlayer() {
               onPause={handleVideoPause}
               onEnded={handleVideoEnded}
               onLoadedMetadata={handleVideoLoadedMetadata}
+              onTimeUpdate={handleTimeUpdate}
+              onDurationChange={handleDurationChange}
               onError={(event) => {
                 console.warn("Video error caught:", event);
               }}
@@ -265,11 +302,52 @@ export function GlobalMediaPlayer() {
             Go Back
           </Button>
           <MediaPlayerControlsOverlay />
-          <div className="flex w-full items-center justify-between">
-            <h2 className="text-2xl font-semibold text-white truncate pb-2">
-              {currentMedia.name}
-            </h2>
-            <div className="w-8" /> {/* Spacer for centering */}
+          <div className="flex flex-col w-full gap-1 pb-2">
+            {/* Show name for episodes */}
+            {mediaDetails?.SeriesName && (
+              <div className="text-sm text-white/70 truncate">
+                {mediaDetails.SeriesName}
+              </div>
+            )}
+            
+            {/* Episode/Movie title with episode number */}
+            <div className="flex items-center justify-between w-full">
+              <h2 className="text-2xl font-semibold text-white truncate">
+                {mediaDetails?.Type === 'Episode' && mediaDetails?.IndexNumber 
+                  ? `${mediaDetails.IndexNumber}. ${mediaDetails.Name || currentMedia.name}`
+                  : mediaDetails?.Name || currentMedia.name
+                }
+              </h2>
+              
+              {/* End time display */}
+              {duration > 0 && currentTime >= 0 && (
+                <div className="text-sm text-white/70 ml-4 whitespace-nowrap">
+                  Ends at {formatEndTime(currentTime, duration)}
+                </div>
+              )}
+            </div>
+            
+            {/* Season and episode info + runtime */}
+            <div className="flex items-center gap-3 text-sm text-white/60">
+              {mediaDetails?.Type === 'Episode' && (
+                <>
+                  {mediaDetails?.ParentIndexNumber && (
+                    <span>Season {mediaDetails.ParentIndexNumber}</span>
+                  )}
+                  {mediaDetails?.IndexNumber && (
+                    <span>Episode {mediaDetails.IndexNumber}</span>
+                  )}
+                </>
+              )}
+              
+              {mediaDetails?.RunTimeTicks && (
+                <span>{formatRuntime(mediaDetails.RunTimeTicks)}</span>
+              )}
+              
+              {mediaDetails?.ProductionYear && (
+                <span>{mediaDetails.ProductionYear}</span>
+              )}
+            </div>
           </div>
           <MediaPlayerSeek />
           <div className="flex w-full items-center gap-2">
