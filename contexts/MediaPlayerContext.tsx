@@ -1,12 +1,14 @@
 "use client";
 
 import React, { createContext, useContext, useState } from 'react';
+import { MediaSourceInfo } from '@/types/jellyfin';
 
 interface MediaToPlay {
   id: string;
   name: string;
   type: 'Movie' | 'Series' | 'Episode';
   resumePositionTicks?: number;
+  selectedVersion?: MediaSourceInfo;
 }
 
 interface MediaPlayerContextType {

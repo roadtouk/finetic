@@ -105,12 +105,13 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
           // Set the current media in context, GlobalMediaPlayer will handle the rest
           if (media) {
             console.log("Playing media:", media.Name);
-            await playMedia({
-              id: media.Id!,
-              name: media.Name!,
-              type: media.Type as "Movie" | "Series" | "Episode",
-              resumePositionTicks: media.UserData?.PlaybackPositionTicks,
-            });
+await playMedia({
+  id: media.Id!,
+  name: media.Name!,
+  type: media.Type as "Movie" | "Series" | "Episode",
+  resumePositionTicks: media.UserData?.PlaybackPositionTicks,
+  selectedVersion: selectedVersion,
+});
             setIsPlayerVisible(true);
           }
         }}

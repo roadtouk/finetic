@@ -225,20 +225,31 @@ export function GlobalMediaPlayer() {
 
       setMediaDetails(details);
 
-      // Select the first available media source
+      // Use selected version from MediaActions or fallback to first source
       if (details.MediaSources && details.MediaSources.length > 0) {
-        const firstSource = details.MediaSources[0];
-        setSelectedVersion(firstSource);
+        let sourceToUse = details.MediaSources[0]; // fallback
+        
+        // If a version was selected in MediaActions, try to find it in the fetched details
+        if (currentMedia.selectedVersion) {
+          const matchingSource = details.MediaSources.find(source => 
+            source.Id === currentMedia.selectedVersion!.Id
+          );
+          if (matchingSource) {
+            sourceToUse = matchingSource;
+          }
+        }
+        
+        setSelectedVersion(sourceToUse);
 
         // Generate stream URL
-        const streamUrl = await getStreamUrl(currentMedia.id, firstSource.Id!);
+        const streamUrl = await getStreamUrl(currentMedia.id, sourceToUse.Id!);
         setStreamUrl(streamUrl);
 
         // Fetch subtitle tracks
         try {
           const tracks = await getSubtitleTracks(
             currentMedia.id,
-            firstSource.Id!
+            sourceToUse.Id!
           );
           setSubtitleTracks(tracks);
         } catch (error) {
