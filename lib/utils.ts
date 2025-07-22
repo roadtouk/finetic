@@ -66,3 +66,25 @@ export const formatRuntime = (runTimeTicks?: number) => {
   }
   return `${minutes}m`;
 };
+
+export const convertToWebVTT = (trackEvents: { TrackEvents: { Id: string; Text: string; StartPositionTicks: number; EndPositionTicks: number; }[] }): string => {
+  const convertTicksToTime = (ticks: number): string => {
+    const totalSeconds = ticks / 10000000;
+    const hours = Math.floor(totalSeconds / 3600)
+      .toString()
+      .padStart(2, '0');
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+      .toString()
+      .padStart(2, '0');
+    const seconds = (totalSeconds % 60).toFixed(3).padStart(6, '0');
+    return `${hours}:${minutes}:${seconds}`;
+  };
+
+  let vtt = 'WEBVTT\n\n';
+  trackEvents.TrackEvents.forEach(event => {
+    const start = convertTicksToTime(event.StartPositionTicks);
+    const end = convertTicksToTime(event.EndPositionTicks);
+    vtt += `${event.Id}\n${start} --> ${end}\n${event.Text}\n\n`;
+  });
+  return vtt;
+};

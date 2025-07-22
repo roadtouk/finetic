@@ -297,10 +297,10 @@ export function GlobalMediaPlayer() {
             <HlsVideoElement
               // @ts-ignore
               ref={videoRef}
-              // src={streamUrl}
-              src={
-                "https://stream.mux.com/A3VXy02VoUinw01pwyomEO3bHnG4P32xzV7u1j1FSzjNg.m3u8"
-              }
+              src={streamUrl}
+              // src={
+              //   "https://stream.mux.com/A3VXy02VoUinw01pwyomEO3bHnG4P32xzV7u1j1FSzjNg.m3u8"
+              // }
               crossOrigin=""
               playsInline
               preload="auto"
