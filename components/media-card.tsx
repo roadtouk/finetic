@@ -76,7 +76,7 @@ export function MediaCard({
       }`}
     >
       <div
-        className={`relative w-full border rounded-md overflow-hidden ${
+        className={`relative w-full border rounded-md overflow-hidden active:scale-[0.98] transition ${
           continueWatching ? "aspect-video" : "aspect-[2/3]"
         }`}
       >
@@ -84,7 +84,7 @@ export function MediaCard({
           {serverUrl ? (
             <img
               src={imageUrl}
-              className={`w-full h-full object-cover transition duration-200 shadow-lg hover:brightness-85 shadow-sm group-hover:shadow-md active:scale-[0.98] ${
+              className={`w-full h-full object-cover transition duration-200 shadow-lg hover:brightness-85 shadow-sm group-hover:shadow-md ${
                 progressPercentage > 0 ? "rounded-t-md" : "rounded-md"
               }`}
               onError={(e) => {

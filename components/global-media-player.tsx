@@ -64,6 +64,7 @@ export function GlobalMediaPlayer() {
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const blobUrlsRef = useRef<string[]>([]);
 
   // Helper function to convert seconds to Jellyfin ticks (1 tick = 100 nanoseconds)
   const secondsToTicks = (seconds: number) => Math.floor(seconds * 10000000);
@@ -186,10 +187,25 @@ export function GlobalMediaPlayer() {
     }
   }, [currentMedia]);
 
+  // Helper function to clean up blob URLs
+  const cleanupBlobUrls = useCallback(() => {
+    blobUrlsRef.current.forEach(url => {
+      try {
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        console.warn('Failed to revoke blob URL:', error);
+      }
+    });
+    blobUrlsRef.current = [];
+  }, []);
+
   // Define handleClose first to avoid circular dependency
   const handleClose = useCallback(async () => {
     // Stop progress tracking before closing
     await stopProgressTracking();
+
+    // Clean up blob URLs
+    cleanupBlobUrls();
 
     setIsPlayerVisible(false);
     setStreamUrl(null);
@@ -198,7 +214,7 @@ export function GlobalMediaPlayer() {
     setSubtitleTracks([]);
     setCurrentTime(0);
     setDuration(0);
-  }, [stopProgressTracking]);
+  }, [stopProgressTracking, cleanupBlobUrls]);
 
   const handleVideoEnded = useCallback(async () => {
     await stopProgressTracking();
@@ -251,8 +267,44 @@ export function GlobalMediaPlayer() {
             currentMedia.id,
             sourceToUse.Id!
           );
-          console.log(tracks);
-          setSubtitleTracks(tracks);
+          console.log("Original tracks:", tracks);
+        
+          // Process each track to fix VTT formatting
+          const processedTracks = await Promise.all(
+            tracks.map(async (track) => {
+              try {
+                // Fetch the VTT content
+                const response = await fetch(track.src);
+                if (!response.ok) {
+                  console.warn(`Failed to fetch VTT for ${track.label}`);
+                  return track; // Return original track if fetch fails
+                }
+                
+                let vttContent = await response.text();
+                
+                // Fix VTT content by removing invalid line positioning when region is used
+                vttContent = vttContent.replace(/( region:\w+)( line:\d+%)/g, '$1');
+                
+                // Create a blob URL for the fixed content
+                const blob = new Blob([vttContent], { type: 'text/vtt' });
+                const blobUrl = URL.createObjectURL(blob);
+                
+                // Track the blob URL for cleanup
+                blobUrlsRef.current.push(blobUrl);
+                
+                return {
+                  ...track,
+                  src: blobUrl
+                };
+              } catch (error) {
+                console.error(`Failed to process subtitle track ${track.label}:`, error);
+                return track; // Return original track if processing fails
+              }
+            })
+          );
+          
+          console.log("Processed tracks:", processedTracks);
+          setSubtitleTracks(processedTracks);
         } catch (error) {
           console.error("Failed to fetch subtitle tracks:", error);
         }
@@ -270,8 +322,10 @@ export function GlobalMediaPlayer() {
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
       }
+      // Clean up blob URLs on unmount
+      cleanupBlobUrls();
     };
-  }, []);
+  }, [cleanupBlobUrls]);
 
   if (!isPlayerVisible || !currentMedia) {
     return null;

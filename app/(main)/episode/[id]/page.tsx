@@ -61,10 +61,10 @@ export default async function Episode({
 
         {/* Content section */}
         <div className="relative z-10 -mt-54 px-6">
-          <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row gap-8 mx-auto items-center">
             {/* Episode Image */}
             <div className="w-full lg:w-1/3 xl:w-1/4 flex-shrink-0 justify-center flex md:block">
-              <div className="relative aspect-video rounded-lg overflow-hidden shadow-2xl border-2 border-border/20 bg-muted mt-10">
+              <div className="relative aspect-video rounded-lg overflow-hidden shadow-2xl border-2 border-border/20 bg-muted">
                 {primaryImage ? (
                   <img
                     className="w-full h-full object-cover"
@@ -194,14 +194,14 @@ export default async function Episode({
 
           {/* Season Episodes Navigation */}
           {episode.SeriesId && (
-            <div className="mt-16 max-w-7xl mx-auto">
+            <div className="mt-16 mx-auto">
               <SeasonEpisodes showId={episode.SeriesId} />
             </div>
           )}
 
           {/* Episode Cast */}
           {episode.People && episode.People.length > 0 && (
-            <div className="mt-16 max-w-7xl mx-auto">
+            <div className="mt-16 mx-auto">
               <CastScrollArea people={episode.People} mediaId={id} />
             </div>
           )}

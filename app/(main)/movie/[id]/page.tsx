@@ -4,6 +4,7 @@ import { SearchBar } from "@/components/search-component";
 import { Badge } from "@/components/ui/badge";
 import { CastScrollArea } from "@/components/cast-scrollarea";
 import { AuroraBackground } from "@/components/aurora-background";
+import { VibrantLogo } from "@/components/vibrant-logo";
 import { redirect } from "next/navigation";
 
 export default async function Movie({
@@ -22,6 +23,7 @@ export default async function Movie({
 
     const primaryImage = await getImageUrl(id, "Primary");
     const backdropImage = await getImageUrl(id, "Backdrop");
+    const logoImage = await getImageUrl(id, "Logo");
 
     return (
       <div className="min-h-screen overflow-hidden md:pr-1">
@@ -36,10 +38,18 @@ export default async function Movie({
               width={1920}
               height={1080}
             />
+            <VibrantLogo
+              src={logoImage}
+              alt={`${movie.Name} logo`}
+              movieName={movie.Name || ""}
+              width={300}
+              height={96}
+              className="absolute top-5/12 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 max-h-20 md:max-h-24 w-auto object-contain"
+            />
             {/* Gradient overlay for better text readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
           </div>
-          
+
           {/* Search bar positioned over backdrop */}
           <div className="absolute top-8 left-0 right-0 z-20 px-6">
             <SearchBar />
@@ -59,42 +69,53 @@ export default async function Movie({
                 height={750}
               />
             </div>
-            
+
             {/* Movie information */}
             <div className="w-full md:w-2/3 lg:w-3/4 pt-4 md:pt-4 text-center md:text-start">
-              <h1 className="text-4xl md:text-5xl font-semibold mb-4 font-poppins text-foreground">
-                {movie.Name}
-              </h1>
-              
+              <div className="mb-4 flex justify-center md:justify-start">
+                <h1 className="text-4xl md:text-5xl font-semibold font-poppins text-foreground">
+                  {movie.Name}
+                </h1>
+              </div>
+
               {/* Movie badges */}
               <div className="flex flex-wrap items-center gap-2 mb-6 justify-center md:justify-start">
                 {movie.ProductionYear && (
-                  <Badge variant="outline" className="bg-sidebar/80 backdrop-blur-sm">
+                  <Badge
+                    variant="outline"
+                    className="bg-sidebar/80 backdrop-blur-sm"
+                  >
                     {movie.ProductionYear}
                   </Badge>
                 )}
                 {movie.OfficialRating && (
-                  <Badge variant="outline" className="bg-sidebar/80 backdrop-blur-sm">
+                  <Badge
+                    variant="outline"
+                    className="bg-sidebar/80 backdrop-blur-sm"
+                  >
                     {movie.OfficialRating}
                   </Badge>
                 )}
                 {movie.RunTimeTicks && (
-                  <Badge variant="outline" className="bg-sidebar/80 backdrop-blur-sm">
+                  <Badge
+                    variant="outline"
+                    className="bg-sidebar/80 backdrop-blur-sm"
+                  >
                     {Math.round(movie.RunTimeTicks / 600000000)} min
                   </Badge>
                 )}
               </div>
-              
+
               {/* Movie overview */}
               <p className="text-lg leading-relaxed mb-8 text-muted-foreground max-w-4xl">
                 {movie.Overview}
               </p>
-              
+
               {/* Media actions */}
               <MediaActions movie={movie} />
             </div>
           </div>
-          
+
           {/* Cast section */}
           <div className="mt-16 max-w-7xl mx-auto">
             <CastScrollArea people={movie.People!} mediaId={id} />

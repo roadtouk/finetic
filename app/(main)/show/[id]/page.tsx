@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { CastScrollArea } from "@/components/cast-scrollarea";
 import { SeasonEpisodes } from "@/components/season-episodes";
 import { AuroraBackground } from "@/components/aurora-background";
+import { VibrantLogo } from "@/components/vibrant-logo";
 import { redirect } from "next/navigation";
 
 export default async function Show({
@@ -24,6 +25,7 @@ export default async function Show({
 
     const primaryImage = await getImageUrl(id, "Primary");
     const backdropImage = await getImageUrl(id, "Backdrop");
+    const logoImage = await getImageUrl(id, "Logo");
 
     return (
       <div className="min-h-screen overflow-hidden md:pr-1">
@@ -37,6 +39,14 @@ export default async function Show({
               alt={`${show.Name} backdrop`}
               width={1920}
               height={1080}
+            />
+            <VibrantLogo
+              src={logoImage}
+              alt={`${show.Name} logo`}
+              movieName={show.Name || ""}
+              width={300}
+              height={96}
+              className="absolute top-5/12 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 max-h-20 md:max-h-24 w-auto object-contain"
             />
             {/* Gradient overlay for better text readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />

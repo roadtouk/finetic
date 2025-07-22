@@ -4,8 +4,7 @@ import { cookies } from "next/headers";
 import { Jellyfin } from "@jellyfin/sdk";
 import { UserLibraryApi } from "@jellyfin/sdk/lib/generated-client/api/user-library-api";
 import { LibraryApi } from "@jellyfin/sdk/lib/generated-client/api/library-api";
-import { createJellyfinInstance, convertToWebVTT } from "@/lib/utils";
-
+import { createJellyfinInstance } from "@/lib/utils";
 
 // Helper function to get auth data from cookies
 export async function getAuthData() {
@@ -86,24 +85,34 @@ export async function getSubtitleTracks(
   const api = jellyfinInstance.createApi(serverUrl);
   api.accessToken = user.AccessToken;
 
-try {
-    const subtitleUrl = `${serverUrl}/Videos/${itemId}/${itemId}/Subtitles/2/0/Stream.js?api_key=${user.AccessToken}`;
-    console.log(`Fetching subtitles from: ${subtitleUrl}`);
-    const response = await fetch(subtitleUrl);
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    const trackEvents = await response.json();
-    const vttData = convertToWebVTT(trackEvents);
-    // Create a data URL for the WebVTT content
-    const vttDataUrl = `data:text/vtt;charset=utf-8,${encodeURIComponent(vttData)}`;
-    return [{
-      kind: 'subtitles',
-      label: 'English',
-      language: 'en',
-      src: vttDataUrl,
-      default: true,
-    }];
+  try {
+    // First get the media item to find subtitle streams
+    const userLibraryApi = new UserLibraryApi(api.configuration);
+    const { data: item } = await userLibraryApi.getItem({
+      userId: user.Id,
+      itemId: itemId,
+    });
+
+    const mediaSource = item.MediaSources?.find(
+      (ms) => ms.Id === mediaSourceId
+    );
+    const subtitleStreams =
+      mediaSource?.MediaStreams?.filter(
+        (stream) => stream.Type === "Subtitle"
+      ) || [];
+    const subtitleTracks = subtitleStreams.map((stream) => {
+      const src = `${serverUrl}/Videos/${itemId}/${mediaSourceId}/Subtitles/${stream.Index}/Stream.vtt?api_key=${user.AccessToken}`;
+      return {
+        kind: "subtitles",
+        label:
+          stream.DisplayTitle || stream.Language || `Track ${stream.Index}`,
+        language: stream.Language || "unknown",
+        src: src,
+        default: stream.IsDefault || false,
+      };
+    });
+
+    return subtitleTracks;
   } catch (error) {
     console.error("Failed to fetch subtitle tracks:", error);
     return [];
