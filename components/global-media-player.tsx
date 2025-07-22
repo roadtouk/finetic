@@ -228,17 +228,17 @@ export function GlobalMediaPlayer() {
       // Use selected version from MediaActions or fallback to first source
       if (details.MediaSources && details.MediaSources.length > 0) {
         let sourceToUse = details.MediaSources[0]; // fallback
-        
+
         // If a version was selected in MediaActions, try to find it in the fetched details
         if (currentMedia.selectedVersion) {
-          const matchingSource = details.MediaSources.find(source => 
-            source.Id === currentMedia.selectedVersion!.Id
+          const matchingSource = details.MediaSources.find(
+            (source) => source.Id === currentMedia.selectedVersion!.Id
           );
           if (matchingSource) {
             sourceToUse = matchingSource;
           }
         }
-        
+
         setSelectedVersion(sourceToUse);
 
         // Generate stream URL
@@ -251,6 +251,7 @@ export function GlobalMediaPlayer() {
             currentMedia.id,
             sourceToUse.Id!
           );
+          console.log(tracks);
           setSubtitleTracks(tracks);
         } catch (error) {
           console.error("Failed to fetch subtitle tracks:", error);
@@ -296,7 +297,10 @@ export function GlobalMediaPlayer() {
             <HlsVideoElement
               // @ts-ignore
               ref={videoRef}
-              src={streamUrl}
+              // src={streamUrl}
+              src={
+                "https://stream.mux.com/A3VXy02VoUinw01pwyomEO3bHnG4P32xzV7u1j1FSzjNg.m3u8"
+              }
               crossOrigin=""
               playsInline
               preload="auto"
@@ -400,16 +404,26 @@ export function GlobalMediaPlayer() {
               {mediaDetails?.People && mediaDetails.People.length > 0 && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-white hover:bg-white/20"
+                    >
                       <Users className="h-4 w-4" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-80 bg-black/90 border-white/20 text-white z-[1000000]" side="top">
+                  <PopoverContent
+                    className="w-80 bg-black/90 border-white/20 text-white z-[1000000]"
+                    side="top"
+                  >
                     <div className="space-y-3">
                       <h3 className="font-semibold text-lg">Cast & Crew</h3>
                       <div className="max-h-64 overflow-y-auto space-y-2">
                         {mediaDetails.People.map((person, index) => (
-                          <div key={`${person.Id}-${index}`} className="flex items-center space-x-3 p-2 rounded hover:bg-white/10">
+                          <div
+                            key={`${person.Id}-${index}`}
+                            className="flex items-center space-x-3 p-2 rounded hover:bg-white/10"
+                          >
                             <div className="flex-shrink-0">
                               {person.PrimaryImageTag ? (
                                 <img
@@ -418,19 +432,27 @@ export function GlobalMediaPlayer() {
                                   className="w-8 h-8 rounded-full object-cover"
                                   onError={(e) => {
                                     const target = e.target as HTMLImageElement;
-                                    target.style.display = 'none';
-                                    target.nextElementSibling!.classList.remove('hidden');
+                                    target.style.display = "none";
+                                    target.nextElementSibling!.classList.remove(
+                                      "hidden"
+                                    );
                                   }}
                                 />
                               ) : null}
-                              <div className={`w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-xs ${person.PrimaryImageTag ? 'hidden' : ''}`}>
-                                {person.Name?.charAt(0) || '?'}
+                              <div
+                                className={`w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-xs ${person.PrimaryImageTag ? "hidden" : ""}`}
+                              >
+                                {person.Name?.charAt(0) || "?"}
                               </div>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm truncate">{person.Name}</p>
+                              <p className="font-medium text-sm truncate">
+                                {person.Name}
+                              </p>
                               {person.Role && (
-                                <p className="text-xs text-white/70 truncate">{person.Role}</p>
+                                <p className="text-xs text-white/70 truncate">
+                                  {person.Role}
+                                </p>
                               )}
                             </div>
                           </div>

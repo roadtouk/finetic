@@ -20,25 +20,7 @@ import {
 import { MediaInfoDialog } from "@/components/media-info-dialog";
 import { Info, Download, Play, ArrowLeft } from "lucide-react";
 import { getDownloadUrl, getStreamUrl, getSubtitleTracks } from "@/app/actions";
-import { GlobalMediaPlayer } from "./global-media-player";
 import { getMediaDetailsFromName, cutOffText } from "@/lib/utils";
-import {
-  MediaPlayer,
-  MediaPlayerControls,
-  MediaPlayerControlsOverlay,
-  MediaPlayerFullscreen,
-  MediaPlayerPiP,
-  MediaPlayerPlay,
-  MediaPlayerSeek,
-  MediaPlayerSeekBackward,
-  MediaPlayerSeekForward,
-  MediaPlayerTime,
-  MediaPlayerVideo,
-  MediaPlayerVolume,
-  MediaPlayerSettings,
-} from "@/components/ui/media-player";
-import MuxVideo from "@mux/mux-video-react";
-import HlsVideoElement from "hls-video-element/react";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 
 interface MediaActionsProps {
