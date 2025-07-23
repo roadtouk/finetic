@@ -50,7 +50,7 @@ export default async function Movie({
               movieName={movie.Name || ""}
               width={300}
               height={96}
-              className="absolute md:top-5/12 top-4/12 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 max-h-20 md:max-h-24 w-auto object-contain max-w-2/3"
+              className="absolute md:top-5/12 top-4/12 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 max-h-20 md:max-h-24 w-auto object-contain max-w-2/3 invisible md:visible"
             />
             {/* Gradient overlay for better text readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
@@ -63,8 +63,8 @@ export default async function Movie({
         </div>
 
         {/* Content section */}
-        <div className="relative z-10 -mt-54 pl-6">
-          <div className="flex flex-col md:flex-row gap- max-w-7xl mx-auto">
+        <div className="relative z-10 -mt-54 md:pl-6">
+          <div className="flex flex-col md:flex-row max-w-7xl mx-auto">
             {/* Movie poster */}
             <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 justify-center flex md:block z-50">
               <img
@@ -77,19 +77,19 @@ export default async function Movie({
             </div>
 
             {/* Movie information */}
-            <div className="w-full md:w-2/3 lg:w-3/4 pt-4 md:pt-8 text-center md:text-start">
+            <div className="w-full md:w-2/3 lg:w-3/4 pt-10 md:pt-8 text-center md:text-start">
               <div className="mb-4 flex justify-center md:justify-start">
-                <h1 className="text-4xl md:text-5xl font-semibold font-poppins md:text-white text-foreground pl-8">
+                <h1 className="text-4xl md:text-5xl font-semibold font-poppins md:text-white text-foreground md:pl-8">
                   {movie.Name}
                 </h1>
               </div>
 
               {/* Movie badges */}
-              <div className="flex flex-wrap items-center gap-2 mb-6 justify-center md:justify-start pl-8">
+              <div className="flex flex-wrap items-center gap-2 mb-6 justify-center md:justify-start md:pl-8">
                 {movie.ProductionYear && (
                   <Badge
                     variant="outline"
-                    className="bg-sidebar/80 backdrop-blur-sm"
+                    className="bg-background backdrop-blur-sm"
                   >
                     {movie.ProductionYear}
                   </Badge>
@@ -97,7 +97,7 @@ export default async function Movie({
                 {movie.OfficialRating && (
                   <Badge
                     variant="outline"
-                    className="bg-sidebar/80 backdrop-blur-sm"
+                    className="bg-background backdrop-blur-sm"
                   >
                     {movie.OfficialRating}
                   </Badge>
@@ -105,15 +105,16 @@ export default async function Movie({
                 {movie.RunTimeTicks && (
                   <Badge
                     variant="outline"
-                    className="bg-sidebar/80 backdrop-blur-sm"
+                    className="bg-background backdrop-blur-sm"
                   >
                     {Math.round(movie.RunTimeTicks / 600000000)} min
                   </Badge>
                 )}
               </div>
 
-              <div className="bg-background pl-8 pt-8">
-                {/* Movie overview */}
+              <div className="h-screen absolute left-0 bg-gradient-to-b bg-background border-t w-screen -z-10 mt-4 invisible md:visible"></div>
+
+              <div className="px-8 md:pl-8 md:pt-10 md:pr-16 flex flex-col justify-center md:items-start items-center">
                 <p className="text-md leading-relaxed mb-8 max-w-4xl">
                   {movie.Overview}
                 </p>
@@ -125,7 +126,7 @@ export default async function Movie({
           </div>
 
           {/* Cast section */}
-          <div className="mt-16 max-w-7xl mx-auto">
+          <div className="mt-16 max-w-7xl mx-auto md:px-0 px-6">
             <CastScrollArea people={movie.People!} mediaId={id} />
           </div>
         </div>
