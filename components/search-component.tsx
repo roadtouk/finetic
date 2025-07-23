@@ -4,9 +4,30 @@ import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Film, Tv, Calendar, PlayCircle, Star, Menu, User, Home, Library, Sun, Moon, Monitor, LogOut } from "lucide-react";
+import {
+  Search,
+  Film,
+  Tv,
+  Calendar,
+  PlayCircle,
+  Star,
+  Menu,
+  User,
+  Home,
+  Library,
+  Sun,
+  Moon,
+  Monitor,
+  LogOut,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { searchItems, getImageUrl, getUser, logout, getServerUrl } from "@/app/actions";
+import {
+  searchItems,
+  getImageUrl,
+  getUser,
+  logout,
+  getServerUrl,
+} from "@/app/actions";
 import { Badge } from "./ui/badge";
 import { SearchSuggestionItem } from "./SearchSuggestionItem";
 import {
@@ -22,6 +43,7 @@ import {
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
+import * as Kbd from "@/components/ui/kbd";
 
 interface SearchBarProps {
   className?: string;
@@ -40,6 +62,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
   // Server actions are imported directly
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Debounced search
   useEffect(() => {
@@ -89,7 +112,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
       try {
         const userData = await getUser();
         setUser(userData);
-        
+
         // Fetch libraries if we have both user and server URL
         const serverUrlData = await getServerUrl();
         if (userData && serverUrlData) {
@@ -101,16 +124,14 @@ export function SearchBar({ className = "" }: SearchBarProps) {
               },
             }
           );
-          
+
           if (response.ok) {
             const data = await response.json();
             // Only show movie and TV show libraries
-            const supportedLibraries = (data || []).filter(
-              (library: any) => {
-                const type = library.CollectionType?.toLowerCase();
-                return type === "movies" || type === "tvshows";
-              }
-            );
+            const supportedLibraries = (data || []).filter((library: any) => {
+              const type = library.CollectionType?.toLowerCase();
+              return type === "movies" || type === "tvshows";
+            });
             setLibraries(supportedLibraries);
           }
         }
@@ -118,10 +139,35 @@ export function SearchBar({ className = "" }: SearchBarProps) {
         console.error("Failed to load user data:", error);
       }
     };
-    
+
     loadUserData();
   }, []);
-  
+
+  // Global keyboard shortcut for search activation
+  useEffect(() => {
+    const handleGlobalKeyDown = (event: KeyboardEvent) => {
+      // Only activate on slash key if no input is focused and no modifiers are pressed
+      if (
+        event.key === "/" &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        !event.altKey &&
+        !event.shiftKey &&
+        document.activeElement?.tagName !== "INPUT" &&
+        document.activeElement?.tagName !== "TEXTAREA" &&
+        !document.activeElement?.hasAttribute("contenteditable")
+      ) {
+        event.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleGlobalKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleGlobalKeyDown);
+    };
+  }, []);
+
   // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -185,12 +231,12 @@ export function SearchBar({ className = "" }: SearchBarProps) {
     }
     return `${minutes}m`;
   };
-  
+
   const handleLogout = async () => {
     await logout();
     // logout() already handles the redirect
   };
-  
+
   const getLibraryIcon = (collectionType: string) => {
     switch (collectionType?.toLowerCase()) {
       case "movies":
@@ -216,6 +262,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
           <Input
+            ref={inputRef}
             type="text"
             placeholder="Search movies, TV shows, and episodes..."
             value={searchQuery}
@@ -226,10 +273,15 @@ export function SearchBar({ className = "" }: SearchBarProps) {
                 setShowSuggestions(true);
               }
             }}
-            className="pl-10 border-border text-foreground placeholder:text-muted-foreground focus:border-ring rounded-full h-11 backdrop-blur-md dark:bg-background/70! bg-background/90"
+            className="pl-10 pr-16 border-border text-foreground placeholder:text-muted-foreground focus:border-ring rounded-full h-11 backdrop-blur-md dark:bg-background/70! bg-background/90"
           />
+          <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10">
+            <Kbd.Root variant="outline" size="lg">
+              <Kbd.Key>/</Kbd.Key>
+            </Kbd.Root>
+          </div>
         </div>
-        
+
         {/* Mobile Navigation Buttons - Only visible on mobile */}
         <div className="flex gap-2 md:hidden">
           {/* Hamburger Menu - Navigation */}
@@ -243,10 +295,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
                 <Menu className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="w-56 rounded-lg"
-            >
+            <DropdownMenuContent align="end" className="w-56 rounded-lg">
               <DropdownMenuItem asChild>
                 <Link href="/home" className="gap-2">
                   <Home className="h-4 w-4" />
@@ -268,7 +317,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-          
+
           {/* Profile Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -280,10 +329,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
                 <User className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="w-56 rounded-lg"
-            >
+            <DropdownMenuContent align="end" className="w-56 rounded-lg">
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger className="gap-2">
                   <Monitor className="h-4 w-4" />
@@ -316,7 +362,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
 
       {/* Search Suggestions Dropdown */}
       {(showSuggestions || isLoading) && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-background/95 backdrop-blur-md rounded-lg border shadow-xl shadow-accent/30 z-[9999] max-h-96 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-2 dark:bg-background/70! bg-background/90 backdrop-blur-md rounded-lg border shadow-xl shadow-accent/30 z-[9999] max-h-96 overflow-y-auto">
           {isLoading && (
             <div className="p-4">
               <div className="text-sm text-muted-foreground mb-3">
