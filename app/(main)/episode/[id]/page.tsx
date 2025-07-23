@@ -12,6 +12,7 @@ import { redirect } from "next/navigation";
 import { CastScrollArea } from "@/components/cast-scrollarea";
 import { SeasonEpisodes } from "@/components/season-episodes";
 import { AuroraBackground } from "@/components/aurora-background";
+import { VibrantLogo } from "@/components/vibrant-logo";
 
 export default async function Episode({
   params,
@@ -35,9 +36,16 @@ export default async function Episode({
       episode.ParentBackdropItemId!,
       "Backdrop"
     );
+    const logoImage = await getImageUrl(episode.SeriesId!, "Logo");
 
     return (
-      <div className="min-h-screen overflow-hidden md:pr-1">
+      <div className="min-h-screen overflow-hiden md:pr-1 pb-16">
+        {/* Aurora background based on backdrop image */}
+        <AuroraBackground
+          imageUrl={backdropImage}
+          className="fixed inset-0 z-0 pointer-events-none opacity-30"
+        />
+
         {/* Backdrop section */}
         <div className="relative">
           {/* Backdrop image with gradient overlay */}
@@ -49,8 +57,16 @@ export default async function Episode({
               width={1920}
               height={1080}
             />
+            <VibrantLogo
+              src={logoImage}
+              alt={`${episode.SeriesName} logo`}
+              movieName={episode.SeriesName || ""}
+              width={300}
+              height={96}
+              className="absolute md:top-5/12 top-4/12 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 max-h-20 md:max-h-24 w-auto object-contain max-w-2/3 invisible md:visible"
+            />
             {/* Gradient overlay for better text readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
           </div>
 
           {/* Search bar positioned over backdrop */}
@@ -60,11 +76,11 @@ export default async function Episode({
         </div>
 
         {/* Content section */}
-        <div className="relative z-10 -mt-54 px-6">
-          <div className="flex flex-col lg:flex-row gap-8 mx-auto items-center">
+        <div className="relative z-10 -mt-54 md:pl-6">
+          <div className="flex flex-col md:flex-row max-w-7xl mx-auto">
             {/* Episode Image */}
-            <div className="w-full lg:w-1/3 xl:w-1/4 flex-shrink-0 justify-center flex md:block">
-              <div className="relative aspect-video rounded-lg overflow-hidden shadow-2xl border-2 border-border/20 bg-muted">
+            <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 justify-center flex md:block z-50 md:mt-8">
+              <div className="relative aspect-video rounded-lg overflow-hidden shadow-2xl bg-muted">
                 {primaryImage ? (
                   <img
                     className="w-full h-full object-cover"
@@ -80,37 +96,19 @@ export default async function Episode({
             </div>
 
             {/* Episode Info */}
-            <div className="w-full lg:w-2/3 xl:w-3/4 pt-4 md:pt-4 text-center md:text-start">
-              {/* Series and Season Info */}
-              <div className="flex items-center gap-2 mb-3">
-                <Tv className="h-4 w-4 text-muted-foreground" />
-                <Link
-                  href={`/show/${episode.SeriesId}`}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {episode.SeriesName}
-                </Link>
-                {episode.ParentIndexNumber && (
-                  <>
-                    <span className="text-muted-foreground">•</span>
-                    <span className="text-sm text-muted-foreground">
-                      Season {episode.ParentIndexNumber}
-                    </span>
-                  </>
-                )}
+            <div className="w-full md:w-2/3 lg:w-3/4 pt-10 md:pt-8 text-center md:text-start">
+              <div className="mb-4 flex justify-center md:justify-start">
+                <h1 className="text-4xl md:text-5xl font-semibold font-poppins md:text-white text-foreground md:pl-8">
+                  {episode.IndexNumber && `${episode.IndexNumber}. `}
+                  {episode.Name || "Untitled Episode"}
+                </h1>
               </div>
 
-              {/* Episode Title */}
-              <h1 className="text-4xl md:text-5xl font-semibold mb-4 font-poppins text-foreground">
-                {episode.IndexNumber && `${episode.IndexNumber}. `}
-                {episode.Name || "Untitled Episode"}
-              </h1>
-
               {/* Episode badges */}
-              <div className="flex flex-wrap items-center gap-2 mb-6 justify-center md:justify-start">
+              <div className="flex flex-wrap items-center gap-2 mb-2 justify-center md:justify-start md:pl-8">
                 <Badge
                   variant="outline"
-                  className="bg-sidebar/80 backdrop-blur-sm"
+                  className="bg-background backdrop-blur-sm"
                 >
                   S{episode.ParentIndexNumber || 1} • E
                   {episode.IndexNumber || 1}
@@ -119,9 +117,8 @@ export default async function Episode({
                 {episode.ProductionYear && (
                   <Badge
                     variant="outline"
-                    className="bg-sidebar/80 backdrop-blur-sm"
+                    className="bg-background backdrop-blur-sm"
                   >
-                    <Calendar className="h-3 w-3 mr-0.5" />
                     {episode.ProductionYear}
                   </Badge>
                 )}
@@ -129,82 +126,46 @@ export default async function Episode({
                 {episode.RunTimeTicks && (
                   <Badge
                     variant="outline"
-                    className="bg-sidebar/80 backdrop-blur-sm"
+                    className="bg-background backdrop-blur-sm"
                   >
-                    <Clock className="h-3 w-3 mr-0.5" />
-                    {formatRuntime(episode.RunTimeTicks)}
+                    {Math.round(episode.RunTimeTicks / 600000000)} min
                   </Badge>
                 )}
 
                 {episode.OfficialRating && (
                   <Badge
                     variant="outline"
-                    className="bg-sidebar/80 backdrop-blur-sm"
+                    className="bg-background backdrop-blur-sm"
                   >
                     {episode.OfficialRating}
                   </Badge>
                 )}
               </div>
 
-              {/* Prominent Play Button */}
-              <div className="mb-8">
+              <div className="h-screen absolute left-0 bg-gradient-to-b bg-background border-t w-screen -z-10 mt-4 invisible md:visible"></div>
+
+              <div className="px-8 md:pl-8 md:pt-10 md:pr-16 flex flex-col justify-center md:items-start items-center">
+                {episode.Overview && (
+                  <p className="text-md leading-relaxed mb-8 max-w-4xl">
+                    {episode.Overview}
+                  </p>
+                )}
+
+                {/* Media actions */}
                 <MediaActions episode={episode} />
               </div>
             </div>
           </div>
-          {/* Episode overview */}
-          {episode.Overview && (
-            <p className="text-lg leading-relaxed mb-8 text-muted-foreground max-w-4xl">
-              {episode.Overview}
-            </p>
-          )}
 
-          {/* Additional Info */}
-          <div className="mt-4 space-y-4">
-            {episode.Genres && episode.Genres.length > 0 && (
-              <div>
-                <h3 className="text-sm font-medium mb-2">Genres</h3>
-                <div className="flex flex-wrap gap-2">
-                  {episode.Genres.map((genre) => (
-                    <Badge key={genre} variant="secondary" className="text-xs">
-                      {genre}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {episode.Studios && episode.Studios.length > 0 && (
-              <div>
-                <h3 className="text-sm font-medium mb-2">Studios</h3>
-                <div className="flex flex-wrap gap-2">
-                  {episode.Studios.map((studio) => (
-                    <Badge
-                      key={studio.Name}
-                      variant="outline"
-                      className="text-xs"
-                    >
-                      {studio.Name}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
+          {/* Season Episodes section */}
+          <div className="mt-16 max-w-7xl mx-auto md:px-0 px-6">
+            <SeasonEpisodes showId={id} />
           </div>
 
-          {/* Season Episodes Navigation */}
-          {episode.SeriesId && (
-            <div className="mt-16 mx-auto">
-              <SeasonEpisodes showId={episode.SeriesId} />
-            </div>
-          )}
-
-          {/* Episode Cast */}
-          {episode.People && episode.People.length > 0 && (
-            <div className="mt-16 mx-auto">
-              <CastScrollArea people={episode.People} mediaId={id} />
-            </div>
-          )}
+          {/* Cast section */}
+          <div className="mt-16 max-w-7xl mx-auto md:px-0 px-6">
+            <CastScrollArea people={episode.People!} mediaId={id} />
+          </div>
         </div>
       </div>
     );

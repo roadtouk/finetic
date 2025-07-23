@@ -110,7 +110,7 @@ export function SearchSuggestionItem({
             </div>
           )}
 
-          {/* Show episode/season/show info for episodes */}
+          {/* Show episode/season/series info for episodes */}
           {item.Type === "Episode" && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {typeof item.ParentIndexNumber === "number" &&

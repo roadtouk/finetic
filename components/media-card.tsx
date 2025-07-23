@@ -30,7 +30,7 @@ export function MediaCard({
   } else if (item.Type === "Episode") {
     linkHref = `/episode/${item.Id}`;
   } else {
-    linkHref = `/show/${item.Id}`;
+    linkHref = `/series/${item.Id}`;
   }
 
   // Determine image type based on continueWatching

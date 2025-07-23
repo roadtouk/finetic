@@ -73,7 +73,7 @@ export async function POST(req: Request) {
             if (mediaType === "Movie") {
               basePath = "/movie";
             } else if (mediaType === "Series") {
-              basePath = "/show";
+              basePath = "/series";
             } else {
               basePath = "/episode";
             }
@@ -562,7 +562,10 @@ Return ONLY the timestamp in HH:MM:SS format (e.g., 02:25.6 or 1:23:45.2):`;
                 analysisText += chunk;
               }
 
-              console.log("[skipToSubtitleContent] Analysis result:", analysisText);
+              console.log(
+                "[skipToSubtitleContent] Analysis result:",
+                analysisText
+              );
 
               // Extract timestamp from Gemini's response (looking for HH:MM:SS format)
               // Order is important: match HH:MM:SS first, then MM:SS
@@ -578,11 +581,17 @@ Return ONLY the timestamp in HH:MM:SS format (e.g., 02:25.6 or 1:23:45.2):`;
               }
 
               // Convert timestamp to seconds using our utility function
-              console.log("[skipToSubtitleContent] Extracted timestamp:", timestampMatch[0]);
+              console.log(
+                "[skipToSubtitleContent] Extracted timestamp:",
+                timestampMatch[0]
+              );
               const bestTimestamp = convertTimestampToSeconds(
                 timestampMatch[0]
               );
-              console.log("[skipToSubtitleContent] Converted to seconds:", bestTimestamp);
+              console.log(
+                "[skipToSubtitleContent] Converted to seconds:",
+                bestTimestamp
+              );
 
               // Find the corresponding subtitle entry for context
               const correspondingSubtitle =
@@ -613,6 +622,65 @@ Return ONLY the timestamp in HH:MM:SS format (e.g., 02:25.6 or 1:23:45.2):`;
             }
           },
         }),
+
+        themeToggle: tool({
+          description:
+            "Toggle or set the application theme between light, dark, or system mode",
+          parameters: z.object({
+            action: z
+              .enum(["toggle", "light", "dark", "system"])
+              .describe(
+                "The theme action to perform: 'toggle' switches between light/dark, 'light' sets light mode, 'dark' sets dark mode, 'system' follows system preference"
+              ),
+          }),
+          execute: async ({ action }) => {
+            console.log("🌓 [themeToggle] Tool called with action:", action);
+
+            try {
+              // Return an action for the client to handle since theme management is client-side
+              let targetTheme: string;
+              let message: string;
+
+              switch (action) {
+                case "toggle":
+                  targetTheme = "toggle";
+                  message = "Toggling theme between light and dark mode...";
+                  break;
+                case "light":
+                  targetTheme = "light";
+                  message = "Switching to light mode...";
+                  break;
+                case "dark":
+                  targetTheme = "dark";
+                  message = "Switching to dark mode...";
+                  break;
+                case "system":
+                  targetTheme = "system";
+                  message =
+                    "Switching to system theme (follows your device preference)...";
+                  break;
+                default:
+                  return {
+                    success: false,
+                    error: "Invalid theme action",
+                  };
+              }
+
+              return {
+                success: true,
+                action: "setTheme",
+                theme: targetTheme,
+                message,
+              };
+            } catch (error) {
+              console.error("[themeToggle] Error:", error);
+              return {
+                success: false,
+                error: "Failed to toggle theme",
+              };
+            }
+          },
+        }),
       },
       system: `You are Finetic, an AI assistant for a media library application (similar to Plex/Jellyfin). 
       Help users navigate to movies and TV shows, search for content, and provide information about media.
@@ -634,6 +702,7 @@ Return ONLY the timestamp in HH:MM:SS format (e.g., 02:25.6 or 1:23:45.2):`;
       - getEpisodes: Get episodes for a TV show season
       - getWatchlist: Get user's watchlist or favorites (popular/highly-rated content)
       - skipToSubtitleContent: Intelligently analyze subtitles and find the best timestamp based on user descriptions (doesn't require exact text matches)
+      - themeToggle: Toggle or set the application theme between light, dark, or system mode
       
       USAGE EXAMPLES:
       - "Show me my continue watching list" → Use continueWatching tool
@@ -647,6 +716,10 @@ Return ONLY the timestamp in HH:MM:SS format (e.g., 02:25.6 or 1:23:45.2):`;
       - "Jump to the scene where the main character talks about love" → Use skipToSubtitleContent tool
       - "Take me to the action sequence" → Use skipToSubtitleContent tool
       - "Skip to when they arrive at the destination" → Use skipToSubtitleContent tool
+      - "Switch to dark mode" → Use themeToggle tool with action "dark"
+      - "Change to light theme" → Use themeToggle tool with action "light"
+      - "Toggle the theme" → Use themeToggle tool with action "toggle"
+      - "Switch to system theme" → Use themeToggle tool with action "system"
 
       SEARCH CORRECTION: Before searching, automatically correct common abbreviations and shorthand terms to their full proper names:
       - "b99" → "Brooklyn Nine-Nine"
@@ -673,7 +746,7 @@ Return ONLY the timestamp in HH:MM:SS format (e.g., 02:25.6 or 1:23:45.2):`;
       
       Always expand abbreviated titles and use the most complete, official title when searching. If unsure about an abbreviation, try both the abbreviated and expanded versions.
 
-      VAGUE QUERY HANDLING: When users provide vague descriptions instead of exact titles, use contextual clues to identify the likely movie/show:
+      VAGUE QUERY HANDLING: When users provide vague descriptions instead of exact titles, use contextual clues to identify the likely movie/series:
       - "the movie with the tars robot" → "Interstellar"
       - "the movie with the blue people" → "Avatar"
       - "the movie where they go back to the future" → "Back to the Future"

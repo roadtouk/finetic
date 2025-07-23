@@ -207,7 +207,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
       router.push(`/movie/${item.Id}`);
     } else if (item.Type === "Series") {
       // Assuming a series page exists at /series/[id]
-      router.push(`/show/${item.Id}`);
+      router.push(`/series/${item.Id}`);
     } else if (item.Type === "Episode") {
       // For episodes, navigate to the search page for now as SeriesId is not directly available
       router.push(`/search?q=${encodeURIComponent(item.Name)}`);

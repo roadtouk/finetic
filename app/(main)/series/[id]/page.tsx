@@ -28,7 +28,13 @@ export default async function Show({
     const logoImage = await getImageUrl(id, "Logo");
 
     return (
-      <div className="min-h-screen overflow-hidden md:pr-1">
+      <div className="min-h-screen overflow-hiden md:pr-1 pb-16">
+        {/* Aurora background based on backdrop image */}
+        <AuroraBackground
+          imageUrl={backdropImage}
+          className="fixed inset-0 z-0 pointer-events-none opacity-30"
+        />
+
         {/* Backdrop section */}
         <div className="relative">
           {/* Backdrop image with gradient overlay */}
@@ -46,10 +52,10 @@ export default async function Show({
               movieName={show.Name || ""}
               width={300}
               height={96}
-              className="absolute top-5/12 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 max-h-20 md:max-h-24 w-auto object-contain"
+              className="absolute md:top-5/12 top-4/12 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 max-h-20 md:max-h-24 w-auto object-contain max-w-2/3 invisible md:visible"
             />
             {/* Gradient overlay for better text readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
           </div>
 
           {/* Search bar positioned over backdrop */}
@@ -59,12 +65,12 @@ export default async function Show({
         </div>
 
         {/* Content section */}
-        <div className="relative z-10 -mt-54 px-6">
-          <div className="flex flex-col md:flex-row gap-8 max-w-7xl mx-auto">
+        <div className="relative z-10 -mt-54 md:pl-6">
+          <div className="flex flex-col md:flex-row max-w-7xl mx-auto">
             {/* Show poster */}
-            <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 justify-center flex md:block">
+            <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 justify-center flex md:block z-50">
               <img
-                className="w-full h-auto rounded-lg shadow-2xl border-2 border-border/20 max-w-1/2 md:max-w-full"
+                className="w-full h-auto rounded-lg shadow-2xl max-w-1/2 md:max-w-full"
                 src={primaryImage}
                 alt={show.Name || "Show Poster"}
                 width={500}
@@ -73,17 +79,19 @@ export default async function Show({
             </div>
 
             {/* Show information */}
-            <div className="w-full md:w-2/3 lg:w-3/4 pt-4 md:pt-4 text-center md:text-start">
-              <h1 className="text-4xl md:text-5xl font-semibold mb-4 font-poppins text-foreground">
-                {show.Name}
-              </h1>
+            <div className="w-full md:w-2/3 lg:w-3/4 pt-10 md:pt-8 text-center md:text-start">
+              <div className="mb-4 flex justify-center md:justify-start">
+                <h1 className="text-4xl md:text-5xl font-semibold font-poppins md:text-white text-foreground md:pl-8">
+                  {show.Name}
+                </h1>
+              </div>
 
               {/* Show badges */}
-              <div className="flex flex-wrap items-center gap-2 mb-6 justify-center md:justify-start">
+              <div className="flex flex-wrap items-center gap-2 mb-2 justify-center md:justify-start md:pl-8">
                 {show.ProductionYear && (
                   <Badge
                     variant="outline"
-                    className="bg-sidebar/80 backdrop-blur-sm"
+                    className="bg-background backdrop-blur-sm"
                   >
                     {show.ProductionYear}
                   </Badge>
@@ -91,30 +99,33 @@ export default async function Show({
                 {show.OfficialRating && (
                   <Badge
                     variant="outline"
-                    className="bg-sidebar/80 backdrop-blur-sm"
+                    className="bg-background backdrop-blur-sm"
                   >
                     {show.OfficialRating}
                   </Badge>
                 )}
               </div>
 
-              {/* Show overview */}
-              <p className="text-lg leading-relaxed mb-8 text-muted-foreground max-w-4xl">
-                {show.Overview}
-              </p>
+              <div className="h-screen absolute left-0 bg-gradient-to-b bg-background border-t w-screen -z-10 mt-4 invisible md:visible"></div>
 
-              {/* Media actions */}
-              <MediaActions show={show} />
+              <div className="px-8 md:pl-8 md:pt-10 md:pr-16 flex flex-col justify-center md:items-start items-center">
+                <p className="text-md leading-relaxed mb-8 max-w-4xl">
+                  {show.Overview}
+                </p>
+
+                {/* Media actions */}
+                <MediaActions show={show} />
+              </div>
             </div>
           </div>
 
           {/* Season Episodes section */}
-          <div className="mt-16 max-w-7xl mx-auto">
+          <div className="mt-16 max-w-7xl mx-auto md:px-0 px-6">
             <SeasonEpisodes showId={id} />
           </div>
 
           {/* Cast section */}
-          <div className="mt-16 max-w-7xl mx-auto">
+          <div className="mt-16 max-w-7xl mx-auto md:px-0 px-6">
             <CastScrollArea people={show.People!} mediaId={id} />
           </div>
         </div>

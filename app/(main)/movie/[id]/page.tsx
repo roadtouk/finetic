@@ -85,7 +85,7 @@ export default async function Movie({
               </div>
 
               {/* Movie badges */}
-              <div className="flex flex-wrap items-center gap-2 mb-6 justify-center md:justify-start md:pl-8">
+              <div className="flex flex-wrap items-center gap-2 mb-2 justify-center md:justify-start md:pl-8">
                 {movie.ProductionYear && (
                   <Badge
                     variant="outline"

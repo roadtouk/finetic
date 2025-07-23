@@ -23,6 +23,7 @@ import {
   List,
   Subtitles,
   LoaderPinwheel,
+  Palette,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Markdown from "react-markdown";
@@ -33,6 +34,8 @@ import { ToolInvocation } from "ai";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 import * as Kbd from "@/components/ui/kbd";
 import { Badge } from "./ui/badge";
+import { AuroraText } from "@/components/magicui/aurora-text";
+import { useTheme } from "next-themes";
 
 interface AIAskProps {
   isOpen?: boolean;
@@ -60,6 +63,7 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
   };
 
   const router = useRouter();
+  const { setTheme, theme } = useTheme();
 
   const { playMedia, skipToTimestamp, currentMedia, currentMediaWithSource } =
     useMediaPlayer();
@@ -92,6 +96,8 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
             handlePlayMedia(toolInvocation);
           } else if (toolInvocation.toolName === "skipToSubtitleContent") {
             handleSkipToTimestamp(toolInvocation);
+          } else if (toolInvocation.toolName === "themeToggle") {
+            handleThemeToggle(toolInvocation);
           }
         }
       }
@@ -166,6 +172,39 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
     }
   };
 
+  const handleThemeToggle = (toolInvocation: ToolInvocation) => {
+    if (
+      "result" in toolInvocation &&
+      toolInvocation.toolName === "themeToggle"
+    ) {
+      console.log(
+        "Theme toggle tool invocation result:",
+        toolInvocation.result
+      );
+      const result = toolInvocation.result;
+      if (result.success && result.action === "setTheme" && result.theme) {
+        if (result.theme === "toggle") {
+          // Toggle between light and dark (ignore system)
+          const currentTheme = theme === "system" ? "light" : theme;
+          const newTheme = currentTheme === "light" ? "dark" : "light";
+          setTheme(newTheme);
+          toast.success(
+            `Theme switched to ${newTheme} mode`
+          );
+        } else {
+          // Set specific theme
+          setTheme(result.theme);
+          const themeLabel = result.theme === "system" ? "system (follows device preference)" : `${result.theme} mode`;
+          toast.success(`Theme switched to ${themeLabel}`);
+        }
+        
+        // Don't auto-close for theme changes as they're quick and users might want to keep chatting
+      } else if (!result.success && result.error) {
+        toast.error(result.error);
+      }
+    }
+  };
+
   const handleCloseAsk = () => {
     setIsAskOpen(false);
     setInput("");
@@ -200,6 +239,7 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
       getSeasons: { icon: Layers, label: "Getting Seasons" },
       getEpisodes: { icon: List, label: "Getting Episodes" },
       getWatchlist: { icon: Star, label: "Getting Watchlist" },
+      themeToggle: { icon: Palette, label: "Changing Theme" },
     };
     return toolMap[toolName] || { icon: Search, label: "Working..." };
   };
@@ -263,8 +303,13 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
                         getToolBadgeInfo(currentTool);
                       return (
                         <Badge variant={"secondary"}>
-                          <ToolIcon className={cn("h-3 w-3", currentTool === "thinking" && "animate-spin")} />
-                          <span className="font-medium">{label}</span>
+                          <ToolIcon
+                            className={cn(
+                              "h-3 w-3",
+                              currentTool === "thinking" && "animate-spin"
+                            )}
+                          />
+                          <span>{label}</span>
                         </Badge>
                       );
                     })()}
