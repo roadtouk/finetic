@@ -298,7 +298,7 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
         >
           <Button
             variant="outline"
-            className="shadow-sm px-4 py-2 h-auto rounded-full flex items-center gap-2 bg-card/90 backdrop-blur-[6px] border bg-background/70!"
+            className="shadow-sm px-4 py-2 h-auto rounded-full flex items-center gap-2 backdrop-blur-[6px] border dark:bg-background/70 bg-background/90"
             onClick={() => setIsAskOpen(!isAskOpen)}
           >
             <MessageCircle className="h-4 w-4" />
