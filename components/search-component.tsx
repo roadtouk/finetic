@@ -226,7 +226,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
                 setShowSuggestions(true);
               }
             }}
-            className="pl-10 border-border text-foreground placeholder:text-muted-foreground focus:border-ring rounded-full h-11 backdrop-blur-md bg-background/80!"
+            className="pl-10 border-border text-foreground placeholder:text-muted-foreground focus:border-ring rounded-full h-11 backdrop-blur-md dark:bg-background/70! bg-background/90"
           />
         </div>
         

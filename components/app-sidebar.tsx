@@ -157,14 +157,6 @@ export function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Libraries</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
               {isLoading ? (
                 // Loading skeleton
                 [1, 2].map((index) => (

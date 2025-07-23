@@ -5,7 +5,25 @@ import { AnimatePresence, motion } from "framer-motion";
 import React, { useEffect, useState } from "react";
 import { BorderBeam } from "./magicui/border-beam";
 import { Button } from "./ui/button";
-import { ArrowRight, Loader2, MessageCircle, Plus, X } from "lucide-react";
+import {
+  ArrowRight,
+  Loader2,
+  MessageCircle,
+  Plus,
+  X,
+  Search,
+  Play,
+  Navigation,
+  SkipForward,
+  Film,
+  Tv,
+  Star,
+  User,
+  Layers,
+  List,
+  Subtitles,
+  LoaderPinwheel,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import Markdown from "react-markdown";
 import { toast } from "sonner";
@@ -14,6 +32,7 @@ import { useRouter } from "next/navigation";
 import { ToolInvocation } from "ai";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 import * as Kbd from "@/components/ui/kbd";
+import { Badge } from "./ui/badge";
 
 interface AIAskProps {
   isOpen?: boolean;
@@ -26,6 +45,7 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
   const [searchSummary, setSearchSummary] = useState<string>("");
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [internalIsOpen, setInternalIsOpen] = useState<boolean>(false);
+  const [currentTool, setCurrentTool] = useState<string | null>(null);
   const { isPlayerVisible } = useMediaPlayer();
 
   // Use external state if provided, otherwise use internal state
@@ -57,6 +77,10 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
     api: "/api/chat",
     body: {
       currentMedia: currentMediaWithSource,
+    },
+    onToolCall: (toolInvocation) => {
+      const toolInvoked = toolInvocation?.toolCall?.toolName;
+      setCurrentTool(toolInvoked || null);
     },
     onFinish: (message) => {
       // Check if the message contains navigation or play instructions
@@ -151,6 +175,33 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
   const handleResetChat = () => {
     setInput("");
     setMessages([]);
+    setCurrentTool(null);
+  };
+
+  // Helper function to get tool badge info
+  const getToolBadgeInfo = (toolName: string) => {
+    console.log("Current tool:", toolName);
+
+    const toolMap: Record<
+      string,
+      { icon: React.ComponentType<any>; label: string; color?: string }
+    > = {
+      thinking: { icon: LoaderPinwheel, label: "Thinking..." },
+      searchMedia: { icon: Search, label: "Searching Media" },
+      navigateToMedia: { icon: Navigation, label: "Navigating" },
+      playMedia: { icon: Play, label: "Playing Media" },
+      skipToSubtitleContent: { icon: Subtitles, label: "Searching Subtitles" },
+      getMovies: { icon: Film, label: "Getting Movies" },
+      getTVShows: { icon: Tv, label: "Getting TV Shows" },
+      continueWatching: { icon: List, label: "Continue Watching" },
+      getPeople: { icon: User, label: "Searching People" },
+      getGenres: { icon: Layers, label: "Getting Genres" },
+      getMediaDetails: { icon: Search, label: "Getting Details" },
+      getSeasons: { icon: Layers, label: "Getting Seasons" },
+      getEpisodes: { icon: List, label: "Getting Episodes" },
+      getWatchlist: { icon: Star, label: "Getting Watchlist" },
+    };
+    return toolMap[toolName] || { icon: Search, label: "Working..." };
   };
 
   const handleSubmitQuestion = async (e: React.FormEvent) => {
@@ -168,6 +219,7 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
 
     try {
       await handleSubmit(e);
+      setCurrentTool("thinking");
       setInput(""); // Clear the input after successful submission
     } catch (error) {
       console.error("Error asking question:", error);
@@ -193,7 +245,7 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
           >
-            <div className="relative bg-card/90 backdrop-blur-[6px] rounded-2xl border shadow-sm p-4 max-h-[80vh]">
+            <div className="relative bg-card/90 backdrop-blur-[6px] rounded-2xl border shadow-xl shadow-primary/5 p-4 max-h-[80vh]">
               {askLoading && (
                 <BorderBeam
                   size={150}
@@ -203,7 +255,20 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
                 />
               )}
               <div className="flex justify-between items-center mb-3">
-                <h4 className="font-medium text-sm">Ask Navigator</h4>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-medium text-sm">Ask Navigator</h4>
+                  {currentTool &&
+                    (() => {
+                      const { icon: ToolIcon, label } =
+                        getToolBadgeInfo(currentTool);
+                      return (
+                        <Badge variant={"secondary"}>
+                          <ToolIcon className={cn("h-3 w-3", currentTool === "thinking" && "animate-spin")} />
+                          <span className="font-medium">{label}</span>
+                        </Badge>
+                      );
+                    })()}
+                </div>
                 <div className="flex items-center gap-1">
                   <Button
                     variant="ghost"
@@ -265,7 +330,7 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
                       value={input}
                       onChange={handleInputChange}
                       placeholder={`Ask something like "go to Inception" or "play Breaking Bad"`}
-                      className="rounded-full bg-background/80 backdrop-blur-md border shadow-sm px-4"
+                      className="rounded-full bg-background/80 backdrop-blur-md border px-4"
                       disabled={askLoading}
                       autoFocus
                     />
@@ -298,13 +363,11 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
         >
           <Button
             variant="outline"
-            className="shadow-sm px-4 py-2 h-auto rounded-full flex items-center gap-2 backdrop-blur-[6px] border dark:bg-background/70 bg-background/90"
+            className="px-4 py-2 h-auto rounded-full flex items-center gap-2 backdrop-blur-[6px] border dark:bg-background/70 bg-background/90"
             onClick={() => setIsAskOpen(!isAskOpen)}
           >
             <MessageCircle className="h-4 w-4" />
-            <span className="text-sm mr-0.5">
-              Ask Navigator
-            </span>
+            <span className="text-sm mr-0.5">Ask Navigator</span>
             <Kbd.Root variant="outline" size="sm">
               <Kbd.Key>⌘</Kbd.Key>
               <Kbd.Separator />

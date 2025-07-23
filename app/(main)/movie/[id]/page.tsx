@@ -26,7 +26,13 @@ export default async function Movie({
     const logoImage = await getImageUrl(id, "Logo");
 
     return (
-      <div className="min-h-screen overflow-hidden md:pr-1">
+      <div className="min-h-screen overflow-hiden md:pr-1 pb-16">
+        {/* Aurora background based on backdrop image */}
+        <AuroraBackground 
+          imageUrl={backdropImage} 
+          className="fixed inset-0 z-0 pointer-events-none opacity-30"
+        />
+        
         {/* Backdrop section */}
         <div className="relative">
           {/* Backdrop image with gradient overlay */}
@@ -44,10 +50,10 @@ export default async function Movie({
               movieName={movie.Name || ""}
               width={300}
               height={96}
-              className="absolute top-5/12 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 max-h-20 md:max-h-24 w-auto object-contain"
+              className="absolute md:top-5/12 top-4/12 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 max-h-20 md:max-h-24 w-auto object-contain max-w-2/3"
             />
             {/* Gradient overlay for better text readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-black/40 to-transparent" />
           </div>
 
           {/* Search bar positioned over backdrop */}
@@ -71,9 +77,9 @@ export default async function Movie({
             </div>
 
             {/* Movie information */}
-            <div className="w-full md:w-2/3 lg:w-3/4 pt-4 md:pt-4 text-center md:text-start">
+            <div className="w-full md:w-2/3 lg:w-3/4 pt-4 md:pt-8 text-center md:text-start">
               <div className="mb-4 flex justify-center md:justify-start">
-                <h1 className="text-4xl md:text-5xl font-semibold font-poppins text-foreground">
+                <h1 className="text-4xl md:text-5xl font-semibold font-poppins md:text-white text-foreground">
                   {movie.Name}
                 </h1>
               </div>
@@ -107,7 +113,7 @@ export default async function Movie({
               </div>
 
               {/* Movie overview */}
-              <p className="text-lg leading-relaxed mb-8 text-muted-foreground max-w-4xl">
+              <p className="text-md leading-relaxed mb-8 text-muted- max-w-4xl">
                 {movie.Overview}
               </p>
 
