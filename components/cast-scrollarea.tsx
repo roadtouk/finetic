@@ -37,7 +37,7 @@ export function CastScrollArea({ people, mediaId }: CastScrollAreaProps) {
               <div className="overflow-hidden rounded-full shadow-lg">
                 {person.PrimaryImageTag ? (
                   <img
-                    src={`${serverUrl}/Items/${person.Id}/Images/Primary?fillHeight=759&fillWidth=506&quality=96&tag=be01a54a72ffd71ded99d2268c8bc258`}
+                    src={`${serverUrl}/Items/${person.Id}/Images/Primary?maxWidth=250&maxHeight=250&quality=60&tag=${person.PrimaryImageTag}`}
                     alt={person.Name || "Cast member"}
                     className="aspect-square h-fit w-24 object-cover"
                   />

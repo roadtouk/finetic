@@ -88,3 +88,25 @@ export const convertToWebVTT = (trackEvents: { TrackEvents: { Id: string; Text: 
   });
   return vtt;
 };
+
+// Convert timestamp string (HH:MM:SS or MM:SS) to seconds
+export const convertTimestampToSeconds = (timestamp: string): number => {
+  const parts = timestamp.split(':');
+  
+  if (parts.length === 2) {
+    // MM:SS format
+    const minutes = parseInt(parts[0], 10);
+    const seconds = parseFloat(parts[1]);
+    return minutes * 60 + seconds;
+  } else if (parts.length === 3) {
+    // HH:MM:SS format
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+    const seconds = parseFloat(parts[2]);
+    return hours * 3600 + minutes * 60 + seconds;
+  }
+  
+  // If format is not recognized, try to parse as float (assume it's already in seconds)
+  const parsed = parseFloat(timestamp);
+  return isNaN(parsed) ? 0 : parsed;
+};

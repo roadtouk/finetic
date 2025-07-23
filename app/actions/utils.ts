@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { Jellyfin } from "@jellyfin/sdk";
 import { UserLibraryApi } from "@jellyfin/sdk/lib/generated-client/api/user-library-api";
 import { LibraryApi } from "@jellyfin/sdk/lib/generated-client/api/library-api";
+import { getSubtitleApi } from "@jellyfin/sdk/lib/utils/api/subtitle-api";
 import { createJellyfinInstance } from "@/lib/utils";
 
 // Helper function to get auth data from cookies
@@ -22,15 +23,38 @@ export async function getAuthData() {
 export async function getImageUrl(
   itemId: string,
   imageType: string = "Primary",
-  tag?: string
+  tag?: string,
+  maxWidth?: number,
+  maxHeight?: number,
+  quality?: number
 ): Promise<string> {
   const { serverUrl } = await getAuthData();
 
-  let url = `${serverUrl}/Items/${itemId}/Images/${imageType}`;
-  if (tag) {
-    url += `?tag=${tag}`;
+  const params = new URLSearchParams();
+  
+  // Set defaults based on image type
+  if (imageType.toLowerCase() === "backdrop") {
+    // Keep backdrops at high quality for full-screen display
+    params.set('maxWidth', (maxWidth ?? 1920).toString());
+    params.set('maxHeight', (maxHeight ?? 1080).toString());
+    params.set('quality', (quality ?? 95).toString());
+  } else if (imageType.toLowerCase() === "logo") {
+    // Keep logos at high quality for crisp display
+    params.set('maxWidth', (maxWidth ?? 800).toString());
+    params.set('maxHeight', (maxHeight ?? 400).toString());
+    params.set('quality', (quality ?? 95).toString());
+  } else {
+    // Optimize other image types (Primary, Thumb, etc.) for faster loading
+    params.set('maxWidth', (maxWidth ?? 400).toString());
+    params.set('maxHeight', (maxHeight ?? 600).toString());
+    params.set('quality', (quality ?? 80).toString());
   }
-  return url;
+  
+  if (tag) {
+    params.set('tag', tag);
+  }
+
+  return `${serverUrl}/Items/${itemId}/Images/${imageType}?${params.toString()}`;
 }
 
 export async function getDownloadUrl(itemId: string): Promise<string> {
@@ -111,6 +135,8 @@ export async function getSubtitleTracks(
         default: stream.IsDefault || false,
       };
     });
+
+    console.log("Subtitle tracks:", subtitleTracks);
 
     return subtitleTracks;
   } catch (error) {

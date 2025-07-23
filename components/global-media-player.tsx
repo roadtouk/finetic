@@ -40,7 +40,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 
 export function GlobalMediaPlayer() {
-  const { isPlayerVisible, setIsPlayerVisible, currentMedia } =
+  const { isPlayerVisible, setIsPlayerVisible, currentMedia, skipTimestamp, setCurrentMediaWithSource } =
     useMediaPlayer();
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [mediaDetails, setMediaDetails] = useState<JellyfinItem | null>(null);
@@ -56,6 +56,7 @@ export function GlobalMediaPlayer() {
     }>
   >([]);
   const [loading, setLoading] = useState(false);
+  const [fetchingSubtitles, setFetchingSubtitles] = useState(false);
 
   // Progress tracking state
   const [playSessionId, setPlaySessionId] = useState<string | null>(null);
@@ -214,12 +215,30 @@ export function GlobalMediaPlayer() {
     setSubtitleTracks([]);
     setCurrentTime(0);
     setDuration(0);
+    setFetchingSubtitles(false);
+    setCurrentMediaWithSource(null);
   }, [stopProgressTracking, cleanupBlobUrls]);
 
   const handleVideoEnded = useCallback(async () => {
     await stopProgressTracking();
     handleClose();
   }, [stopProgressTracking, handleClose]);
+
+  // Load subtitle tracks asynchronously after playback starts
+  const loadSubtitleTracks = useCallback(async (itemId: string, mediaSourceId: string) => {
+    setFetchingSubtitles(true);
+    try {
+      const tracks = await getSubtitleTracks(itemId, mediaSourceId);
+      console.log("Original tracks:", tracks);
+    
+      console.log("Processed tracks:", tracks);
+      setSubtitleTracks(tracks);
+    } catch (error) {
+      console.error("Failed to fetch subtitle tracks:", error);
+    } finally {
+      setFetchingSubtitles(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (currentMedia && isPlayerVisible) {
@@ -257,57 +276,20 @@ export function GlobalMediaPlayer() {
 
         setSelectedVersion(sourceToUse);
 
+        // Update the current media with source information for the AI chat context
+        setCurrentMediaWithSource({
+          id: currentMedia.id,
+          name: currentMedia.name,
+          type: currentMedia.type,
+          mediaSourceId: sourceToUse.Id || null,
+        });
+
         // Generate stream URL
         const streamUrl = await getStreamUrl(currentMedia.id, sourceToUse.Id!);
         setStreamUrl(streamUrl);
 
-        // Fetch subtitle tracks
-        try {
-          const tracks = await getSubtitleTracks(
-            currentMedia.id,
-            sourceToUse.Id!
-          );
-          console.log("Original tracks:", tracks);
-        
-          // Process each track to fix VTT formatting
-          const processedTracks = await Promise.all(
-            tracks.map(async (track) => {
-              try {
-                // Fetch the VTT content
-                const response = await fetch(track.src);
-                if (!response.ok) {
-                  console.warn(`Failed to fetch VTT for ${track.label}`);
-                  return track; // Return original track if fetch fails
-                }
-                
-                let vttContent = await response.text();
-                
-                // Fix VTT content by removing invalid line positioning when region is used
-                vttContent = vttContent.replace(/( region:\w+)( line:\d+%)/g, '$1');
-                
-                // Create a blob URL for the fixed content
-                const blob = new Blob([vttContent], { type: 'text/vtt' });
-                const blobUrl = URL.createObjectURL(blob);
-                
-                // Track the blob URL for cleanup
-                blobUrlsRef.current.push(blobUrl);
-                
-                return {
-                  ...track,
-                  src: blobUrl
-                };
-              } catch (error) {
-                console.error(`Failed to process subtitle track ${track.label}:`, error);
-                return track; // Return original track if processing fails
-              }
-            })
-          );
-          
-          console.log("Processed tracks:", processedTracks);
-          setSubtitleTracks(processedTracks);
-        } catch (error) {
-          console.error("Failed to fetch subtitle tracks:", error);
-        }
+        // Start fetching subtitle tracks asynchronously without blocking playback
+        loadSubtitleTracks(currentMedia.id, sourceToUse.Id!);
       }
     } catch (error) {
       console.error("Failed to load media:", error);
@@ -315,6 +297,15 @@ export function GlobalMediaPlayer() {
       setLoading(false);
     }
   };
+
+  // Handle skip timestamp
+  useEffect(() => {
+    if (skipTimestamp !== null && videoRef.current) {
+      console.log(`Skipping to timestamp: ${skipTimestamp} seconds`);
+      videoRef.current.currentTime = skipTimestamp;
+      setCurrentTime(skipTimestamp);
+    }
+  }, [skipTimestamp]);
 
   // Clean up on unmount
   useEffect(() => {
@@ -392,6 +383,13 @@ export function GlobalMediaPlayer() {
             <ArrowLeft className="h-4 w-4" />
             Go Back
           </Button>
+          {/* Fetching subtitles indicator in top right corner */}
+          {fetchingSubtitles && (
+            <div className="fixed right-4 top-4 z-10 bg-black/50 backdrop-blur-sm rounded-md px-3 py-2 text-white text-sm flex items-center gap-2">
+              <div className="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></div>
+              Fetching subtitles
+            </div>
+          )}
           <MediaPlayerControlsOverlay />
           <div className="flex flex-col w-full gap-1.5 pb-2">
             {/* Show name for episodes */}

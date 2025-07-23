@@ -8,14 +8,13 @@ import {
   fetchMediaDetails,
   fetchResumeItems,
 } from "@/app/actions/media";
-import {
-  fetchSeasons,
-  fetchEpisodes,
-} from "@/app/actions/tv-shows";
+import { fetchSeasons, fetchEpisodes } from "@/app/actions/tv-shows";
+import { getSubtitleContent } from "@/app/actions/subtitles";
+import { convertTimestampToSeconds } from "@/lib/utils";
 
 export async function POST(req: Request) {
   try {
-    const { messages } = await req.json();
+    const { messages, currentMedia } = await req.json();
 
     const result = await streamText({
       model: google("gemini-2.0-flash"),
@@ -89,7 +88,8 @@ export async function POST(req: Request) {
         }),
 
         playMedia: tool({
-          description: "Play a specific movie, TV show, or episode directly in the media player",
+          description:
+            "Play a specific movie, TV show, or episode directly in the media player",
           parameters: z.object({
             mediaId: z.string().describe("The unique ID of the media item"),
             mediaName: z.string().describe("The name of the media item"),
@@ -180,10 +180,14 @@ export async function POST(req: Request) {
           },
         }),
 
-continueWatching: tool({
-          description: "Fetch list of media items that are currently being watched/continued",
+        continueWatching: tool({
+          description:
+            "Fetch list of media items that are currently being watched/continued",
           parameters: z.object({
-            limit: z.number().optional().describe("Number of items, default is 20"),
+            limit: z
+              .number()
+              .optional()
+              .describe("Number of items, default is 20"),
           }),
           execute: async ({ limit = 20 }) => {
             console.log("🕒 [continueWatching] Tool called with limit:", limit);
@@ -210,26 +214,33 @@ continueWatching: tool({
             }
           },
         }),
-        
+
         getPeople: tool({
-          description: "Search for people (e.g., directors, actors) related to media",
+          description:
+            "Search for people (e.g., directors, actors) related to media",
           parameters: z.object({
-            query: z.string().describe("The search term or person name to look for"),
+            query: z
+              .string()
+              .describe("The search term or person name to look for"),
           }),
           execute: async ({ query }) => {
             console.log("🔍 [getPeople] Tool called with query:", query);
             try {
               // Search for media first, then extract people from results
               const results = await searchItems(query);
-              const people: Array<{id: string, name: string, role?: string}> = [];
-              
+              const people: Array<{ id: string; name: string; role?: string }> =
+                [];
+
               // Extract people from search results
-              results.forEach(item => {
+              results.forEach((item) => {
                 if (item.People) {
-                  item.People.forEach(person => {
-                    if (person.Name && person.Name.toLowerCase().includes(query.toLowerCase())) {
+                  item.People.forEach((person) => {
+                    if (
+                      person.Name &&
+                      person.Name.toLowerCase().includes(query.toLowerCase())
+                    ) {
                       people.push({
-                        id: person.Id || '',
+                        id: person.Id || "",
                         name: person.Name,
                         role: person.Type! || person.Role,
                       });
@@ -237,7 +248,7 @@ continueWatching: tool({
                   });
                 }
               });
-              
+
               return {
                 success: true,
                 people: people.slice(0, 10), // Limit results
@@ -252,14 +263,20 @@ continueWatching: tool({
             }
           },
         }),
-        
+
         getGenres: tool({
           description: "Get list of all genres available in the library",
           parameters: z.object({
-            mediaType: z.enum(["Movie", "Series", "All"]).optional().describe("Filter by media type, default is All"),
+            mediaType: z
+              .enum(["Movie", "Series", "All"])
+              .optional()
+              .describe("Filter by media type, default is All"),
           }),
           execute: async ({ mediaType = "All" }) => {
-            console.log("🎭 [getGenres] Tool called with mediaType:", mediaType);
+            console.log(
+              "🎭 [getGenres] Tool called with mediaType:",
+              mediaType
+            );
             try {
               // Get movies and/or TV shows to extract genres
               let items = [];
@@ -271,17 +288,17 @@ continueWatching: tool({
                 const shows = await fetchTVShows(50);
                 items.push(...shows);
               }
-              
+
               // Extract unique genres
               const genreSet = new Set<string>();
-              items.forEach(item => {
+              items.forEach((item) => {
                 if (item.Genres) {
                   item.Genres.forEach((genre: string) => genreSet.add(genre));
                 }
               });
-              
+
               const genres = Array.from(genreSet).sort();
-              
+
               return {
                 success: true,
                 genres,
@@ -296,7 +313,7 @@ continueWatching: tool({
             }
           },
         }),
-        
+
         getMediaDetails: tool({
           description:
             "Get detailed information about a specific movie or TV show",
@@ -342,7 +359,7 @@ continueWatching: tool({
             }
           },
         }),
-        
+
         getSeasons: tool({
           description: "Get seasons for a TV show",
           parameters: z.object({
@@ -372,14 +389,17 @@ continueWatching: tool({
             }
           },
         }),
-        
+
         getEpisodes: tool({
           description: "Get episodes for a TV show season",
           parameters: z.object({
             seasonId: z.string().describe("The unique ID of the season"),
           }),
           execute: async ({ seasonId }) => {
-            console.log("📺 [getEpisodes] Tool called with seasonId:", seasonId);
+            console.log(
+              "📺 [getEpisodes] Tool called with seasonId:",
+              seasonId
+            );
             try {
               const episodes = await fetchEpisodes(seasonId);
               return {
@@ -405,11 +425,15 @@ continueWatching: tool({
             }
           },
         }),
-        
+
         getWatchlist: tool({
-          description: "Get user's watchlist or favorites (simulated with highly-rated content)",
+          description:
+            "Get user's watchlist or favorites (simulated with highly-rated content)",
           parameters: z.object({
-            limit: z.number().optional().describe("Number of items, default is 20"),
+            limit: z
+              .number()
+              .optional()
+              .describe("Number of items, default is 20"),
           }),
           execute: async ({ limit = 20 }) => {
             console.log("⭐ [getWatchlist] Tool called with limit:", limit);
@@ -417,11 +441,11 @@ continueWatching: tool({
               // Since there's no direct watchlist API, we'll get popular/recent content
               const [movies, shows] = await Promise.all([
                 fetchMovies(Math.ceil(limit / 2)),
-                fetchTVShows(Math.ceil(limit / 2))
+                fetchTVShows(Math.ceil(limit / 2)),
               ]);
-              
+
               const allItems = [...movies, ...shows].slice(0, limit);
-              
+
               return {
                 success: true,
                 watchlist: allItems.map((item) => ({
@@ -443,9 +467,158 @@ continueWatching: tool({
             }
           },
         }),
+
+        skipToSubtitleContent: tool({
+          description:
+            "Analyze subtitles and find the best timestamp to skip to based on the user's description. Only works when media is currently playing.",
+          parameters: z.object({
+            userDescription: z
+              .string()
+              .describe(
+                "The user's description of what scene/moment they want to skip to"
+              ),
+            subtitleIndex: z
+              .number()
+              .optional()
+              .describe("The subtitle stream index (default: 0)"),
+          }),
+          execute: async ({ userDescription, subtitleIndex = 0 }) => {
+            console.log("⏩ [skipToSubtitleContent] Tool called with:", {
+              userDescription,
+              subtitleIndex,
+              currentMedia,
+            });
+
+            // Check if we have current media context
+            if (
+              !currentMedia ||
+              !currentMedia.id ||
+              !currentMedia.mediaSourceId
+            ) {
+              return {
+                success: false,
+                error:
+                  "No media is currently playing. Please start playing a video first to use subtitle search.",
+              };
+            }
+
+            try {
+              const result = await getSubtitleContent(
+                currentMedia.id,
+                currentMedia.mediaSourceId,
+                subtitleIndex
+              );
+
+              if (!result.success) {
+                return {
+                  success: false,
+                  error: result.error || "Failed to fetch subtitles",
+                };
+              }
+
+              if (result.subtitles.length === 0) {
+                return {
+                  success: false,
+                  error: `No subtitles found for ${currentMedia.name}`,
+                };
+              }
+
+              // Let Gemini analyze the subtitles to find the best match
+              // Format subtitle data for analysis - create a more structured prompt
+              const subtitleText = result.subtitles
+                .map(
+                  (sub, index) =>
+                    `${index + 1}. [${sub.timestampFormatted}] ${sub.text}`
+                )
+                .join("\n");
+
+              // Create a prompt for Gemini to analyze
+              const analysisPrompt = `You are analyzing subtitles from "${currentMedia.name}" to help a user skip to a specific scene.
+
+User wants to skip to: "${userDescription}"
+
+Subtitle entries (format: [HH:MM:SS] text):
+${subtitleText}
+
+Task: Find the most relevant timestamp that matches the user's description.
+
+Consider:
+- Semantic meaning and emotional context
+- Scene transitions and narrative flow  
+- Character dialogue and actions
+- Plot developments that match the description
+
+Return ONLY the timestamp in HH:MM:SS format (e.g., 02:25.6 or 1:23:45.2):`;
+
+              // Use Gemini to analyze the subtitles
+              const analysisResult = await streamText({
+                model: google("gemini-2.0-flash"),
+                messages: [{ role: "user", content: analysisPrompt }],
+                maxTokens: 50, // Keep response short
+              });
+
+              let analysisText = "";
+              for await (const chunk of analysisResult.textStream) {
+                analysisText += chunk;
+              }
+
+              console.log("[skipToSubtitleContent] Analysis result:", analysisText);
+
+              // Extract timestamp from Gemini's response (looking for HH:MM:SS format)
+              // Order is important: match HH:MM:SS first, then MM:SS
+              const timestampMatch = analysisText.match(
+                /\d{1,2}:\d{2}:\d{2}(?:\.\d+)?|\d{1,2}:\d{2}(?:\.\d+)?/
+              );
+              if (!timestampMatch) {
+                return {
+                  success: false,
+                  error:
+                    "Could not determine the best timestamp for your request. Please try being more specific.",
+                };
+              }
+
+              // Convert timestamp to seconds using our utility function
+              console.log("[skipToSubtitleContent] Extracted timestamp:", timestampMatch[0]);
+              const bestTimestamp = convertTimestampToSeconds(
+                timestampMatch[0]
+              );
+              console.log("[skipToSubtitleContent] Converted to seconds:", bestTimestamp);
+
+              // Find the corresponding subtitle entry for context
+              const correspondingSubtitle =
+                result.subtitles.find(
+                  (sub) => Math.abs(sub.timestamp - bestTimestamp) < 2 // Within 2 seconds
+                ) ||
+                result.subtitles.reduce((closest, current) =>
+                  Math.abs(current.timestamp - bestTimestamp) <
+                  Math.abs(closest.timestamp - bestTimestamp)
+                    ? current
+                    : closest
+                );
+
+              return {
+                success: true,
+                action: "skipTo",
+                timestamp: bestTimestamp,
+                timestampFormatted: correspondingSubtitle.timestampFormatted,
+                text: correspondingSubtitle.text,
+                message: `Found the scene you described in ${currentMedia.name} at ${correspondingSubtitle.timestampFormatted}. Skipping there now...`,
+              };
+            } catch (error) {
+              console.error("[skipToSubtitleContent] Error:", error);
+              return {
+                success: false,
+                error: "Failed to analyze subtitle content",
+              };
+            }
+          },
+        }),
       },
       system: `You are Finetic, an AI assistant for a media library application (similar to Plex/Jellyfin). 
       Help users navigate to movies and TV shows, search for content, and provide information about media.
+      
+      CURRENT MEDIA CONTEXT:
+      ${currentMedia ? `The user is currently watching: "${currentMedia.name}" (${currentMedia.type}). You can use the skipToSubtitleContent tool to search subtitles and jump to specific scenes in this video.` : "No media is currently playing. The skipToSubtitleContent tool is only available when media is actively playing."}
       
       AVAILABLE TOOLS AND CAPABILITIES:
       - searchMedia: Search for movies, TV shows, or episodes by name or keyword
@@ -460,6 +633,7 @@ continueWatching: tool({
       - getSeasons: Get seasons for a TV show
       - getEpisodes: Get episodes for a TV show season
       - getWatchlist: Get user's watchlist or favorites (popular/highly-rated content)
+      - skipToSubtitleContent: Intelligently analyze subtitles and find the best timestamp based on user descriptions (doesn't require exact text matches)
       
       USAGE EXAMPLES:
       - "Show me my continue watching list" → Use continueWatching tool
@@ -469,6 +643,10 @@ continueWatching: tool({
       - "What's in my watchlist?" → Use getWatchlist tool
       - "Show me recent movies" → Use getMovies tool
       - "Play Inception" → Search for it, then use playMedia tool
+      - "Skip to the part where they say 'hello world'" → Use skipToSubtitleContent tool with user description
+      - "Jump to the scene where the main character talks about love" → Use skipToSubtitleContent tool
+      - "Take me to the action sequence" → Use skipToSubtitleContent tool
+      - "Skip to when they arrive at the destination" → Use skipToSubtitleContent tool
 
       SEARCH CORRECTION: Before searching, automatically correct common abbreviations and shorthand terms to their full proper names:
       - "b99" → "Brooklyn Nine-Nine"

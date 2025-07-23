@@ -13,6 +13,7 @@ import { Input } from "./ui/input";
 import { useRouter } from "next/navigation";
 import { ToolInvocation } from "ai";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
+import * as Kbd from "@/components/ui/kbd";
 
 interface AIAskProps {
   isOpen?: boolean;
@@ -26,9 +27,10 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [internalIsOpen, setInternalIsOpen] = useState<boolean>(false);
   const { isPlayerVisible } = useMediaPlayer();
-  
+
   // Use external state if provided, otherwise use internal state
-  const isAskOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+  const isAskOpen =
+    externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
   const setIsAskOpen = (open: boolean) => {
     if (onOpenChange) {
       onOpenChange(open);
@@ -39,8 +41,9 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
 
   const router = useRouter();
 
-  const { playMedia } = useMediaPlayer();
-  
+  const { playMedia, skipToTimestamp, currentMedia, currentMediaWithSource } =
+    useMediaPlayer();
+
   const {
     messages,
     input,
@@ -52,6 +55,9 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
     setInput,
   } = useChat({
     api: "/api/chat",
+    body: {
+      currentMedia: currentMediaWithSource,
+    },
     onFinish: (message) => {
       // Check if the message contains navigation or play instructions
       if (message.toolInvocations) {
@@ -60,6 +66,8 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
             navigateToMedia(toolInvocation);
           } else if (toolInvocation.toolName === "playMedia") {
             handlePlayMedia(toolInvocation);
+          } else if (toolInvocation.toolName === "skipToSubtitleContent") {
+            handleSkipToTimestamp(toolInvocation);
           }
         }
       }
@@ -83,13 +91,16 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
   };
 
   const handlePlayMedia = (toolInvocation: ToolInvocation) => {
-    if (
-      "result" in toolInvocation &&
-      toolInvocation.toolName === "playMedia"
-    ) {
+    if ("result" in toolInvocation && toolInvocation.toolName === "playMedia") {
       console.log("Play media tool invocation result:", toolInvocation.result);
       const result = toolInvocation.result;
-      if (result.success && result.action === "play" && result.mediaId && result.mediaName && result.mediaType) {
+      if (
+        result.success &&
+        result.action === "play" &&
+        result.mediaId &&
+        result.mediaName &&
+        result.mediaType
+      ) {
         playMedia({
           id: result.mediaId,
           name: result.mediaName,
@@ -98,6 +109,35 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
         setTimeout(() => {
           setIsAskOpen(false);
         }, 500);
+      }
+    }
+  };
+
+  const handleSkipToTimestamp = (toolInvocation: ToolInvocation) => {
+    if (
+      "result" in toolInvocation &&
+      toolInvocation.toolName === "skipToSubtitleContent"
+    ) {
+      console.log(
+        "Skip to timestamp tool invocation result:",
+        toolInvocation.result
+      );
+      const result = toolInvocation.result;
+      if (
+        result.success &&
+        result.action === "skipTo" &&
+        typeof result.timestamp === "number"
+      ) {
+        skipToTimestamp(result.timestamp);
+        toast.success(
+          `Skipped to ${result.timestampFormatted}: "${result.text}"`
+        );
+        // Hide the AI Ask component after successfully skipping
+        setTimeout(() => {
+          setIsAskOpen(false);
+        }, 500);
+      } else if (!result.success && result.error) {
+        toast.error(result.error);
       }
     }
   };
@@ -140,7 +180,9 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
   };
 
   return (
-    <div className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 flex flex-col items-center px-4 w-full ${isAskOpen ? 'z-[9999999]' : 'z-50'}`}>
+    <div
+      className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 flex flex-col items-center px-4 w-full ${isAskOpen ? "z-[9999999]" : "z-50"}`}
+    >
       {/* Ask question expanded panel */}
       <AnimatePresence>
         {isAskOpen && (
@@ -161,7 +203,7 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
                 />
               )}
               <div className="flex justify-between items-center mb-3">
-                <h4 className="font-medium text-sm">Ask about these results</h4>
+                <h4 className="font-medium text-sm">Ask Navigator</h4>
                 <div className="flex items-center gap-1">
                   <Button
                     variant="ghost"
@@ -222,7 +264,7 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
                     <Input
                       value={input}
                       onChange={handleInputChange}
-                      placeholder={`Ask your server...`}
+                      placeholder={`Ask something like "go to Inception" or "play Breaking Bad"`}
                       className="rounded-full bg-background/80 backdrop-blur-md border shadow-sm px-4"
                       disabled={askLoading}
                       autoFocus
@@ -246,7 +288,7 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
         )}
       </AnimatePresence>
 
-{/* Ask button */}
+      {/* Ask button */}
       {!isPlayerVisible && (
         <motion.div
           initial={false}
@@ -260,7 +302,14 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
             onClick={() => setIsAskOpen(!isAskOpen)}
           >
             <MessageCircle className="h-4 w-4" />
-            <span className="text-sm">Ask your server</span>
+            <span className="text-sm mr-0.5">
+              Ask Navigator
+            </span>
+            <Kbd.Root variant="outline" size="sm">
+              <Kbd.Key>⌘</Kbd.Key>
+              <Kbd.Separator />
+              <Kbd.Key>K</Kbd.Key>
+            </Kbd.Root>
           </Button>
         </motion.div>
       )}
