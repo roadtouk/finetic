@@ -108,6 +108,7 @@ export async function getSubtitleTracks(
   const jellyfinInstance = createJellyfinInstance();
   const api = jellyfinInstance.createApi(serverUrl);
   api.accessToken = user.AccessToken;
+  
 
   try {
     // First get the media item to find subtitle streams

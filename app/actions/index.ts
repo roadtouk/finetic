@@ -39,5 +39,4 @@ export {
   getDownloadUrl,
   getStreamUrl,
   getSubtitleTracks,
-  extractImageColors,
 } from './utils';
