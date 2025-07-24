@@ -114,7 +114,7 @@
   --color-3: oklch(69.6% 0.165 251);
   --color-4: oklch(80.2% 0.134 225);
   --color-5: oklch(90.7% 0.231 133);
-  
+
   /* Jellyfin colors - light mode */
   --jellyfin-purple: #AA5CC3;
   --jellyfin-blue: #00A4DC;
@@ -159,7 +159,7 @@
   --color-3: oklch(69.6% 0.165 251);
   --color-4: oklch(80.2% 0.134 225);
   --color-5: oklch(90.7% 0.231 133);
-  
+
   /* Jellyfin colors - dark mode (lighter versions) */
   --jellyfin-purple: #C084FC;
   --jellyfin-blue: #60A5FA;

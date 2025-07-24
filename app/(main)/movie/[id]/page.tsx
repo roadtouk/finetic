@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { CastScrollArea } from "@/components/cast-scrollarea";
 import { AuroraBackground } from "@/components/aurora-background";
 import { VibrantLogo } from "@/components/vibrant-logo";
+import { RottenTomatoesIcon } from "@/components/icons/rotten-tomatoes";
+import { Star } from "lucide-react";
 import { redirect } from "next/navigation";
 
 export default async function Movie({
@@ -26,7 +28,7 @@ export default async function Movie({
     const logoImage = await getImageUrl(id, "Logo");
 
     return (
-      <div className="min-h-screen overflow-hiden md:pr-1 pb-16">
+      <div className="min-h-screen overflow-hidden md:pr-1 pb-16">
         {/* Aurora background based on backdrop image */}
         <AuroraBackground
           imageUrl={backdropImage}
@@ -38,7 +40,7 @@ export default async function Movie({
           {/* Backdrop image with gradient overlay */}
           <div className="relative h-[50vh] md:h-[60vh] overflow-hidden">
             <img
-              className="w-full h-full object-cover md:mt-2.5 md:rounded-t-xl"
+              className="w-full h-full object-cover md:mt-2.5 md:rounded-xl"
               src={backdropImage}
               alt={`${movie.Name} backdrop`}
               width={1920}
@@ -52,8 +54,9 @@ export default async function Movie({
               height={96}
               className="absolute md:top-5/12 top-4/12 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 max-h-20 md:max-h-24 w-auto object-contain max-w-2/3 invisible md:visible"
             />
-            {/* Gradient overlay for better text readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+            {/* Enhanced gradient overlay for smooth transition to overview */}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/80" />
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
           </div>
 
           {/* Search bar positioned over backdrop */}
@@ -110,9 +113,27 @@ export default async function Movie({
                     {Math.round(movie.RunTimeTicks / 600000000)} min
                   </Badge>
                 )}
+                {movie.CommunityRating && (
+                  <Badge
+                    variant="outline"
+                    className="bg-background backdrop-blur-sm flex items-center gap-1"
+                  >
+                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                    {movie.CommunityRating.toFixed(1)}
+                  </Badge>
+                )}
+                {movie.CriticRating && (
+                  <Badge
+                    variant="outline"
+                    className="bg-background backdrop-blur-sm flex items-center gap-1"
+                  >
+                    <RottenTomatoesIcon size={12} />
+                    {movie.CriticRating}%
+                  </Badge>
+                )}
               </div>
 
-              <div className="h-screen absolute left-0 bg-gradient-to-b bg-background border-t w-screen -z-10 mt-4 invisible md:visible"></div>
+              <div className="h-screen absolute left-0 right-0 bg-gradient-to-b bg-background -z-10 mt-4 invisible md:visible"></div>
 
               <div className="px-8 md:pl-8 md:pt-10 md:pr-16 flex flex-col justify-center md:items-start items-center">
                 <p className="text-md leading-relaxed mb-8 max-w-4xl">

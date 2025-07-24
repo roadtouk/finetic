@@ -7,6 +7,7 @@ import { GlobalMediaPlayer } from "@/components/global-media-player";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 import { useState } from "react";
 import { MediaPlayerProvider } from "@/contexts/MediaPlayerContext";
+import { AuroraBackground } from "@/components/aurora-background";
 
 export default function MainLayout({
   children,
@@ -18,29 +19,29 @@ export default function MainLayout({
   // Handle Cmd+K (Mac) / Ctrl+K (Windows/Linux) to toggle AI Ask
   useKeyboardShortcut(
     {
-      key: 'k',
+      key: "k",
       metaKey: true, // Command key on Mac
     },
     () => {
-      setIsAIAskOpen(prev => !prev);
+      setIsAIAskOpen((prev) => !prev);
     }
   );
 
   // Also handle Ctrl+K for non-Mac users
   useKeyboardShortcut(
     {
-      key: 'k',
+      key: "k",
       ctrlKey: true,
     },
     () => {
-      setIsAIAskOpen(prev => !prev);
+      setIsAIAskOpen((prev) => !prev);
     }
   );
 
   // Handle Escape key to close AI Ask when it's open
   useKeyboardShortcut(
     {
-      key: 'Escape',
+      key: "Escape",
       allowInInputFields: true, // Allow Escape to work even when focused on input fields
     },
     () => {
@@ -56,7 +57,9 @@ export default function MainLayout({
         <SidebarProvider>
           <AppSidebar />
           <SidebarInset className="flex-1 overflow-hidden">
-            <div className="flex-1 overflow-y-auto no-scrollbar">{children}</div>
+            <div className="flex-1 overflow-y-auto no-scrollbar">
+              {children}
+            </div>
           </SidebarInset>
         </SidebarProvider>
         <AIAsk isOpen={isAIAskOpen} onOpenChange={setIsAIAskOpen} />

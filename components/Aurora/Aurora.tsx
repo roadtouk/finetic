@@ -111,22 +111,54 @@ void main() {
 
 interface AuroraProps {
   colorStops?: string[];
+  targetColors?: string[];
   amplitude?: number;
   blend?: number;
   time?: number;
   speed?: number;
+  onColorsUpdated?: (colors: string[]) => void;
+}
+
+// Helper function to interpolate between two colors
+function interpolateColor(color1: string, color2: string, factor: number): string {
+  const c1 = new Color(color1);
+  const c2 = new Color(color2);
+  
+  const r = Math.round((c1.r * 255) * (1 - factor) + (c2.r * 255) * factor);
+  const g = Math.round((c1.g * 255) * (1 - factor) + (c2.g * 255) * factor);
+  const b = Math.round((c1.b * 255) * (1 - factor) + (c2.b * 255) * factor);
+  
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 
 export default function Aurora(props: AuroraProps) {
   const {
     colorStops = ["#5227FF", "#7cff67", "#5227FF"],
+    targetColors,
     amplitude = 1.0,
     blend = 0.5,
+    onColorsUpdated,
   } = props;
   const propsRef = useRef<AuroraProps>(props);
   propsRef.current = props;
 
   const ctnDom = useRef<HTMLDivElement>(null);
+  const transitionProgressRef = useRef(0);
+  const startColorsRef = useRef<string[]>(colorStops);
+  const isTransitioningRef = useRef(false);
+  const currentColorsRef = useRef<string[]>(colorStops);
+
+  // Handle color transitions
+  useEffect(() => {
+    if (!targetColors || JSON.stringify(targetColors) === JSON.stringify(currentColorsRef.current)) {
+      return;
+    }
+
+    // Start transition
+    startColorsRef.current = [...currentColorsRef.current];
+    transitionProgressRef.current = 0;
+    isTransitioningRef.current = true;
+  }, [targetColors]);
 
   useEffect(() => {
     const ctn = ctnDom.current;
@@ -185,16 +217,46 @@ export default function Aurora(props: AuroraProps) {
     let animateId = 0;
     const update = (t: number) => {
       animateId = requestAnimationFrame(update);
-      const { time = t * 0.01, speed = 1.0 } = propsRef.current;
+      const { time = t * 0.01, speed = 1.0, targetColors: propsTargetColors } = propsRef.current;
+      
+      // Handle color transition
+      if (isTransitioningRef.current && propsTargetColors) {
+        transitionProgressRef.current += 0.02; // Adjust speed as needed (0.02 = ~1 second transition)
+        
+        if (transitionProgressRef.current >= 1) {
+          // Transition complete
+          transitionProgressRef.current = 1;
+          isTransitioningRef.current = false;
+          currentColorsRef.current = [...propsTargetColors];
+          
+          // Notify parent of color update
+          if (propsRef.current.onColorsUpdated) {
+            propsRef.current.onColorsUpdated([...propsTargetColors]);
+          }
+        } else {
+          // Interpolate colors during transition
+          const progress = transitionProgressRef.current;
+          // Use easing function for smoother transition
+          const easedProgress = progress * progress * (3 - 2 * progress); // smoothstep
+          
+          currentColorsRef.current = startColorsRef.current.map((startColor, index) => {
+            const targetColor = propsTargetColors[index] || startColor;
+            return interpolateColor(startColor, targetColor, easedProgress);
+          });
+        }
+      }
+      
       if (program) {
         program.uniforms.uTime.value = time * speed * 0.1;
         program.uniforms.uAmplitude.value = propsRef.current.amplitude ?? 1.0;
         program.uniforms.uBlend.value = propsRef.current.blend ?? blend;
-        const stops = propsRef.current.colorStops ?? colorStops;
-        program.uniforms.uColorStops.value = stops.map((hex: string) => {
+        
+        // Use current interpolated colors
+        program.uniforms.uColorStops.value = currentColorsRef.current.map((hex: string) => {
           const c = new Color(hex);
           return [c.r, c.g, c.b];
         });
+        
         renderer.render({ scene: mesh });
       }
     };

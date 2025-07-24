@@ -1,12 +1,15 @@
 import { fetchTVShowDetails } from "@/app/actions/tv-shows";
 import { getImageUrl } from "@/app/actions/utils";
 import { MediaActions } from "@/components/media-actions";
+import { SeriesPlayButton } from "@/components/series-play-button";
 import { SearchBar } from "@/components/search-component";
 import { Badge } from "@/components/ui/badge";
 import { CastScrollArea } from "@/components/cast-scrollarea";
 import { SeasonEpisodes } from "@/components/season-episodes";
 import { AuroraBackground } from "@/components/aurora-background";
 import { VibrantLogo } from "@/components/vibrant-logo";
+import { RottenTomatoesIcon } from "@/components/icons/rotten-tomatoes";
+import { Star } from "lucide-react";
 import { redirect } from "next/navigation";
 
 export default async function Show({
@@ -28,7 +31,7 @@ export default async function Show({
     const logoImage = await getImageUrl(id, "Logo");
 
     return (
-      <div className="min-h-screen overflow-hiden md:pr-1 pb-16">
+      <div className="min-h-screen overflow-hidden md:pr-1 pb-16">
         {/* Aurora background based on backdrop image */}
         <AuroraBackground
           imageUrl={backdropImage}
@@ -104,6 +107,24 @@ export default async function Show({
                     {show.OfficialRating}
                   </Badge>
                 )}
+                {show.CommunityRating && (
+                  <Badge
+                    variant="outline"
+                    className="bg-background backdrop-blur-sm flex items-center gap-1"
+                  >
+                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                    {show.CommunityRating.toFixed(1)}
+                  </Badge>
+                )}
+                {show.CriticRating && (
+                  <Badge
+                    variant="outline"
+                    className="bg-background backdrop-blur-sm flex items-center gap-1"
+                  >
+                    <RottenTomatoesIcon size={12} />
+                    {show.CriticRating}%
+                  </Badge>
+                )}
               </div>
 
               <div className="h-screen absolute left-0 bg-gradient-to-b bg-background border-t w-screen -z-10 mt-4 invisible md:visible"></div>
@@ -113,7 +134,10 @@ export default async function Show({
                   {show.Overview}
                 </p>
 
-                {/* Media actions */}
+                {/* Series play/resume button and media actions */}
+                <div className="flex items-center gap-2 mb-6">
+                  <SeriesPlayButton series={show} />
+                </div>
                 <MediaActions show={show} />
               </div>
             </div>

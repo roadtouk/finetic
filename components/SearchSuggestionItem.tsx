@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getImageUrl } from "@/app/actions";
-import { Film, PlayCircle, Tv, Calendar, Star } from "lucide-react";
+import { Film, PlayCircle, Tv, Calendar, Star, User } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -60,6 +60,8 @@ export function SearchSuggestionItem({
               <Film className="h-6 w-6 text-muted-foreground" />
             ) : item.Type === "Episode" ? (
               <PlayCircle className="h-6 w-6 text-muted-foreground" />
+            ) : item.Type === "Person" ? (
+              <User className="h-6 w-6 text-muted-foreground" />
             ) : (
               <Tv className="h-6 w-6 text-muted-foreground" />
             )}
@@ -80,6 +82,11 @@ export function SearchSuggestionItem({
             <Badge variant={"outline"}>
               <Tv className="h-3 w-3 mr-0.5 text-emerald-400" />
               Series
+            </Badge>
+          ) : item.Type === "Person" ? (
+            <Badge variant={"outline"}>
+              <User className="h-3 w-3 mr-0.5 text-purple-400" />
+              Person
             </Badge>
           ) : item.Type === "Episode" ? (
             <Badge variant={"outline"}>

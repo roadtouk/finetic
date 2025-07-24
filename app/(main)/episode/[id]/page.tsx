@@ -13,6 +13,7 @@ import { CastScrollArea } from "@/components/cast-scrollarea";
 import { SeasonEpisodes } from "@/components/season-episodes";
 import { AuroraBackground } from "@/components/aurora-background";
 import { VibrantLogo } from "@/components/vibrant-logo";
+import { SidebarInset } from "@/components/ui/sidebar";
 
 export default async function Episode({
   params,
@@ -39,7 +40,7 @@ export default async function Episode({
     const logoImage = await getImageUrl(episode.SeriesId!, "Logo");
 
     return (
-      <div className="min-h-screen overflow-hiden md:pr-1 pb-16">
+      <div className="min-h-screen overflow-hidden md:pr-1 pb-16">
         {/* Aurora background based on backdrop image */}
         <AuroraBackground
           imageUrl={backdropImage}
@@ -142,7 +143,7 @@ export default async function Episode({
                 )}
               </div>
 
-              <div className="h-screen absolute left-0 bg-gradient-to-b bg-background border-t w-screen -z-10 mt-4 invisible md:visible"></div>
+              <div className="h-screen absolute left-0 bg-background border-t w-screen -z-10 mt-4 invisible md:visible"></div>
 
               <div className="px-8 md:pl-8 md:pt-10 md:pr-16 flex flex-col justify-center md:items-start items-center">
                 {episode.Overview && (

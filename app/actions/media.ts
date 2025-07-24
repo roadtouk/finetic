@@ -159,6 +159,77 @@ export async function fetchMediaDetails(
   }
 }
 
+export async function fetchPersonDetails(
+  personId: string
+): Promise<JellyfinItem | null> {
+  try {
+    const { serverUrl, user } = await getAuthData();
+    const jellyfinInstance = createJellyfinInstance();
+    const api = jellyfinInstance.createApi(serverUrl);
+    api.accessToken = user.AccessToken;
+
+    const userLibraryApi = new UserLibraryApi(api.configuration);
+    const { data } = await userLibraryApi.getItem({
+      userId: user.Id,
+      itemId: personId,
+    });
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch person details:", error);
+
+    // If it's an authentication error, throw an error with a special flag
+    if (isAuthError(error)) {
+      console.log("Authentication error detected, clearing auth data");
+      const authError = new Error(
+        "Authentication expired. Please sign in again."
+      );
+      (authError as any).isAuthError = true;
+      throw authError;
+    }
+
+    return null;
+  }
+}
+
+export async function fetchPersonFilmography(personId: string): Promise<JellyfinItem[]> {
+  try {
+    const { serverUrl, user } = await getAuthData();
+    const jellyfinInstance = createJellyfinInstance();
+    const api = jellyfinInstance.createApi(serverUrl);
+    api.accessToken = user.AccessToken;
+
+    const { data } = await getItemsApi(api).getItems({
+      userId: user.Id,
+      includeItemTypes: [BaseItemKind.Movie, BaseItemKind.Series],
+      recursive: true,
+      personIds: [personId],
+      sortBy: [ItemSortBy.ProductionYear],
+      sortOrder: [SortOrder.Descending],
+      fields: [
+        ItemFields.CanDelete,
+        ItemFields.PrimaryImageAspectRatio,
+        ItemFields.Overview,
+        ItemFields.People,
+      ],
+    });
+    return data.Items || [];
+  } catch (error) {
+    console.error("Failed to fetch person filmography:", error);
+
+    // If it's an authentication error, throw an error with a special flag
+    if (isAuthError(error)) {
+      console.log("Authentication error detected, clearing auth data");
+      const authError = new Error(
+        "Authentication expired. Please sign in again."
+      );
+      (authError as any).isAuthError = true;
+      throw authError;
+    }
+
+    return [];
+  }
+}
+
 export async function fetchResumeItems() {
   try {
     const { serverUrl, user } = await getAuthData();

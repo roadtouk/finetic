@@ -9,6 +9,8 @@ import { BaseItemKind } from "@jellyfin/sdk/lib/generated-client/models/base-ite
 import { ItemFields } from "@jellyfin/sdk/lib/generated-client/models/item-fields";
 import { ItemSortBy } from "@jellyfin/sdk/lib/generated-client/models/item-sort-by";
 import { SortOrder } from "@jellyfin/sdk/lib/generated-client/models/sort-order";
+import { ItemFilter } from "@jellyfin/sdk/lib/generated-client/models/item-filter";
+import { getItemsApi } from "@jellyfin/sdk/lib/utils/api/items-api";
 import { createJellyfinInstance } from "@/lib/utils";
 
 // Type aliases for easier use
@@ -91,6 +93,12 @@ export async function fetchTVShowDetails(tvShowId: string): Promise<JellyfinItem
     const { data } = await userLibraryApi.getItem({
       userId: user.Id,
       itemId: tvShowId,
+      fields: [
+        ItemFields.CanDelete,
+        ItemFields.PrimaryImageAspectRatio,
+        ItemFields.Overview,
+        ItemFields.MediaSources,
+      ],
     });
     return data;
   } catch (error) {
@@ -114,6 +122,64 @@ export async function fetchEpisodeDetails(episodeId: string): Promise<JellyfinIt
     return data;
   } catch (error) {
     console.error("Failed to fetch episode details:", error);
+    return null;
+  }
+}
+
+export async function getNextEpisodeForSeries(seriesId: string): Promise<JellyfinItem | null> {
+  const { serverUrl, user } = await getAuthData();
+  const jellyfinInstance = createJellyfinInstance();
+  const api = jellyfinInstance.createApi(serverUrl);
+  api.accessToken = user.AccessToken;
+
+  try {
+    const itemsApi = getItemsApi(api);
+    
+    // Get all episodes for the series with user data
+    const { data } = await itemsApi.getItems({
+      userId: user.Id,
+      parentId: seriesId,
+      includeItemTypes: [BaseItemKind.Episode],
+      recursive: true,
+      sortBy: [ItemSortBy.ParentIndexNumber, ItemSortBy.IndexNumber],
+      sortOrder: [SortOrder.Ascending, SortOrder.Ascending],
+      fields: [
+        ItemFields.CanDelete,
+        ItemFields.PrimaryImageAspectRatio,
+        ItemFields.Overview,
+        ItemFields.MediaSources,
+      ],
+    });
+
+    if (!data.Items || data.Items.length === 0) {
+      return null;
+    }
+
+    // First, look for episodes with resume positions (partially watched)
+    const resumableEpisodes = data.Items.filter(episode => 
+      episode.UserData?.PlaybackPositionTicks && 
+      episode.UserData.PlaybackPositionTicks > 0 &&
+      !episode.UserData.Played
+    );
+
+    if (resumableEpisodes.length > 0) {
+      // Return the most recently partially watched episode
+      return resumableEpisodes[0];
+    }
+
+    // If no resumable episodes, find the first unwatched episode
+    const unwatchedEpisodes = data.Items.filter(episode => 
+      !episode.UserData?.Played
+    );
+
+    if (unwatchedEpisodes.length > 0) {
+      return unwatchedEpisodes[0];
+    }
+
+    // If all episodes are watched, return the first episode for rewatching
+    return data.Items[0] || null;
+  } catch (error) {
+    console.error("Failed to get next episode for series:", error);
     return null;
   }
 }

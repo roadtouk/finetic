@@ -14,6 +14,8 @@ export {
   fetchMovies,
   fetchTVShows,
   fetchMediaDetails,
+  fetchPersonDetails,
+  fetchPersonFilmography,
   fetchResumeItems,
   reportPlaybackStart,
   reportPlaybackProgress,
@@ -31,6 +33,7 @@ export {
 // Search actions
 export {
   searchItems,
+  searchPeople,
 } from './search';
 
 // Utility actions

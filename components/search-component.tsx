@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,6 +30,7 @@ import {
 } from "@/app/actions";
 import { Badge } from "./ui/badge";
 import { SearchSuggestionItem } from "./SearchSuggestionItem";
+import { TextShimmerWave } from "./ui/text-shimmer-wave";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,6 +65,18 @@ export function SearchBar({ className = "" }: SearchBarProps) {
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Memoized loading component to prevent re-rendering while typing
+  const loadingComponent = useMemo(
+    () => (
+      <div className="flex justify-center items-center p-8">
+        <TextShimmerWave className="text-sm font-mono">
+          Searching...
+        </TextShimmerWave>
+      </div>
+    ),
+    []
+  );
+
   // Debounced search
   useEffect(() => {
     if (searchTimeout.current) {
@@ -75,13 +88,13 @@ export function SearchBar({ className = "" }: SearchBarProps) {
       searchTimeout.current = setTimeout(async () => {
         try {
           const results = await searchItems(searchQuery.trim());
-          // Sort to prioritize Movies and Series over Episodes
+          // Sort to prioritize Movies and Series over Episodes and People
           const sortedResults = results.sort((a, b) => {
-            const typePriority = { Movie: 1, Series: 2, Episode: 3 };
+            const typePriority = { Movie: 1, Series: 2, Person: 3, Episode: 4 };
             const aPriority =
-              typePriority[a.Type as keyof typeof typePriority] || 4;
+              typePriority[a.Type as keyof typeof typePriority] || 5;
             const bPriority =
-              typePriority[b.Type as keyof typeof typePriority] || 4;
+              typePriority[b.Type as keyof typeof typePriority] || 5;
             return aPriority - bPriority;
           });
           setSuggestions(sortedResults.slice(0, 6)); // Limit to 6 suggestions
@@ -208,6 +221,8 @@ export function SearchBar({ className = "" }: SearchBarProps) {
     } else if (item.Type === "Series") {
       // Assuming a series page exists at /series/[id]
       router.push(`/series/${item.Id}`);
+    } else if (item.Type === "Person") {
+      router.push(`/person/${item.Id}`);
     } else if (item.Type === "Episode") {
       // For episodes, navigate to the search page for now as SeriesId is not directly available
       router.push(`/search?q=${encodeURIComponent(item.Name)}`);
@@ -264,7 +279,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
           <Input
             ref={inputRef}
             type="text"
-            placeholder="Search movies, TV shows, and episodes..."
+            placeholder="Search movies, TV shows, episodes, and people..."
             value={searchQuery}
             onChange={handleInputChange}
             onKeyDown={handleInputKeyDown}
@@ -363,27 +378,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
       {/* Search Suggestions Dropdown */}
       {(showSuggestions || isLoading) && (
         <div className="absolute top-full left-0 right-0 mt-2 dark:bg-background/70! bg-background/90 backdrop-blur-md rounded-lg border shadow-xl shadow-accent/30 z-[9999] max-h-96 overflow-y-auto">
-          {isLoading && (
-            <div className="p-4">
-              <div className="text-sm text-muted-foreground mb-3">
-                Searching...
-              </div>
-              {/* Skeleton loading states */}
-              {[...Array(3)].map((_, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-3 p-3 last:border-b-0"
-                >
-                  <Skeleton className="w-12 h-16 bg-muted rounded" />
-                  <div className="flex-1">
-                    <Skeleton className="h-4 w-3/4 bg-muted mb-2" />
-                    <Skeleton className="h-3 w-1/2 bg-muted mb-1" />
-                    <Skeleton className="h-3 w-1/4 bg-muted" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          {isLoading && loadingComponent}
 
           {!isLoading && suggestions.length > 0 && (
             <div className="p-2">
