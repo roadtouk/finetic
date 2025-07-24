@@ -93,12 +93,6 @@ export async function fetchTVShowDetails(tvShowId: string): Promise<JellyfinItem
     const { data } = await userLibraryApi.getItem({
       userId: user.Id,
       itemId: tvShowId,
-      fields: [
-        ItemFields.CanDelete,
-        ItemFields.PrimaryImageAspectRatio,
-        ItemFields.Overview,
-        ItemFields.MediaSources,
-      ],
     });
     return data;
   } catch (error) {
