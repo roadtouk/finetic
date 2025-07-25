@@ -1,14 +1,8 @@
-import React from "react";
 import { fetchEpisodeDetails } from "@/app/actions/tv-shows";
 import { getImageUrl } from "@/app/actions/utils";
 import { MediaActions } from "@/components/media-actions";
 import { SearchBar } from "@/components/search-component";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { formatRuntime } from "@/lib/utils";
-import { ArrowLeft, Calendar, Clock, Play, Tv, Star } from "lucide-react";
-import Link from "next/link";
-import { redirect } from "next/navigation";
 import { CastScrollArea } from "@/components/cast-scrollarea";
 import { SeasonEpisodes } from "@/components/season-episodes";
 import { AuroraBackground } from "@/components/aurora-background";
@@ -16,7 +10,8 @@ import { VibrantLogo } from "@/components/vibrant-logo";
 import { VibrantBackdrop } from "@/components/vibrant-backdrop";
 import { RottenTomatoesIcon } from "@/components/icons/rotten-tomatoes";
 import { TextAnimate } from "@/components/magicui/text-animate";
-import { SidebarInset } from "@/components/ui/sidebar";
+import { Star, Play } from "lucide-react";
+import { redirect } from "next/navigation";
 
 export default async function Episode({
   params,
@@ -31,9 +26,6 @@ export default async function Episode({
     if (!episode) {
       return <div className="p-4">Episode not found</div>;
     }
-
-    // console.log("Episode data:", episode);
-    // console.log("Episode MediaSources:", episode.MediaSources);
 
     const primaryImage = await getImageUrl(id, "Primary");
     const backdropImage = await getImageUrl(
@@ -81,11 +73,11 @@ export default async function Episode({
         </div>
 
         {/* Content section */}
-        <div className="relative z-10 -mt-54 md:pl-6">
-          <div className="flex flex-col md:flex-row max-w-7xl mx-auto">
+        <div className="relative z-10 -mt-54 md:pl-6 bg-background/95 dark:bg-background/50 backdrop-blur-xl rounded-2xl mx-4">
+          <div className="flex flex-col md:flex-row mx-auto">
             {/* Episode Image */}
-            <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 justify-center flex md:block z-50 md:mt-8">
-              <div className="relative aspect-video rounded-lg overflow-hidden shadow-2xl bg-muted">
+            <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 justify-center flex md:block z-50 mt-6">
+              <div className="relative aspect-video rounded-lg overflow-hidden shadow-2xl bg-muted max-w-1/2 md:max-w-full mt-16">
                 {primaryImage ? (
                   <img
                     className="w-full h-full object-cover"
@@ -101,7 +93,7 @@ export default async function Episode({
             </div>
 
             {/* Episode Info */}
-            <div className="w-full md:w-2/3 lg:w-3/4 pt-10 md:pt-8 text-center md:text-start bg-background/95 dark:bg-background/50 backdrop-blur-xl rounded-2xl mx-8 mr-16">
+            <div className="w-full md:w-2/3 lg:w-3/4 pt-10 md:pt-8 text-center md:text-start mt-8">
               <div className="mb-4 flex justify-center md:justify-start">
                 <TextAnimate
                   as="h1"
@@ -110,7 +102,7 @@ export default async function Episode({
                   by="character"
                   once
                 >
-                  {`${episode.IndexNumber ? `${episode.IndexNumber}. ` : ''}${episode.Name || "Untitled Episode"}`}
+                  {`${episode.IndexNumber ? `${episode.IndexNumber}. ` : ""}${episode.Name || "Untitled Episode"}`}
                 </TextAnimate>
               </div>
 
@@ -190,16 +182,16 @@ export default async function Episode({
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Season Episodes section */}
-          <div className="mt-16 max-w-7xl mx-auto md:px-0 px-6">
-            <SeasonEpisodes showId={id} />
-          </div>
+        {/* Season Episodes section */}
+        <div className="mt-16 max-w-7xl md:px-0 mx-12">
+          <SeasonEpisodes showId={id} />
+        </div>
 
-          {/* Cast section */}
-          <div className="mt-16 max-w-7xl mx-auto md:px-0 px-6">
-            <CastScrollArea people={episode.People!} mediaId={id} />
-          </div>
+        {/* Cast section */}
+        <div className="mt-16 max-w-7xl md:px-0 ml-6">
+          <CastScrollArea people={episode.People!} mediaId={id} />
         </div>
       </div>
     );

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { JellyfinItem } from "@/types/jellyfin";
 import { Button } from "@/components/ui/button";
-import { Play } from "lucide-react";
+import { Play, Loader2 } from "lucide-react";
 import { getNextEpisodeForSeries } from "@/app/actions/tv-shows";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 import { Skeleton } from "./ui/skeleton";
@@ -54,8 +54,8 @@ export function SeriesPlayButton({ series }: SeriesPlayButtonProps) {
 
   if (loading) {
     return (
-      <Button variant="default" disabled>
-        <Play className="h-4 w-4" />
+      <Button variant="default" disabled size="lg">
+        <Loader2 className="h-4 w-4 animate-spin" />
         Loading...
       </Button>
     );
@@ -77,7 +77,7 @@ export function SeriesPlayButton({ series }: SeriesPlayButtonProps) {
   console.log("Played:", nextEpisode.UserData?.Played);
 
   return (
-    <Button variant="default" onClick={handlePlay} className="gap-2">
+    <Button variant="default" onClick={handlePlay} className="gap-2" size="lg">
       <Play className="h-4 w-4" />
       {buttonText}
       {nextEpisode && (

@@ -29,6 +29,8 @@ export function MediaCard({
     linkHref = `/movie/${item.Id}`;
   } else if (item.Type === "Episode") {
     linkHref = `/episode/${item.Id}`;
+  } else if (item.Type === "Season") {
+    linkHref = `/season/${item.Id}`;
   } else {
     linkHref = `/series/${item.Id}`;
   }
@@ -139,7 +141,7 @@ export function MediaCard({
             {item.Name}
           </div>
           <div className="text-xs text-muted-foreground mt-0.5">
-            {item.Type === "Movie" || item.Type === "Series"
+            {item.Type === "Movie" || item.Type === "Series" || item.Type === "Season"
               ? item.ProductionYear
               : item.SeriesName}
           </div>

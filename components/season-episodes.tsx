@@ -28,6 +28,7 @@ import { usePathname } from "next/navigation";
 
 interface SeasonEpisodesProps {
   showId: string;
+  currentSeasonId?: string;
 }
 
 interface Season {
@@ -89,6 +90,7 @@ const findSeasonForEpisode = async (episodeId: string, seasons: Season[]): Promi
 
 export const SeasonEpisodes = React.memo(function SeasonEpisodes({
   showId,
+  currentSeasonId,
 }: SeasonEpisodesProps) {
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
@@ -112,8 +114,12 @@ export const SeasonEpisodes = React.memo(function SeasonEpisodes({
       const cachedSeasons = seasonsCache.get(showId)!;
       setSeasons(cachedSeasons);
       
+      // If we have a current season ID, use it
+      if (currentSeasonId && !selectedSeasonId) {
+        setSelectedSeasonId(currentSeasonId);
+      }
       // If we have a current episode, try to find its season
-      if (currentEpisodeId && !selectedSeasonId) {
+      else if (currentEpisodeId && !selectedSeasonId) {
         const currentEpisodeSeasonId = await findSeasonForEpisode(currentEpisodeId, cachedSeasons);
         if (currentEpisodeSeasonId) {
           setSelectedSeasonId(currentEpisodeSeasonId);
@@ -147,8 +153,12 @@ export const SeasonEpisodes = React.memo(function SeasonEpisodes({
       seasonsCache.set(showId, typedSeasons);
       setSeasons(typedSeasons);
 
+      // If we have a current season ID, use it
+      if (currentSeasonId) {
+        setSelectedSeasonId(currentSeasonId);
+      }
       // If we have a current episode, try to find its season
-      if (currentEpisodeId) {
+      else if (currentEpisodeId) {
         const currentEpisodeSeasonId = await findSeasonForEpisode(currentEpisodeId, typedSeasons);
         if (currentEpisodeSeasonId) {
           setSelectedSeasonId(currentEpisodeSeasonId);
@@ -175,7 +185,7 @@ export const SeasonEpisodes = React.memo(function SeasonEpisodes({
     } finally {
       setLoading(false);
     }
-  }, [showId, selectedSeasonId, currentEpisodeId]);
+  }, [showId, selectedSeasonId, currentEpisodeId, currentSeasonId]);
 
   // Memoized function to load episodes with caching
   const loadEpisodes = useCallback(async (seasonId: string) => {

@@ -1,33 +1,35 @@
-import { fetchMediaDetails, getImageUrl } from "@/app/actions";
-import { MediaActions } from "@/components/media-actions";
+import { fetchMediaDetails, getImageUrl, getServerUrl } from "@/app/actions";
+import { fetchEpisodes } from "@/app/actions/tv-shows";
 import { SearchBar } from "@/components/search-component";
 import { Badge } from "@/components/ui/badge";
-import { CastScrollArea } from "@/components/cast-scrollarea";
 import { AuroraBackground } from "@/components/aurora-background";
 import { VibrantLogo } from "@/components/vibrant-logo";
-import { VibrantBackdrop } from "@/components/vibrant-backdrop";
-import { RottenTomatoesIcon } from "@/components/icons/rotten-tomatoes";
-import { TextAnimate } from "@/components/magicui/text-animate";
-import { Star } from "lucide-react";
+import { SeasonEpisodes } from "@/components/season-episodes";
+import { Star, Play, TvIcon } from "lucide-react";
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-export default async function Movie({
+export default async function SeasonPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const serverUrl = await getServerUrl();
 
   try {
-    const movie = await fetchMediaDetails(id);
+    const season = await fetchMediaDetails(id);
+    const episodes = await fetchEpisodes(id);
 
-    if (!movie) {
-      return <div className="p-4">Movie not found</div>;
+    if (!season) {
+      return <div className="p-4">Season not found</div>;
     }
 
     const primaryImage = await getImageUrl(id, "Primary");
-    const backdropImage = await getImageUrl(id, "Backdrop");
-    const logoImage = await getImageUrl(id, "Logo");
+    const backdropImage = await getImageUrl(season.SeriesId || id, "Backdrop");
+    const logoImage = await getImageUrl(season.SeriesId || id, "Logo");
 
     return (
       <div className="min-h-screen overflow-hidden md:pr-1 pb-16">
@@ -44,17 +46,17 @@ export default async function Movie({
             <img
               className="w-full h-full object-cover"
               src={backdropImage}
-              alt={`${movie.Name} backdrop`}
+              alt={`${season.SeriesName} backdrop`}
               width={1920}
               height={1080}
             />
             <VibrantLogo
               src={logoImage}
-              alt={`${movie.Name} logo`}
-              movieName={movie.Name || ""}
+              alt={`${season.SeriesName} logo`}
+              movieName={season.SeriesName || ""}
               width={300}
               height={96}
-              className="absolute md:top-5/12 top-4/12 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 max-h-20 md:max-h-24 w-auto object-contain max-w-2/3 invisible md:visible"
+              className="absolute md:top-4/12 top-4/12 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 max-h-20 md:max-h-24 w-auto object-contain max-w-2/3 invisible md:visible"
             />
             {/* Enhanced gradient overlay for smooth transition to overview */}
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/30 to-black/90 md:rounded-xl" />
@@ -70,98 +72,77 @@ export default async function Movie({
         {/* Content section */}
         <div className="relative z-10 -mt-54 md:pl-6 bg-background/95 dark:bg-background/50 backdrop-blur-xl rounded-2xl mx-4">
           <div className="flex flex-col md:flex-row mx-auto">
-            {/* Movie poster */}
+            {/* Season poster */}
             <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 justify-center flex md:block z-50 mt-6">
               <img
                 className="w-full h-auto rounded-lg shadow-2xl max-w-1/2 md:max-w-full"
                 src={primaryImage}
-                alt={movie.Name || "Movie Poster"}
+                alt={season.Name || "Season Poster"}
                 width={500}
                 height={750}
               />
             </div>
 
-            {/* Movie information */}
-            {/* <div className="h-screen absolute left-0 right-0 bg-white backdrop-blur-3xl -z-10 mt-4 invisible md:visible"></div> */}
-            <div className="w-full md:w-2/3 lg:w-3/4 pt-10 md:pt-8 text-center md:text-start mt-8">
-              <div className="mb-4 flex justify-center md:justify-start">
-                <TextAnimate
-                  as="h1"
-                  className="text-4xl md:text-5xl font-semibold font-poppins text-foreground md:pl-8 drop-shadow-xl"
-                  animation="blurInUp"
-                  by="character"
-                  once
+            {/* Season information */}
+            <div className="w-full md:w-2/3 lg:w-3/4 pt-10 md:pt-8 text-center md:text-start mt-6">
+              {/* Back to series button */}
+              <div className="mb-4 flex justify-center md:justify-start md:pl-8">
+                <Link
+                  href={`/series/${season.SeriesId}`}
+                  className="flex items-center gap-2 text-foreground/80 hover:underline hover:underline-offset-4"
                 >
-                  {movie.Name || ""}
-                </TextAnimate>
+                  <TvIcon className="w-4 h-4" />
+                  {season.SeriesName}
+                </Link>
               </div>
 
-              {/* Movie badges */}
+              <div className="mb-4 flex justify-center md:justify-start mt-4">
+                <span className="text-4xl md:text-5xl font-semibold font-poppins text-foreground md:pl-8 drop-shadow-xl">
+                  {season.Name || `Season ${season.IndexNumber || 1}`}
+                </span>
+              </div>
+
+              {/* Season badges */}
               <div className="flex flex-wrap items-center gap-2 mb-2 justify-center md:justify-start md:pl-8">
-                {movie.ProductionYear && (
+                {season.ProductionYear && (
                   <Badge
                     variant="outline"
                     className="bg-background/90 backdrop-blur-sm"
                   >
-                    {movie.ProductionYear}
+                    {season.ProductionYear}
                   </Badge>
                 )}
-                {movie.OfficialRating && (
+                {episodes && episodes.length > 0 && (
                   <Badge
                     variant="outline"
                     className="bg-background/90 backdrop-blur-sm"
                   >
-                    {movie.OfficialRating}
+                    {episodes.length} Episode{episodes.length !== 1 ? "s" : ""}
                   </Badge>
                 )}
-                {movie.RunTimeTicks && (
-                  <Badge
-                    variant="outline"
-                    className="bg-background/90 backdrop-blur-sm"
-                  >
-                    {Math.round(movie.RunTimeTicks / 600000000)} min
-                  </Badge>
-                )}
-                {movie.CommunityRating && (
+                {season.CommunityRating && (
                   <Badge
                     variant="outline"
                     className="bg-background/90 backdrop-blur-sm flex items-center gap-1"
                   >
                     <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                    {movie.CommunityRating.toFixed(1)}
-                  </Badge>
-                )}
-                {movie.CriticRating && (
-                  <Badge
-                    variant="outline"
-                    className="bg-background/90 backdrop-blur-sm flex items-center gap-1"
-                  >
-                    <RottenTomatoesIcon size={12} />
-                    {movie.CriticRating}%
+                    {season.CommunityRating.toFixed(1)}
                   </Badge>
                 )}
               </div>
 
               <div className="px-8 md:pl-8 md:pt-4 md:pr-16 flex flex-col justify-center md:items-start items-center">
-                <MediaActions movie={movie} />
-
-                {movie.Taglines && (
-                  <p className="text-lg text-muted-foreground mb-4 max-w-4xl text-center md:text-left font-poppins drop-shadow-md">
-                    {movie.Taglines[0]}
+                {season.Overview && (
+                  <p className="text-md leading-relaxed mb-6 max-w-4xl">
+                    {season.Overview}
                   </p>
                 )}
-
-                <p className="text-md leading-relaxed mb-8 max-w-4xl">
-                  {movie.Overview}
-                </p>
-                {/* Media actions */}
               </div>
             </div>
           </div>
-        </div>
-        {/* Cast section */}
-        <div className="mt-16 max-w-7xl md:px-0 ml-6">
-          <CastScrollArea people={movie.People!} mediaId={id} />
+
+{/* Episodes section */}
+          <SeasonEpisodes showId={season.SeriesId || id} currentSeasonId={id} />
         </div>
       </div>
     );
@@ -172,7 +153,7 @@ export default async function Movie({
     }
 
     // For other errors, show an error page
-    console.error("Error loading movie:", error);
-    return <div className="p-4">Error loading movie. Please try again.</div>;
+    console.error("Error loading season:", error);
+    return <div className="p-4">Error loading season. Please try again.</div>;
   }
 }

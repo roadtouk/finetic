@@ -23,35 +23,35 @@ export async function getAuthData() {
 export async function getImageUrl(
   itemId: string,
   imageType: string = "Primary",
+  quality?: number,
   tag?: string,
   maxWidth?: number,
-  maxHeight?: number,
-  quality?: number
+  maxHeight?: number
 ): Promise<string> {
   const { serverUrl } = await getAuthData();
 
   const params = new URLSearchParams();
-  
+
   // Set defaults based on image type
   if (imageType.toLowerCase() === "backdrop") {
     // Keep backdrops at high quality for full-screen display
-    params.set('maxWidth', (maxWidth ?? 1920).toString());
-    params.set('maxHeight', (maxHeight ?? 1080).toString());
-    params.set('quality', (quality ?? 95).toString());
+    params.set("maxWidth", (maxWidth ?? 1920).toString());
+    params.set("maxHeight", (maxHeight ?? 1080).toString());
+    params.set("quality", (quality ?? 95).toString());
   } else if (imageType.toLowerCase() === "logo") {
     // Keep logos at high quality for crisp display
-    params.set('maxWidth', (maxWidth ?? 800).toString());
-    params.set('maxHeight', (maxHeight ?? 400).toString());
-    params.set('quality', (quality ?? 95).toString());
+    params.set("maxWidth", (maxWidth ?? 800).toString());
+    params.set("maxHeight", (maxHeight ?? 400).toString());
+    params.set("quality", (quality ?? 95).toString());
   } else {
     // Optimize other image types (Primary, Thumb, etc.) for faster loading
-    params.set('maxWidth', (maxWidth ?? 400).toString());
-    params.set('maxHeight', (maxHeight ?? 600).toString());
-    params.set('quality', (quality ?? 80).toString());
+    params.set("maxWidth", (maxWidth ?? 400).toString());
+    params.set("maxHeight", (maxHeight ?? 600).toString());
+    params.set("quality", (quality ?? 80).toString());
   }
-  
+
   if (tag) {
-    params.set('tag', tag);
+    params.set("tag", tag);
   }
 
   return `${serverUrl}/Items/${itemId}/Images/${imageType}?${params.toString()}`;
@@ -108,7 +108,6 @@ export async function getSubtitleTracks(
   const jellyfinInstance = createJellyfinInstance();
   const api = jellyfinInstance.createApi(serverUrl);
   api.accessToken = user.AccessToken;
-  
 
   try {
     // First get the media item to find subtitle streams

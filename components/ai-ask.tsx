@@ -8,7 +8,7 @@ import { Button } from "./ui/button";
 import {
   ArrowRight,
   Loader2,
-  MessageCircle,
+  Ship,
   Plus,
   X,
   Search,
@@ -411,7 +411,7 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
             className="px-4 py-2 h-auto rounded-full flex items-center gap-2 backdrop-blur-[6px] border dark:bg-background/70 bg-background/90"
             onClick={() => setIsAskOpen(!isAskOpen)}
           >
-            <MessageCircle className="h-4 w-4" />
+            <Ship className="h-4 w-4" />
             <span className="text-sm mr-0.5">Ask Navigator</span>
             <Kbd.Root variant="outline" size="sm">
               <Kbd.Key>⌘</Kbd.Key>
