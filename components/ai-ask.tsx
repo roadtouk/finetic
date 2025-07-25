@@ -15,6 +15,7 @@ import {
   Play,
   Navigation,
   SkipForward,
+  ScanText,
   Film,
   Tv,
   Star,
@@ -24,6 +25,7 @@ import {
   Subtitles,
   LoaderPinwheel,
   Palette,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Markdown from "react-markdown";
@@ -49,6 +51,7 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [internalIsOpen, setInternalIsOpen] = useState<boolean>(false);
   const [currentTool, setCurrentTool] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const { isPlayerVisible } = useMediaPlayer();
 
   // Use external state if provided, otherwise use internal state
@@ -62,10 +65,60 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
     }
   };
 
+  // Function to handle opening AI Ask, with fullscreen exit if needed
+  const handleOpenAsk = async () => {
+    if (isFullscreen) {
+      // Exit fullscreen first
+      try {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if ((document as any).webkitExitFullscreen) {
+          await (document as any).webkitExitFullscreen();
+        } else if ((document as any).mozCancelFullScreen) {
+          await (document as any).mozCancelFullScreen();
+        } else if ((document as any).msExitFullscreen) {
+          await (document as any).msExitFullscreen();
+        }
+        // Wait a bit for fullscreen to exit, then open AI Ask
+        setTimeout(() => {
+          setIsAskOpen(true);
+        }, 100);
+      } catch (error) {
+        console.warn('Failed to exit fullscreen:', error);
+        // Still try to open AI Ask even if fullscreen exit fails
+        setIsAskOpen(true);
+      }
+    } else {
+      setIsAskOpen(!isAskOpen);
+    }
+  };
+
   const router = useRouter();
   const { setTheme, theme } = useTheme();
 
-  const { playMedia, skipToTimestamp, currentMedia, currentMediaWithSource } =
+  // Track fullscreen state
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    // Set initial state
+    setIsFullscreen(!!document.fullscreenElement);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, []);
+
+  const { playMedia, skipToTimestamp, currentMedia, currentMediaWithSource, currentTimestamp } =
     useMediaPlayer();
 
   const {
@@ -81,12 +134,16 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
     api: "/api/chat",
     body: {
       currentMedia: currentMediaWithSource,
+      currentTimestamp,
     },
     onToolCall: (toolInvocation) => {
       const toolInvoked = toolInvocation?.toolCall?.toolName;
       setCurrentTool(toolInvoked || null);
     },
     onFinish: (message) => {
+      // Clear the current tool badge when finished
+      setCurrentTool(null);
+      
       // Check if the message contains navigation or play instructions
       if (message.toolInvocations) {
         for (const toolInvocation of message.toolInvocations) {
@@ -230,6 +287,8 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
       navigateToMedia: { icon: Navigation, label: "Navigating" },
       playMedia: { icon: Play, label: "Playing Media" },
       skipToSubtitleContent: { icon: Subtitles, label: "Searching Subtitles" },
+      explainScene: { icon: BookOpen, label: "Explaining Scene" },
+      analyzeMedia: { icon: ScanText, label: "Analyzing Media" },
       getMovies: { icon: Film, label: "Getting Movies" },
       getTVShows: { icon: Tv, label: "Getting TV Shows" },
       continueWatching: { icon: List, label: "Continue Watching" },
@@ -399,28 +458,26 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
       </AnimatePresence>
 
       {/* Ask button */}
-      {!isPlayerVisible && (
-        <motion.div
-          initial={false}
-          animate={isAskOpen ? { scale: 1.05 } : { scale: 1 }}
-          transition={{ duration: 0.2 }}
-          className="flex items-center gap-2 w-full max-w-md justify-center"
+      <motion.div
+        initial={false}
+        animate={isAskOpen ? { scale: 1.05 } : { scale: 1 }}
+        transition={{ duration: 0.2 }}
+        className="flex items-center gap-2 w-full max-w-md justify-center"
+      >
+        <Button
+          variant="outline"
+          className="px-4 py-2 h-auto rounded-full flex items-center gap-2 backdrop-blur-[6px] border dark:bg-background/70 bg-background/90"
+          onClick={handleOpenAsk}
         >
-          <Button
-            variant="outline"
-            className="px-4 py-2 h-auto rounded-full flex items-center gap-2 backdrop-blur-[6px] border dark:bg-background/70 bg-background/90"
-            onClick={() => setIsAskOpen(!isAskOpen)}
-          >
             <Ship className="h-4 w-4" />
             <span className="text-sm mr-0.5">Ask Navigator</span>
             <Kbd.Root variant="outline" size="sm">
               <Kbd.Key className="font-sans">⌘</Kbd.Key>
               <Kbd.Separator />
-              <Kbd.Key>K</Kbd.Key>
+            <Kbd.Key>K</Kbd.Key>
             </Kbd.Root>
           </Button>
         </motion.div>
-      )}
     </div>
   );
 };

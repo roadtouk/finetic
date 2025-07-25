@@ -14,7 +14,7 @@ import { convertTimestampToSeconds } from "@/lib/utils";
 
 export async function POST(req: Request) {
   try {
-    const { messages, currentMedia } = await req.json();
+    const { messages, currentMedia, currentTimestamp } = await req.json();
 
     const result = await streamText({
       model: google("gemini-2.0-flash"),
@@ -623,6 +623,249 @@ Return ONLY the timestamp in HH:MM:SS format (e.g., 02:25.6 or 1:23:45.2):`;
           },
         }),
 
+        explainScene: tool({
+          description:
+            "Analyze subtitles around the current timestamp to explain what's happening in the movie or show. Works when media is currently playing.",
+          parameters: z.object({
+            currentTimestamp: z
+              .number()
+              .describe(
+                "The current playback timestamp in seconds (where the user is in the video)"
+              ),
+            contextWindow: z
+              .number()
+              .optional()
+              .describe(
+                "Number of seconds before and after current timestamp to analyze (default: 30)"
+              ),
+            subtitleIndex: z
+              .number()
+              .optional()
+              .describe("The subtitle stream index (default: 0)"),
+          }),
+          execute: async ({
+            currentTimestamp,
+            contextWindow = 30,
+            subtitleIndex = 0,
+          }) => {
+            console.log("📖 [explainScene] Tool called with:", {
+              currentTimestamp,
+              contextWindow,
+              subtitleIndex,
+              currentMedia,
+            });
+
+            // Check if we have current media context
+            if (
+              !currentMedia ||
+              !currentMedia.id ||
+              !currentMedia.mediaSourceId
+            ) {
+              return {
+                success: false,
+                error:
+                  "No media is currently playing. Please start playing a video first to get scene explanations.",
+              };
+            }
+
+            try {
+              const result = await getSubtitleContent(
+                currentMedia.id,
+                currentMedia.mediaSourceId,
+                subtitleIndex
+              );
+
+              if (!result.success) {
+                return {
+                  success: false,
+                  error: result.error || "Failed to fetch subtitles",
+                };
+              }
+
+              if (result.subtitles.length === 0) {
+                return {
+                  success: false,
+                  error: `No subtitles found for ${currentMedia.name}`,
+                };
+              }
+
+              // Filter subtitles to get context around current timestamp
+              const startTime = Math.max(0, currentTimestamp - contextWindow);
+              const endTime = currentTimestamp + contextWindow;
+
+              const relevantSubtitles = result.subtitles.filter(
+                (sub) => sub.timestamp >= startTime && sub.timestamp <= endTime
+              );
+
+              if (relevantSubtitles.length === 0) {
+                return {
+                  success: false,
+                  error:
+                    "No subtitles found around the current timestamp. The scene might be silent or you may need to adjust the time window.",
+                };
+              }
+
+              // Format subtitle context for analysis
+              const subtitleContext = relevantSubtitles
+                .map(
+                  (sub) =>
+                    `[${sub.timestampFormatted}] ${sub.text}${
+                      Math.abs(sub.timestamp - currentTimestamp) <= 2
+                        ? " ← CURRENT POSITION"
+                        : ""
+                    }`
+                )
+                .join("\n");
+
+              // Create analysis prompt for Gemini
+              const analysisPrompt = `You are analyzing a scene from "${currentMedia.name}" to explain what's happening to the viewer.\n\nSubtitle context:\n${subtitleContext}\n\nProvide a natural 1-2 sentence explanation of what's happening in this scene. Focus on the key action and who's involved. Don't mention timestamps - just explain the scene naturally.`;
+
+              // Use Gemini to analyze the scene
+              const analysisResult = await streamText({
+                model: google("gemini-2.0-flash"),
+                messages: [{ role: "user", content: analysisPrompt }],
+                maxTokens: 300, // Allow for detailed explanation
+              });
+
+              let explanation = "";
+              for await (const chunk of analysisResult.textStream) {
+                explanation += chunk;
+              }
+
+              console.log("[explainScene] Generated explanation:", explanation);
+
+              // Find the closest subtitle to current timestamp for reference
+              const closestSubtitle = relevantSubtitles.reduce(
+                (closest, current) =>
+                  Math.abs(current.timestamp - currentTimestamp) <
+                  Math.abs(closest.timestamp - currentTimestamp)
+                    ? current
+                    : closest
+              );
+
+              return {
+                success: true,
+                explanation: explanation.trim(),
+                currentTime: {
+                  timestamp: currentTimestamp,
+                  formatted: `${Math.floor(
+                    currentTimestamp / 60
+                  )}:${String(Math.floor(currentTimestamp % 60)).padStart(
+                    2,
+                    "0"
+                  )}`,
+                },
+                contextSubtitles: relevantSubtitles.length,
+                closestDialogue: {
+                  text: closestSubtitle.text,
+                  timestamp: closestSubtitle.timestampFormatted,
+                },
+                mediaName: currentMedia.name,
+              };
+            } catch (error) {
+              console.error("[explainScene] Error:", error);
+              return {
+                success: false,
+                error: "Failed to analyze scene content",
+              };
+            }
+          },
+        }),
+
+        analyzeMedia: tool({
+          description:
+            "Analyze the entire movie or episode using subtitles to answer questions about the plot, characters, themes, or any aspect of the content. Works when media is currently playing.",
+          parameters: z.object({
+            userQuestion: z
+              .string()
+              .describe(
+                "The user's question about the movie/episode (e.g., 'What is this about?', 'Who are the main characters?', 'What happened at the end?')"
+              ),
+            subtitleIndex: z
+              .number()
+              .optional()
+              .describe("The subtitle stream index (default: 0)"),
+          }),
+          execute: async ({ userQuestion, subtitleIndex = 0 }) => {
+            console.log("🎬 [analyzeMedia] Tool called with:", {
+              userQuestion,
+              subtitleIndex,
+              currentMedia,
+            });
+
+            // Check if we have current media context
+            if (
+              !currentMedia ||
+              !currentMedia.id ||
+              !currentMedia.mediaSourceId
+            ) {
+              return {
+                success: false,
+                error:
+                  "No media is currently playing. Please start playing a video first to analyze the content.",
+              };
+            }
+
+            try {
+              const result = await getSubtitleContent(
+                currentMedia.id,
+                currentMedia.mediaSourceId,
+                subtitleIndex
+              );
+
+              if (!result.success) {
+                return {
+                  success: false,
+                  error: result.error || "Failed to fetch subtitles",
+                };
+              }
+
+              if (result.subtitles.length === 0) {
+                return {
+                  success: false,
+                  error: `No subtitles found for ${currentMedia.name}`,
+                };
+              }
+
+              // Format all subtitles for analysis
+              const allSubtitles = result.subtitles
+                .map((sub) => `[${sub.timestampFormatted}] ${sub.text}`)
+                .join("\n");
+
+              // Create analysis prompt for Gemini
+              const analysisPrompt = `You are analyzing "${currentMedia.name}" to answer a user's question about the content.\n\nUser's question: "${userQuestion}"\n\nComplete subtitle content:\n${allSubtitles}\n\nProvide a helpful and accurate answer to the user's question in a natural and conversational style. Focus on the plot, characters, themes, or relevant details. Keep your response informative but concise.`;
+
+              // Use Gemini to analyze the media
+              const analysisResult = await streamText({
+                model: google("gemini-2.0-flash"),
+                messages: [{ role: "user", content: analysisPrompt }],
+                maxTokens: 500, // Allow for detailed responses
+              });
+
+              let answer = "";
+              for await (const chunk of analysisResult.textStream) {
+                answer += chunk;
+              }
+
+              console.log("[analyzeMedia] Generated answer:", answer);
+
+              return {
+                success: true,
+                answer: answer.trim(),
+                question: userQuestion,
+                mediaName: currentMedia.name,
+                subtitleCount: result.subtitles.length,
+              };
+            } catch (error) {
+              console.error("[analyzeMedia] Error:", error);
+              return {
+                success: false,
+                error: "Failed to analyze media content",
+              };
+            }
+          },
+        }),
+
         themeToggle: tool({
           description:
             "Toggle or set the application theme between light, dark, or system mode",
@@ -686,7 +929,7 @@ Return ONLY the timestamp in HH:MM:SS format (e.g., 02:25.6 or 1:23:45.2):`;
       Help users navigate to movies and TV shows, search for content, and provide information about media.
       
       CURRENT MEDIA CONTEXT:
-      ${currentMedia ? `The user is currently watching: "${currentMedia.name}" (${currentMedia.type}). You can use the skipToSubtitleContent tool to search subtitles and jump to specific scenes in this video.` : "No media is currently playing. The skipToSubtitleContent tool is only available when media is actively playing."}
+      ${currentMedia ? `The user is currently watching: "${currentMedia.name}" (${currentMedia.type}). You can use the skipToSubtitleContent tool to search subtitles and jump to specific scenes in this video, or the explainScene tool to analyze what's happening at their current timestamp.` : "No media is currently playing. The skipToSubtitleContent and explainScene tools are only available when media is actively playing."}
       
       AVAILABLE TOOLS AND CAPABILITIES:
       - searchMedia: Search for movies, TV shows, or episodes by name or keyword
@@ -702,6 +945,8 @@ Return ONLY the timestamp in HH:MM:SS format (e.g., 02:25.6 or 1:23:45.2):`;
       - getEpisodes: Get episodes for a TV show season
       - getWatchlist: Get user's watchlist or favorites (popular/highly-rated content)
       - skipToSubtitleContent: Intelligently analyze subtitles and find the best timestamp based on user descriptions (doesn't require exact text matches)
+      - explainScene: Analyze subtitles around current timestamp to explain what's happening in the scene
+      - analyzeMedia: Analyze the entire movie/episode using subtitles to answer questions about plot, characters, themes, etc.
       - themeToggle: Toggle or set the application theme between light, dark, or system mode
       
       USAGE EXAMPLES:
@@ -716,6 +961,15 @@ Return ONLY the timestamp in HH:MM:SS format (e.g., 02:25.6 or 1:23:45.2):`;
       - "Jump to the scene where the main character talks about love" → Use skipToSubtitleContent tool
       - "Take me to the action sequence" → Use skipToSubtitleContent tool
       - "Skip to when they arrive at the destination" → Use skipToSubtitleContent tool
+      - "What's happening in this scene?" → Use explainScene tool with currentTimestamp: ${currentTimestamp || 0}
+      - "Explain what's going on right now" → Use explainScene tool with currentTimestamp: ${currentTimestamp || 0}
+      - "What did I miss?" → Use explainScene tool with currentTimestamp: ${currentTimestamp || 0}
+      - "Who is talking in this scene?" → Use explainScene tool with currentTimestamp: ${currentTimestamp || 0}
+      - "What is this movie about?" → Use analyzeMedia tool with userQuestion
+      - "Who are the main characters?" → Use analyzeMedia tool with userQuestion
+      - "What happened at the end?" → Use analyzeMedia tool with userQuestion
+      - "Summarize this episode" → Use analyzeMedia tool with userQuestion
+      - "What's the plot of this movie?" → Use analyzeMedia tool with userQuestion
       - "Switch to dark mode" → Use themeToggle tool with action "dark"
       - "Change to light theme" → Use themeToggle tool with action "light"
       - "Toggle the theme" → Use themeToggle tool with action "toggle"

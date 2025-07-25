@@ -27,6 +27,8 @@ interface MediaPlayerContextType {
   setCurrentMediaWithSource: (media: CurrentMediaWithSource | null) => void;
   skipToTimestamp: (timestamp: number) => void;
   skipTimestamp: number | null;
+  currentTimestamp: number;
+  setCurrentTimestamp: (timestamp: number) => void;
 }
 
 const MediaPlayerContext = createContext<MediaPlayerContextType | undefined>(undefined);
@@ -36,6 +38,7 @@ export function MediaPlayerProvider({ children }: { children: React.ReactNode })
   const [currentMedia, setCurrentMedia] = useState<MediaToPlay | null>(null);
   const [currentMediaWithSource, setCurrentMediaWithSource] = useState<CurrentMediaWithSource | null>(null);
   const [skipTimestamp, setSkipTimestamp] = useState<number | null>(null);
+  const [currentTimestamp, setCurrentTimestamp] = useState<number>(0);
 
   const playMedia = (media: MediaToPlay) => {
     setCurrentMedia(media);
@@ -57,7 +60,9 @@ export function MediaPlayerProvider({ children }: { children: React.ReactNode })
       currentMediaWithSource,
       setCurrentMediaWithSource,
       skipToTimestamp,
-      skipTimestamp
+      skipTimestamp,
+      currentTimestamp,
+      setCurrentTimestamp
     }}>
       {children}
     </MediaPlayerContext.Provider>

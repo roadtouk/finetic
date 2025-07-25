@@ -18,9 +18,10 @@ import {
   MediaPlayerVideo,
   MediaPlayerVolume,
   MediaPlayerSettings,
+  MediaPlayerTooltip,
 } from "@/components/ui/media-player";
 // import MuxVideo from "@mux/mux-video-react";
-import { ArrowLeft, RotateCcw, RotateCw, Users } from "lucide-react";
+import { ArrowLeft, RotateCcw, RotateCw, Users, Ship } from "lucide-react";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 import {
   getStreamUrl,
@@ -39,8 +40,12 @@ import {
 } from "@/components/ui/popover";
 import { useAuth } from "@/hooks/useAuth";
 
-export function GlobalMediaPlayer() {
-  const { isPlayerVisible, setIsPlayerVisible, currentMedia, skipTimestamp, setCurrentMediaWithSource } =
+interface GlobalMediaPlayerProps {
+  onToggleAIAsk?: () => void;
+}
+
+export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
+  const { isPlayerVisible, setIsPlayerVisible, currentMedia, skipTimestamp, setCurrentMediaWithSource, setCurrentTimestamp } =
     useMediaPlayer();
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [mediaDetails, setMediaDetails] = useState<JellyfinItem | null>(null);
@@ -162,9 +167,11 @@ export function GlobalMediaPlayer() {
   // Handle video time updates
   const handleTimeUpdate = useCallback(() => {
     if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime);
+      const time = videoRef.current.currentTime;
+      setCurrentTime(time);
+      setCurrentTimestamp(time); // Update context with current time
     }
-  }, []);
+  }, [setCurrentTimestamp]);
 
   // Handle duration change
   const handleDurationChange = useCallback(() => {
@@ -452,17 +459,30 @@ export function GlobalMediaPlayer() {
               <MediaPlayerTime />
             </div>
             <div className="flex items-center gap-2">
+              {/* Navigator button */}
+              <MediaPlayerTooltip tooltip="Navigator" shortcut="Cmd + K">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-white hover:bg-white/20"
+                  onClick={onToggleAIAsk}
+                >
+                  <Ship className="h-4 w-4" />
+                </Button>
+              </MediaPlayerTooltip>
               {/* People button with cast and crew popover */}
               {mediaDetails?.People && mediaDetails.People.length > 0 && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-white hover:bg-white/20"
-                    >
-                      <Users className="h-4 w-4" />
-                    </Button>
+                    <MediaPlayerTooltip tooltip="Cast & Crew">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-white hover:bg-white/20"
+                      >
+                        <Users className="h-4 w-4" />
+                      </Button>
+                    </MediaPlayerTooltip>
                   </PopoverTrigger>
                   <PopoverContent
                     className="w-80 bg-black/90 border-white/20 text-white z-[1000000]"
