@@ -37,6 +37,7 @@
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.23.6",
     "hls-video-element": "^1.5.6",
+    "jotai": "^2.12.5",
     "ldrs": "^1.1.7",
     "lucide-react": "^0.525.0",
     "media-chrome": "^4.12.0",
@@ -93,7 +94,10 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ]
     },
