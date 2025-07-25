@@ -171,8 +171,27 @@
   * {
     @apply border-border outline-ring/50;
   }
+  
+  /* Prevent white flash during theme transitions */
+  html {
+    background-color: oklch(0.141 0.005 285.823); /* dark background as fallback */
+  }
+  
   body {
     @apply bg-background text-foreground;
+    transition: background-color 0.1s ease-in-out;
+  }
+
+  /* macOS Electron traffic light buttons spacing */
+  .electron-mac {
+    padding-top: 28px; /* Height of traffic light buttons area */
+  }
+
+  /* Alternative approach using CSS environment variables (if supported) */
+  @supports (padding-top: env(titlebar-area-height)) {
+    .electron-mac {
+      padding-top: env(titlebar-area-height);
+    }
   }
 
   /* Custom scrollbar styles */

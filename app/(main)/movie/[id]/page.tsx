@@ -160,7 +160,7 @@ export default async function Movie({
           </div>
         </div>
         {/* Cast section */}
-        <div className="mt-16 max-w-7xl md:px-0 ml-6">
+        <div className="mt-16 md:px-0 ml-6">
           <CastScrollArea people={movie.People!} mediaId={id} />
         </div>
       </div>

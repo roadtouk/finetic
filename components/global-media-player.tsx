@@ -47,6 +47,18 @@ interface GlobalMediaPlayerProps {
 export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
   const { isPlayerVisible, setIsPlayerVisible, currentMedia, skipTimestamp, setCurrentMediaWithSource, setCurrentTimestamp } =
     useMediaPlayer();
+
+  // Check if we're in Electron environment
+  const isElectron = typeof window !== 'undefined' && (window as any).electronAPI?.isElectron;
+  
+  // Log which player is being used
+  React.useEffect(() => {
+    if (isElectron) {
+      console.log('🎬 Using Electron environment - MPV player support available');
+    } else {
+      console.log('🌐 Using web environment - HLS video player');
+    }
+  }, [isElectron]);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [mediaDetails, setMediaDetails] = useState<JellyfinItem | null>(null);
   const [selectedVersion, setSelectedVersion] =

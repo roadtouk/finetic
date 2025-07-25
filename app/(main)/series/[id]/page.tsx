@@ -230,7 +230,7 @@ export default async function Show({
           </div>
 
           {/* Cast section */}
-          <div className="mt-16 md:px-0 ml-6">
+          <div className="mt-16 md:px-0">
             <CastScrollArea people={show.People!} mediaId={id} />
           </div>
         </div>

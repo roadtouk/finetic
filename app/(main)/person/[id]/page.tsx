@@ -47,6 +47,19 @@ export default async function PersonPage({
       });
     };
 
+    // Helper function to calculate age
+    const calculateAge = (birthDate: string | null | undefined, deathDate?: string | null | undefined) => {
+      if (!birthDate) return null;
+      const birth = new Date(birthDate);
+      const end = deathDate ? new Date(deathDate) : new Date();
+      const age = end.getFullYear() - birth.getFullYear();
+      const monthDiff = end.getMonth() - birth.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && end.getDate() < birth.getDate())) {
+        return age - 1;
+      }
+      return age;
+    };
+
     // Helper function to get external link icon and name
     const getExternalLinkInfo = (name: string) => {
       const lowerName = name.toLowerCase();
@@ -82,7 +95,7 @@ export default async function PersonPage({
 
         {/* Content section */}
         <div className="relative z-10 mt-32 md:pl-8">
-          <div className="flex flex-col md:flex-row max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row mx-auto">
             {/* Person photo */}
             <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 justify-center flex md:block z-50">
               <img
@@ -110,7 +123,7 @@ export default async function PersonPage({
                     <div className="flex items-center gap-2 text-sm">
                       <Calendar className="w-4 h-4 text-muted-foreground" />
                       <span className="text-muted-foreground">Born:</span>
-                      <span>{formatDate(person.PremiereDate)}</span>
+                      <span>{formatDate(person.PremiereDate)} (age {calculateAge(person.PremiereDate, person.EndDate)})</span>
                     </div>
                   )}
                   {person.EndDate && (

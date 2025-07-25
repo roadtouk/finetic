@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
@@ -28,7 +29,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getUser, getServerUrl, logout } from "@/app/actions";
-import { JellyfinIcon } from "@/components/jellyfin-icon";
 import {
   Film,
   Tv,
@@ -49,7 +49,7 @@ interface JellyfinLibrary {
   ItemCount?: number;
 }
 
-export function AppSidebar() {
+export function AppSidebar({ isElectronMac, isElectronFullscreen }: { isElectronMac: boolean; isElectronFullscreen: boolean }) {
   const { setTheme } = useTheme();
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -119,7 +119,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar variant="floating" collapsible="icon">
+    <Sidebar variant="floating" collapsible="icon" className={`${isElectronMac && !isElectronFullscreen ? "pt-10" : ""}`}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -130,10 +130,16 @@ export function AppSidebar() {
             >
               <Link href="/home">
                 <div className="text-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <JellyfinIcon className="size-6 fill-primary" />
+                  <Image
+                    src="/logo/finetic.png"
+                    alt="Finetic Logo"
+                    width={32}
+                    height={32}
+                    className="rounded"
+                  />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-medium">Finetic</span>
+                  <span className="font-semibold">Finetic</span>
                   <span className="text-xs">
                     {serverUrl && new URL(serverUrl).hostname}
                   </span>

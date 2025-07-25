@@ -54,6 +54,7 @@ import {
   useMediaSelector,
 } from "media-chrome/dist/react/media-store";
 import * as React from "react";
+import { useMPVPlayer } from "../../hooks/useMPVPlayer";
 import * as ReactDOM from "react-dom";
 
 const ROOT_NAME = "MediaPlayer";
@@ -239,6 +240,19 @@ function MediaPlayerRoot(props: MediaPlayerRootProps) {
 }
 
 function MediaPlayerRootImpl(props: MediaPlayerRootProps) {
+  // Use MPVPlayer hook
+  const {
+    isElectron,
+    isPlaying,
+    play,
+    pause,
+    stop,
+    loadVideo,
+    seek,
+    setVolume,
+    toggleFullscreen,
+    togglePlayPause,
+  } = useMPVPlayer();
   const {
     onPlay,
     onPause,
