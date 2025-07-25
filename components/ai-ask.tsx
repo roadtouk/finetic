@@ -414,7 +414,7 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
             <Ship className="h-4 w-4" />
             <span className="text-sm mr-0.5">Ask Navigator</span>
             <Kbd.Root variant="outline" size="sm">
-              <Kbd.Key>⌘</Kbd.Key>
+              <Kbd.Key className="font-sans">⌘</Kbd.Key>
               <Kbd.Separator />
               <Kbd.Key>K</Kbd.Key>
             </Kbd.Root>

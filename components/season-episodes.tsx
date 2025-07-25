@@ -19,12 +19,12 @@ import {
 import { fetchSeasons, fetchEpisodes } from "@/app/actions/tv-shows";
 import { getImageUrl } from "@/app/actions/utils";
 import Link from "next/link";
-import { Play, Clock } from "lucide-react";
+import { Play, Clock, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatRuntime } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 interface SeasonEpisodesProps {
   showId: string;
@@ -49,6 +49,9 @@ interface Episode {
   SeriesId?: string;
   SeasonId?: string;
   ParentIndexNumber?: number;
+  CommunityRating?: number;
+  OfficialRating?: string;
+  CriticRating?: number;
 }
 
 // Global cache for episodes and seasons data to prevent refetching when switching between episodes
@@ -101,11 +104,15 @@ export const SeasonEpisodes = React.memo(function SeasonEpisodes({
 
   const { serverUrl } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
 
   // Extract current episode ID from pathname if we're on an episode page
   const currentEpisodeId = pathname.startsWith("/episode/")
     ? pathname.split("/")[2]
     : null;
+
+  // Check if we're on a season page
+  const isOnSeasonPage = pathname.startsWith("/season/");
 
   // Memoized function to load seasons with caching
   const loadSeasons = useCallback(async () => {
@@ -268,13 +275,20 @@ export const SeasonEpisodes = React.memo(function SeasonEpisodes({
 
   return (
     <div className="mt-8">
-      <div className="flex items-center gap-4 mb-6 justify-between">
-        <h2 className="text-2xl font-semibold">
-          {seasons.find((s) => s.Id === selectedSeasonId)?.Name ||
-            `Season ${seasons.find((s) => s.Id === selectedSeasonId)?.IndexNumber || 1}`}
-        </h2>
+      <div className="flex items-center gap-4 mb-6">
         <div className="relative z-[9999]">
-          <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId}>
+          <Select 
+            value={selectedSeasonId} 
+            onValueChange={(seasonId) => {
+              if (isOnSeasonPage) {
+                // Navigate to the new season page
+                router.push(`/season/${seasonId}`);
+              } else {
+                // Just update the selected season for series pages
+                setSelectedSeasonId(seasonId);
+              }
+            }}
+          >
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Select season" />
             </SelectTrigger>
@@ -294,13 +308,35 @@ export const SeasonEpisodes = React.memo(function SeasonEpisodes({
           <div className="flex w-max space-x-4 mb-8 pl-1 pr-1">
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="shrink-0 w-72">
-                <div className="space-y-3">
-                  <Skeleton className="aspect-video rounded-lg" />
+                <div className="space-y-3 py-2">
+                  {/* Episode Thumbnail Skeleton */}
+                  <div className="relative aspect-video rounded-lg overflow-hidden bg-muted shadow-lg">
+                    <Skeleton className="w-full h-full" />
+                    {/* Runtime badge skeleton */}
+                    <div className="absolute bottom-3 right-3">
+                      <Skeleton className="h-6 w-12 rounded-md" />
+                    </div>
+                  </div>
+                  
+                  {/* Episode Info Skeleton */}
                   <div className="space-y-2">
+                    {/* Episode title */}
                     <Skeleton className="h-5 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                    <Skeleton className="h-6 w-16" />
+                    <Skeleton className="h-5 w-3/4" />
+                    
+                    {/* Episode description */}
+                    <div className="space-y-1">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-5/6" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </div>
+                    
+                    {/* Metadata badges skeleton */}
+                    <div className="flex items-center gap-2 flex-wrap mt-2.5">
+                      <Skeleton className="h-6 w-16 rounded-md" /> {/* Season/Episode badge */}
+                      <Skeleton className="h-6 w-12 rounded-md" /> {/* Rating badge */}
+                      <Skeleton className="h-6 w-20 rounded-md" /> {/* Date badge */}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -411,14 +447,23 @@ const EpisodeCard = React.memo(function EpisodeCard({
             )}
 
             {/* Metadata */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap mt-2.5">
               <Badge variant="outline" className="text-xs bg-sidebar">
                 S{episode.ParentIndexNumber || 1} • E{episode.IndexNumber || 1}
               </Badge>
+              {episode.CommunityRating && (
+                <Badge
+                  variant="outline"
+                  className="text-xs bg-sidebar flex items-center gap-1"
+                >
+                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                  {episode.CommunityRating.toFixed(1)}
+                </Badge>
+              )}
               {formatDate(episode.PremiereDate) && (
-                <span className="text-xs text-muted-foreground">
+                <Badge variant="outline" className="text-xs bg-sidebar">
                   {formatDate(episode.PremiereDate)}
-                </span>
+                </Badge>
               )}
             </div>
           </div>

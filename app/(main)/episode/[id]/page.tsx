@@ -182,11 +182,8 @@ export default async function Episode({
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Season Episodes section */}
-        <div className="mt-16 max-w-7xl md:px-0 mx-12">
-          <SeasonEpisodes showId={id} />
+          {/* Season Episodes section */}
+          <SeasonEpisodes showId={episode.SeriesId!} />
         </div>
 
         {/* Cast section */}

@@ -209,12 +209,12 @@ export default async function Show({
             </div>
           </div>
 
-          <h2 className="text-3xl font-semibold text-foreground mt-12 mb-6 text-center md:text-left max-w-7xl mx-auto">
+          <h2 className="text-3xl font-semibold text-foreground mt-12 mb-6 text-center md:text-left mx-auto">
             Seasons
           </h2>
 
           {/* Seasons section */}
-          <div className="mt-8 max-w-7xl mx-auto md:px-0 px-6 flex flex-row flex-wrap gap-8">
+          <div className="mt-8 mx-auto md:px-0 px-6 flex flex-row flex-wrap gap-8">
             {seasons.map((season) => (
               <MediaCard
                 key={season.Id}
@@ -230,7 +230,7 @@ export default async function Show({
           </div>
 
           {/* Cast section */}
-          <div className="mt-16 max-w-7xl md:px-0 ml-6">
+          <div className="mt-16 md:px-0 ml-6">
             <CastScrollArea people={show.People!} mediaId={id} />
           </div>
         </div>

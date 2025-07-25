@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { AuroraBackground } from "@/components/aurora-background";
 import { VibrantLogo } from "@/components/vibrant-logo";
 import { SeasonEpisodes } from "@/components/season-episodes";
+import { SeriesPlayButton } from "@/components/series-play-button";
 import { Star, Play, TvIcon } from "lucide-react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -131,7 +132,12 @@ export default async function SeasonPage({
                 )}
               </div>
 
-              <div className="px-8 md:pl-8 md:pt-4 md:pr-16 flex flex-col justify-center md:items-start items-center">
+              {/* Play button */}
+              <div className="flex justify-center md:justify-start md:pl-8 mt-8">
+                <SeriesPlayButton series={season} />
+              </div>
+
+              <div className="px-8 md:pl-8 md:pt-6 md:pr-16 flex flex-col justify-center md:items-start items-center">
                 {season.Overview && (
                   <p className="text-md leading-relaxed mb-6 max-w-4xl">
                     {season.Overview}
@@ -141,7 +147,7 @@ export default async function SeasonPage({
             </div>
           </div>
 
-{/* Episodes section */}
+          {/* Episodes section */}
           <SeasonEpisodes showId={season.SeriesId || id} currentSeasonId={id} />
         </div>
       </div>
