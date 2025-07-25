@@ -6,13 +6,16 @@ import { SearchBar } from "@/components/search-component";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatRuntime } from "@/lib/utils";
-import { ArrowLeft, Calendar, Clock, Play, Tv } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Play, Tv, Star } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CastScrollArea } from "@/components/cast-scrollarea";
 import { SeasonEpisodes } from "@/components/season-episodes";
 import { AuroraBackground } from "@/components/aurora-background";
 import { VibrantLogo } from "@/components/vibrant-logo";
+import { VibrantBackdrop } from "@/components/vibrant-backdrop";
+import { RottenTomatoesIcon } from "@/components/icons/rotten-tomatoes";
+import { TextAnimate } from "@/components/magicui/text-animate";
 import { SidebarInset } from "@/components/ui/sidebar";
 
 export default async function Episode({
@@ -50,9 +53,9 @@ export default async function Episode({
         {/* Backdrop section */}
         <div className="relative">
           {/* Backdrop image with gradient overlay */}
-          <div className="relative h-[50vh] md:h-[60vh] overflow-hidden">
+          <div className="relative h-[50vh] md:h-[70vh] overflow-hidden md:rounded-xl md:mt-2.5">
             <img
-              className="w-full h-full object-cover md:mt-2.5 md:rounded-t-xl"
+              className="w-full h-full object-cover"
               src={backdropImage}
               alt={`${episode.Name} backdrop`}
               width={1920}
@@ -66,8 +69,9 @@ export default async function Episode({
               height={96}
               className="absolute md:top-5/12 top-4/12 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 max-h-20 md:max-h-24 w-auto object-contain max-w-2/3 invisible md:visible"
             />
-            {/* Gradient overlay for better text readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+            {/* Enhanced gradient overlay for smooth transition to overview */}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/30 to-black/90 md:rounded-xl" />
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black to-transparent md:rounded-xl" />
           </div>
 
           {/* Search bar positioned over backdrop */}
@@ -97,19 +101,24 @@ export default async function Episode({
             </div>
 
             {/* Episode Info */}
-            <div className="w-full md:w-2/3 lg:w-3/4 pt-10 md:pt-8 text-center md:text-start">
+            <div className="w-full md:w-2/3 lg:w-3/4 pt-10 md:pt-8 text-center md:text-start bg-background/95 dark:bg-background/50 backdrop-blur-xl rounded-2xl mx-8 mr-16">
               <div className="mb-4 flex justify-center md:justify-start">
-                <h1 className="text-4xl md:text-5xl font-semibold font-poppins md:text-white text-foreground md:pl-8">
-                  {episode.IndexNumber && `${episode.IndexNumber}. `}
-                  {episode.Name || "Untitled Episode"}
-                </h1>
+                <TextAnimate
+                  as="h1"
+                  className="text-4xl md:text-5xl font-semibold font-poppins text-foreground md:pl-8 drop-shadow-xl"
+                  animation="blurInUp"
+                  by="character"
+                  once
+                >
+                  {`${episode.IndexNumber ? `${episode.IndexNumber}. ` : ''}${episode.Name || "Untitled Episode"}`}
+                </TextAnimate>
               </div>
 
               {/* Episode badges */}
               <div className="flex flex-wrap items-center gap-2 mb-2 justify-center md:justify-start md:pl-8">
                 <Badge
                   variant="outline"
-                  className="bg-background backdrop-blur-sm"
+                  className="bg-background/90 backdrop-blur-sm"
                 >
                   S{episode.ParentIndexNumber || 1} • E
                   {episode.IndexNumber || 1}
@@ -118,42 +127,66 @@ export default async function Episode({
                 {episode.ProductionYear && (
                   <Badge
                     variant="outline"
-                    className="bg-background backdrop-blur-sm"
+                    className="bg-background/90 backdrop-blur-sm"
                   >
                     {episode.ProductionYear}
-                  </Badge>
-                )}
-
-                {episode.RunTimeTicks && (
-                  <Badge
-                    variant="outline"
-                    className="bg-background backdrop-blur-sm"
-                  >
-                    {Math.round(episode.RunTimeTicks / 600000000)} min
                   </Badge>
                 )}
 
                 {episode.OfficialRating && (
                   <Badge
                     variant="outline"
-                    className="bg-background backdrop-blur-sm"
+                    className="bg-background/90 backdrop-blur-sm"
                   >
                     {episode.OfficialRating}
                   </Badge>
                 )}
+
+                {episode.RunTimeTicks && (
+                  <Badge
+                    variant="outline"
+                    className="bg-background/90 backdrop-blur-sm"
+                  >
+                    {Math.round(episode.RunTimeTicks / 600000000)} min
+                  </Badge>
+                )}
+
+                {episode.CommunityRating && (
+                  <Badge
+                    variant="outline"
+                    className="bg-background/90 backdrop-blur-sm flex items-center gap-1"
+                  >
+                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                    {episode.CommunityRating.toFixed(1)}
+                  </Badge>
+                )}
+
+                {episode.CriticRating && (
+                  <Badge
+                    variant="outline"
+                    className="bg-background/90 backdrop-blur-sm flex items-center gap-1"
+                  >
+                    <RottenTomatoesIcon size={12} />
+                    {episode.CriticRating}%
+                  </Badge>
+                )}
               </div>
 
-              <div className="h-screen absolute left-0 bg-background border-t w-screen -z-10 mt-4 invisible md:visible"></div>
+              <div className="px-8 md:pl-8 md:pt-4 md:pr-16 flex flex-col justify-center md:items-start items-center">
+                <MediaActions episode={episode} />
 
-              <div className="px-8 md:pl-8 md:pt-10 md:pr-16 flex flex-col justify-center md:items-start items-center">
+                {episode.Taglines && (
+                  <p className="text-lg text-muted-foreground mb-4 max-w-4xl text-center md:text-left font-poppins drop-shadow-md">
+                    {episode.Taglines[0]}
+                  </p>
+                )}
+
                 {episode.Overview && (
                   <p className="text-md leading-relaxed mb-8 max-w-4xl">
                     {episode.Overview}
                   </p>
                 )}
-
                 {/* Media actions */}
-                <MediaActions episode={episode} />
               </div>
             </div>
           </div>

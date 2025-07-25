@@ -39,8 +39,8 @@ export function CastScrollArea({ people, mediaId }: CastScrollAreaProps) {
               href={`/person/${person.Id}`}
               className="shrink-0 group"
             >
-              <figure className="cursor-pointer transition-transform group-hover:scale-105">
-                <div className="overflow-hidden rounded-full shadow-lg">
+              <figure className="cursor-pointer transition-transform">
+                <div className="overflow-hidden rounded-full shadow-lg group-hover:brightness-75 transition">
                   {person.PrimaryImageTag ? (
                     <img
                       src={`${serverUrl}/Items/${person.Id}/Images/Primary?maxWidth=250&maxHeight=250&quality=60&tag=${person.PrimaryImageTag}`}

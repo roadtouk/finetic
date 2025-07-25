@@ -36,7 +36,7 @@
     "ldrs": "^1.1.7",
     "lucide-react": "^0.525.0",
     "media-chrome": "^4.12.0",
-    "motion": "^12.23.7",
+    "motion": "^12.23.9",
     "next": "15.4.1",
     "next-themes": "^0.4.6",
     "node-vibrant": "^4.0.3",
