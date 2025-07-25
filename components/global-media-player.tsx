@@ -20,7 +20,7 @@ import {
   MediaPlayerSettings,
   MediaPlayerTooltip,
 } from "@/components/ui/media-player";
-// import MuxVideo from "@mux/mux-video-react";
+import MuxVideo from "@mux/mux-video-react";
 import { ArrowLeft, RotateCcw, RotateCw, Users, Ship } from "lucide-react";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 import {
@@ -39,24 +39,50 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useAuth } from "@/hooks/useAuth";
+import { useMPVPlayer } from "@/hooks/useMPVPlayer";
 
 interface GlobalMediaPlayerProps {
   onToggleAIAsk?: () => void;
 }
 
 export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
-  const { isPlayerVisible, setIsPlayerVisible, currentMedia, skipTimestamp, setCurrentMediaWithSource, setCurrentTimestamp } =
-    useMediaPlayer();
+  const {
+    isPlayerVisible,
+    setIsPlayerVisible,
+    currentMedia,
+    skipTimestamp,
+    setCurrentMediaWithSource,
+    setCurrentTimestamp,
+  } = useMediaPlayer();
 
   // Check if we're in Electron environment
-  const isElectron = typeof window !== 'undefined' && (window as any).electronAPI?.isElectron;
-  
+  const isElectron =
+    typeof window !== "undefined" && (window as any).electronAPI?.isElectron;
+
+  // MPV Player integration
+  const {
+    isPlaying: mpvIsPlaying,
+    position: mpvPosition,
+    duration: mpvDuration,
+    volume: mpvVolume,
+    error: mpvError,
+    isLoading: mpvIsLoading,
+    loadVideo: mpvLoadVideo,
+    play: mpvPlay,
+    pause: mpvPause,
+    stop: mpvStop,
+    seek: mpvSeek,
+    setVolume: mpvSetVolume,
+  } = useMPVPlayer();
+
   // Log which player is being used
   React.useEffect(() => {
     if (isElectron) {
-      console.log('🎬 Using Electron environment - MPV player support available');
+      console.log(
+        "🎬 Using Electron environment - MPV player support available"
+      );
     } else {
-      console.log('🌐 Using web environment - HLS video player');
+      console.log("🌐 Using web environment - HLS video player");
     }
   }, [isElectron]);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
@@ -106,6 +132,13 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
   // Start progress tracking
   const startProgressTracking = useCallback(async () => {
     if (!currentMedia || !selectedVersion || !videoRef.current) return;
+
+    // Skip progress tracking for test videos
+    if (currentMedia.id === "test-big-buck-bunny") {
+      console.log("🧪 Skipping progress tracking for test video");
+      setHasStartedPlayback(true);
+      return;
+    }
 
     const sessionId = crypto.randomUUID();
     setPlaySessionId(sessionId);
@@ -209,11 +242,11 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
 
   // Helper function to clean up blob URLs
   const cleanupBlobUrls = useCallback(() => {
-    blobUrlsRef.current.forEach(url => {
+    blobUrlsRef.current.forEach((url) => {
       try {
         URL.revokeObjectURL(url);
       } catch (error) {
-        console.warn('Failed to revoke blob URL:', error);
+        console.warn("Failed to revoke blob URL:", error);
       }
     });
     blobUrlsRef.current = [];
@@ -223,6 +256,16 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
   const handleClose = useCallback(async () => {
     // Stop progress tracking before closing
     await stopProgressTracking();
+
+    // Stop MPV playback if active
+    if (isElectron) {
+      try {
+        console.log("🛑 Stopping MPV playback");
+        await mpvStop();
+      } catch (error) {
+        console.warn("Failed to stop MPV:", error);
+      }
+    }
 
     // Clean up blob URLs
     cleanupBlobUrls();
@@ -236,7 +279,7 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
     setDuration(0);
     setFetchingSubtitles(false);
     setCurrentMediaWithSource(null);
-  }, [stopProgressTracking, cleanupBlobUrls]);
+  }, [stopProgressTracking, cleanupBlobUrls, isElectron, mpvStop]);
 
   const handleVideoEnded = useCallback(async () => {
     await stopProgressTracking();
@@ -244,20 +287,23 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
   }, [stopProgressTracking, handleClose]);
 
   // Load subtitle tracks asynchronously after playback starts
-  const loadSubtitleTracks = useCallback(async (itemId: string, mediaSourceId: string) => {
-    setFetchingSubtitles(true);
-    try {
-      const tracks = await getSubtitleTracks(itemId, mediaSourceId);
-      console.log("Original tracks:", tracks);
-    
-      console.log("Processed tracks:", tracks);
-      setSubtitleTracks(tracks);
-    } catch (error) {
-      console.error("Failed to fetch subtitle tracks:", error);
-    } finally {
-      setFetchingSubtitles(false);
-    }
-  }, []);
+  const loadSubtitleTracks = useCallback(
+    async (itemId: string, mediaSourceId: string) => {
+      setFetchingSubtitles(true);
+      try {
+        const tracks = await getSubtitleTracks(itemId, mediaSourceId);
+        console.log("Original tracks:", tracks);
+
+        console.log("Processed tracks:", tracks);
+        setSubtitleTracks(tracks);
+      } catch (error) {
+        console.error("Failed to fetch subtitle tracks:", error);
+      } finally {
+        setFetchingSubtitles(false);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     if (currentMedia && isPlayerVisible) {
@@ -270,7 +316,69 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
 
     setLoading(true);
     try {
-      // Fetch media details
+      // Handle test case for MPV testing
+      if (currentMedia.id === "test-big-buck-bunny") {
+        console.log("🧪 Loading test video for MPV testing");
+
+        // Create mock media details for test
+        const mockDetails = {
+          Id: "test-big-buck-bunny",
+          Name: "Big Buck Bunny (Test Video)",
+          Type: "Movie",
+          MediaSources: [
+            {
+              Id: "test-source-1",
+              Name: "Test Source",
+              Container: "mp4",
+              Size: 276134947,
+              Bitrate: 2000000,
+              RunTimeTicks: 5960000000, // ~10 minutes
+            },
+          ],
+          RunTimeTicks: 5960000000,
+          ProductionYear: 2008,
+        };
+
+        setMediaDetails(mockDetails as any);
+        setSelectedVersion(mockDetails.MediaSources[0] as any);
+
+        // Set mock current media with source
+        setCurrentMediaWithSource({
+          id: currentMedia.id,
+          name: currentMedia.name,
+          type: currentMedia.type,
+          mediaSourceId: "test-source-1",
+        });
+
+        // Use the test video URL directly
+        const testStreamUrl =
+          "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+        setStreamUrl(testStreamUrl);
+
+        // Load in MPV if in Electron
+        if (isElectron && testStreamUrl) {
+          console.log(
+            "🎬 Loading test video in MPV for enhanced playback:",
+            testStreamUrl
+          );
+          try {
+            await mpvLoadVideo(testStreamUrl, {
+              volume: mpvVolume,
+            });
+            console.log("✅ MPV test video loaded successfully");
+          } catch (mpvError) {
+            console.warn(
+              "⚠️ MPV failed to load test video, continuing with HTML video:",
+              mpvError
+            );
+          }
+        }
+
+        setLoading(false);
+        return;
+      }
+
+      // Regular Jellyfin media handling
       const details = await fetchMediaDetails(currentMedia.id);
       if (!details) {
         console.error("Failed to fetch media details");
@@ -307,6 +415,25 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
         const streamUrl = await getStreamUrl(currentMedia.id, sourceToUse.Id!);
         setStreamUrl(streamUrl);
 
+        // If in Electron, also load video in MPV for enhanced features
+        if (isElectron && streamUrl) {
+          console.log(
+            "🎬 Loading video in MPV for enhanced playback:",
+            streamUrl
+          );
+          try {
+            await mpvLoadVideo(streamUrl, {
+              volume: mpvVolume,
+            });
+            console.log("✅ MPV video loaded successfully");
+          } catch (mpvError) {
+            console.warn(
+              "⚠️ MPV failed to load video, continuing with HTML video:",
+              mpvError
+            );
+          }
+        }
+
         // Start fetching subtitle tracks asynchronously without blocking playback
         loadSubtitleTracks(currentMedia.id, sourceToUse.Id!);
       }
@@ -342,13 +469,14 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-[999999] bg-black flex items-center justify-center">
+    <div className="fixed inset-0 z-[999999] bg-black flex items-center justify-center w-screen">
       <MediaPlayer
         autoHide
         onEnded={handleClose}
         onMediaError={(error) => {
           console.warn("Media player error caught:", error);
         }}
+        className="w-screen"
       >
         {loading || !streamUrl || !mediaDetails ? (
           <MediaPlayerLoading delayMs={200}>
@@ -358,7 +486,7 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
           </MediaPlayerLoading>
         ) : (
           <MediaPlayerVideo asChild>
-            <HlsVideoElement
+            <MuxVideo
               // @ts-ignore
               ref={videoRef}
               src={streamUrl}
@@ -369,7 +497,7 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
               playsInline
               preload="auto"
               autoPlay={!currentMedia?.resumePositionTicks}
-              className="w-full h-screen bg-black"
+              className="h-screen bg-black w-screen"
               onPlay={handleVideoPlay}
               onPause={handleVideoPause}
               onEnded={handleVideoEnded}
@@ -390,7 +518,7 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
                   default={track.default}
                 />
               ))}
-            </HlsVideoElement>
+            </MuxVideo>
           </MediaPlayerVideo>
         )}
         <MediaPlayerControls className="flex-col items-start gap-2.5 px-6 pb-4 z-[9999]">
@@ -402,9 +530,30 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
             <ArrowLeft className="h-4 w-4" />
             Go Back
           </Button>
-          {/* Fetching subtitles indicator in top right corner */}
+          {/* MPV status indicator */}
+          {isElectron && !mpvError && (
+            <div className="fixed right-4 top-4 z-10 bg-green-600/80 backdrop-blur-sm rounded-md px-3 py-2 text-white text-sm flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              MPV Enhanced
+              {mpvDuration > 0 && (
+                <span className="text-xs opacity-75">
+                  ({Math.floor(mpvPosition)}s / {Math.floor(mpvDuration)}s)
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* MPV error indicator */}
+          {isElectron && mpvError && (
+            <div className="fixed right-4 top-4 z-10 bg-red-600/80 backdrop-blur-sm rounded-md px-3 py-2 text-white text-sm flex items-center gap-2">
+              <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+              MPV Error
+            </div>
+          )}
+
+          {/* Fetching subtitles indicator */}
           {fetchingSubtitles && (
-            <div className="fixed right-4 top-4 z-10 bg-black/50 backdrop-blur-sm rounded-md px-3 py-2 text-white text-sm flex items-center gap-2">
+            <div className="fixed right-4 top-16 z-10 bg-black/50 backdrop-blur-sm rounded-md px-3 py-2 text-white text-sm flex items-center gap-2">
               <div className="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></div>
               Fetching subtitles
             </div>

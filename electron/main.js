@@ -39,16 +39,55 @@ async function createWindow() {
   console.log('Window created with dimensions:', mainWindow.getSize());
 
   // Initialize MPV player
-  try {
-    mpvPlayer = new MPV({
+try {
+    console.log('Initializing MPV player...');
+    
+    // Check if MPV binary is available
+    const { execSync } = require('child_process');
+    try {
+      const mpvVersion = execSync('mpv --version', { encoding: 'utf8' });
+      console.log('MPV binary found:', mpvVersion.split('\n')[0]);
+    } catch (mpvError) {
+      console.warn('MPV binary not found in PATH:', mpvError.message);
+    }
+    
+    // Initialize with explicit binary path and embedding options
+    const mpvOptions = {
       debug: isDev,
       verbose: isDev,
-    });
+      // Try to specify the binary path explicitly
+      binary: '/opt/homebrew/bin/mpv', // Common Homebrew path on macOS
+      // Options to try to embed MPV in the Electron window
+      socket: '/tmp/mpv-socket', // Use IPC socket for better control
+      time_update: 1, // Get time updates every second
+    };
     
-    await mpvPlayer.start();
+    console.log('MPV options:', mpvOptions);
+    mpvPlayer = new MPV(mpvOptions);
+    
+    // Log the MPV player object methods for debugging
+    console.log('MPV Player initialized. Available methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(mpvPlayer)));
+    
+    // The node-mpv library doesn't require explicit start() or connect() calls
+    // The player is ready to use after construction
     console.log('MPV player initialized successfully');
   } catch (error) {
-    console.error('Failed to initialize MPV player:', error);
+    console.error('Failed to initialize MPV player:', error.message);
+    console.error('Full error:', error);
+    
+    // Try without explicit binary path
+    try {
+      console.log('Retrying MPV initialization without binary path...');
+      mpvPlayer = new MPV({
+        debug: isDev,
+        verbose: isDev,
+      });
+      console.log('MPV player initialized successfully on retry');
+    } catch (retryError) {
+      console.error('Retry also failed:', retryError.message);
+      // Set mpvPlayer to null so other parts of the code know it's not available
+      mpvPlayer = null;
+    }
   }
 
   // Always load from localhost for now (you'll need to run 'npm start' separately)
@@ -152,6 +191,7 @@ ipcMain.handle('mpv-load', async (event, url, options = {}) => {
   }
   
   try {
+    // For external MPV window (current behavior)
     await mpvPlayer.load(url, 'replace');
     
     // Set additional options if provided
@@ -166,6 +206,46 @@ ipcMain.handle('mpv-load', async (event, url, options = {}) => {
     return { success: true };
   } catch (error) {
     console.error('Error loading video in MPV:', error);
+    throw error;
+  }
+});
+
+// IPC handler to create an embedded MPV player
+ipcMain.handle('mpv-load-embedded', async (event, url, options = {}) => {
+  if (!mpvPlayer) {
+    throw new Error('MPV player not initialized');
+  }
+  
+  try {
+    console.log('Loading video in embedded mode:', url);
+    
+    // Note: For true embedding, you would need to:
+    // 1. Create a child window or use BrowserView
+    // 2. Use MPV with --wid option to embed in that window
+    // 3. This is more complex and requires platform-specific code
+    
+    // For now, we'll use the standard approach but with minimal window decorations
+    await mpvPlayer.load(url, 'replace');
+    
+    // Try to minimize the MPV window decorations
+    try {
+      await mpvPlayer.setProperty('border', false);
+      await mpvPlayer.setProperty('title-bar', false);
+    } catch (propError) {
+      console.warn('Could not set MPV window properties:', propError.message);
+    }
+    
+    if (options.subtitles) {
+      await mpvPlayer.addSubtitles(options.subtitles);
+    }
+    
+    if (options.volume !== undefined) {
+      await mpvPlayer.volume(options.volume);
+    }
+    
+    return { success: true, embedded: false }; // embedded: false indicates external window
+  } catch (error) {
+    console.error('Error loading video in embedded MPV:', error);
     throw error;
   }
 });

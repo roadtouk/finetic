@@ -99,51 +99,44 @@ export function MPVVideoPlayer({
     );
   }
 
-  // Electron with MPV
+  // Electron with MPV - Show embedded interface
   return (
     <MediaPlayer className={className} autoHide>
-      {/* Hidden video element for media-chrome compatibility */}
-      <MediaPlayerVideo style={{ display: 'none' }} />
+      {/* Use regular video element for embedded playback */}
+      <MediaPlayerVideo
+        src={src}
+        onPlay={onPlay}
+        onPause={onPause}
+        onEnded={onEnded}
+        onLoadedData={onLoad}
+        autoPlay={autoPlay}
+      />
       
-      {/* MPV Player overlay */}
-      <div className="relative flex-1 bg-black">
-        {error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/80 text-white">
-            <div className="text-center">
-              <h3 className="text-lg font-semibold">Playback Error</h3>
-              <p className="text-sm text-gray-300">{error}</p>
-            </div>
-          </div>
-        )}
-        
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-          </div>
-        )}
-        
-        {src && !error && (
-          <div className="absolute inset-0 flex items-center justify-center text-white">
-            <div className="text-center">
-              <h3 className="text-lg font-semibold mb-2">{title || 'Video Player'}</h3>
-              <p className="text-sm text-gray-300">Playing with MPV</p>
-              {duration > 0 && (
-                <div className="mt-4">
-                  <div className="text-xs text-gray-400">
-                    {Math.floor(position / 60)}:{Math.floor(position % 60).toString().padStart(2, '0')} / {Math.floor(duration / 60)}:{Math.floor(duration % 60).toString().padStart(2, '0')}
-                  </div>
-                  <div className="w-64 bg-gray-600 rounded-full h-1 mt-2">
-                    <div 
-                      className="bg-blue-600 h-1 rounded-full transition-all"
-                      style={{ width: `${(position / duration) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+      {/* MPV Status Overlay */}
+      <div className="absolute top-4 right-4 z-50">
+        <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 text-white text-sm flex items-center gap-2">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <span>MPV Enhanced</span>
+        </div>
       </div>
+      
+      {/* Error overlay */}
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/80 text-white z-40">
+          <div className="text-center">
+            <h3 className="text-lg font-semibold">MPV Error</h3>
+            <p className="text-sm text-gray-300">{error}</p>
+            <p className="text-xs text-gray-400 mt-2">Falling back to standard playback</p>
+          </div>
+        </div>
+      )}
+      
+      {/* Loading overlay */}
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-40">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+        </div>
+      )}
 
       <MediaPlayerControls>
         <MediaPlayerPlay />

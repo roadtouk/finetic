@@ -1,4 +1,4 @@
-import { useAtom } from 'jotai';
+import { useAtom } from "jotai";
 import {
   isPlayerVisibleAtom,
   currentMediaAtom,
@@ -8,13 +8,15 @@ import {
   currentTimestampAtom,
   playMediaAtom,
   MediaToPlay,
-  CurrentMediaWithSource
-} from '@/lib/atoms';
+  CurrentMediaWithSource,
+} from "@/lib/atoms";
 
 export function useMediaPlayer() {
   const [isPlayerVisible, setIsPlayerVisible] = useAtom(isPlayerVisibleAtom);
   const [currentMedia] = useAtom(currentMediaAtom);
-  const [currentMediaWithSource, setCurrentMediaWithSource] = useAtom(currentMediaWithSourceAtom);
+  const [currentMediaWithSource, setCurrentMediaWithSource] = useAtom(
+    currentMediaWithSourceAtom
+  );
   const [skipTimestamp] = useAtom(skipTimestampAtom);
   const [currentTimestamp, setCurrentTimestamp] = useAtom(currentTimestampAtom);
   const [, playMedia] = useAtom(playMediaAtom);
@@ -30,7 +32,7 @@ export function useMediaPlayer() {
     skipToTimestamp,
     skipTimestamp,
     currentTimestamp,
-    setCurrentTimestamp
+    setCurrentTimestamp,
   };
 }
 

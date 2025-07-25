@@ -6,6 +6,7 @@ import { AuroraBackground } from "@/components/aurora-background";
 import { MediaSection } from "@/components/media-section";
 import { SearchBar } from "@/components/search-component";
 import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models/base-item-dto";
+import { MPVTest } from '@/components/MPVTest';
 
 export default async function Home() {
   let serverUrl = "";
@@ -51,6 +52,7 @@ export default async function Home() {
           <h2 className="text-3xl font-semibold text-foreground mb-2 font-poppins">
             Welcome back, {user?.Name}
           </h2>
+          <MPVTest />
           <p className="text-muted-foreground mb-6">
             Continue watching or discover something new
           </p>

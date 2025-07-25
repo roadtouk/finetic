@@ -30,8 +30,8 @@ export function LoginForm({ onSuccess, onBack }: LoginFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim() || !password.trim()) {
-      setError("Please enter both username and password");
+    if (!username.trim()) {
+      setError("Please enter a username");
       return;
     }
 

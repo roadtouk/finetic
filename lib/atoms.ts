@@ -1,5 +1,5 @@
-import { atom } from 'jotai';
-import { MediaSourceInfo } from '@/types/jellyfin';
+import { atom } from "jotai";
+import { MediaSourceInfo } from "@/types/jellyfin";
 
 // AI Ask state
 export const isAIAskOpenAtom = atom(false);
@@ -19,7 +19,7 @@ export const isElectronFullscreenAtom = atom((get) => {
 export interface MediaToPlay {
   id: string;
   name: string;
-  type: 'Movie' | 'Series' | 'Episode';
+  type: "Movie" | "Series" | "Episode";
   resumePositionTicks?: number;
   selectedVersion?: MediaSourceInfo;
 }
@@ -27,31 +27,27 @@ export interface MediaToPlay {
 export interface CurrentMediaWithSource {
   id: string;
   name: string;
-  type: 'Movie' | 'Series' | 'Episode';
+  type: "Movie" | "Series" | "Episode";
   mediaSourceId?: string | null;
 }
 
 export const isPlayerVisibleAtom = atom(false);
 export const currentMediaAtom = atom<MediaToPlay | null>(null);
-export const currentMediaWithSourceAtom = atom<CurrentMediaWithSource | null>(null);
+export const currentMediaWithSourceAtom = atom<CurrentMediaWithSource | null>(
+  null
+);
 export const skipTimestampAtom = atom<number | null>(null);
 export const currentTimestampAtom = atom(0);
 
 // Derived atom for playing media
-export const playMediaAtom = atom(
-  null,
-  (get, set, media: MediaToPlay) => {
-    set(currentMediaAtom, media);
-    set(isPlayerVisibleAtom, true);
-  }
-);
+export const playMediaAtom = atom(null, (get, set, media: MediaToPlay) => {
+  set(currentMediaAtom, media);
+  set(isPlayerVisibleAtom, true);
+});
 
 // Derived atom for skipping to timestamp
-export const skipToTimestampAtom = atom(
-  null,
-  (get, set, timestamp: number) => {
-    set(skipTimestampAtom, timestamp);
-    // Clear the timestamp after a short delay to allow the player to consume it
-    setTimeout(() => set(skipTimestampAtom, null), 100);
-  }
-);
+export const skipToTimestampAtom = atom(null, (get, set, timestamp: number) => {
+  set(skipTimestampAtom, timestamp);
+  // Clear the timestamp after a short delay to allow the player to consume it
+  setTimeout(() => set(skipTimestampAtom, null), 100);
+});

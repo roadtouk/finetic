@@ -28,6 +28,21 @@ export const useMPVPlayer = () => {
 
   // Check if we're running in Electron
   const isElectron = typeof window !== 'undefined' && (window as any).electronAPI?.isElectron;
+  
+  // Log environment information for debugging
+  useEffect(() => {
+    console.log('🔍 MPV Player Hook Environment Check:');
+    console.log('  - Window exists:', typeof window !== 'undefined');
+    console.log('  - ElectronAPI exists:', !!(window as any).electronAPI);
+    console.log('  - Is Electron:', isElectron);
+    console.log('  - ElectronAPI.mpv:', (window as any).electronAPI?.mpv);
+    
+    if (isElectron) {
+      console.log('✅ MPV Player is available in Electron environment');
+    } else {
+      console.log('❌ MPV Player not available - not in Electron environment');
+    }
+  }, [isElectron]);
 
   const updatePosition = useCallback(async () => {
     if (!isElectron) return;
@@ -59,9 +74,12 @@ export const useMPVPlayer = () => {
     }
 
     setState(prev => ({ ...prev, isLoading: true, error: null }));
+    console.log('🎬 Loading video with MPV:', url, options);
 
     try {
-      await (window as any).electronAPI.mpv.load(url, options);
+      const result = await (window as any).electronAPI.mpv.load(url, options);
+      console.log('✅ Video loaded successfully:', result);
+      
       setState(prev => ({ 
         ...prev, 
         isLoading: false,
@@ -71,6 +89,7 @@ export const useMPVPlayer = () => {
       // Update position after loading
       setTimeout(updatePosition, 500);
     } catch (error) {
+      console.error('❌ Failed to load video with MPV:', error);
       setState(prev => ({ 
         ...prev, 
         isLoading: false, 
@@ -191,6 +210,30 @@ export const useMPVPlayer = () => {
     }
   }, [state.isPlaying, play, pause]);
 
+  // Test function to verify MPV player is working
+  const testMPVConnection = useCallback(async () => {
+    if (!isElectron) {
+      console.log('❌ Cannot test MPV - not in Electron environment');
+      return false;
+    }
+
+    try {
+      console.log('🧪 Testing MPV player connection...');
+      
+      // Try to get position (this should work even without media loaded)
+      const result = await (window as any).electronAPI.mpv.getPosition();
+      console.log('✅ MPV test successful:', result);
+      return true;
+    } catch (error) {
+      console.error('❌ MPV test failed:', error);
+      setState(prev => ({ 
+        ...prev, 
+        error: `MPV test failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      }));
+      return false;
+    }
+  }, [isElectron]);
+
   return {
     // State
     ...state,
@@ -207,5 +250,6 @@ export const useMPVPlayer = () => {
     addSubtitles,
     togglePlayPause,
     updatePosition,
+    testMPVConnection,
   };
 };
