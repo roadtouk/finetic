@@ -31,6 +31,7 @@ import {
   reportPlaybackProgress,
   reportPlaybackStopped,
 } from "@/app/actions";
+import { getSubtitleContent } from "@/app/actions/subtitles";
 import HlsVideoElement from "hls-video-element/react";
 import { formatRuntime } from "@/lib/utils";
 import {
@@ -71,6 +72,14 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
   >([]);
   const [loading, setLoading] = useState(false);
   const [fetchingSubtitles, setFetchingSubtitles] = useState(false);
+  const [currentSubtitle, setCurrentSubtitle] = useState<string | null>(null);
+  const [subtitleData, setSubtitleData] = useState<
+    Array<{
+      timestamp: number;
+      timestampFormatted: string;
+      text: string;
+    }>
+  >([]);
 
   // Progress tracking state
   const [playSessionId, setPlaySessionId] = useState<string | null>(null);
@@ -247,23 +256,58 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
     handleClose();
   }, [stopProgressTracking, handleClose]);
 
-  // Load subtitle tracks asynchronously after playback starts
-  const loadSubtitleTracks = useCallback(
+  // Load subtitle data asynchronously after playback starts
+  const loadSubtitleData = useCallback(
     async (itemId: string, mediaSourceId: string) => {
       setFetchingSubtitles(true);
       try {
-        const tracks = await getSubtitleTracks(itemId, mediaSourceId);
-        console.log("Original tracks:", tracks);
-
-        console.log("Processed tracks:", tracks);
-        setSubtitleTracks(tracks);
+        const result = await getSubtitleContent(itemId, mediaSourceId, 0);
+        if (result.success) {
+          console.log(`Loaded ${result.subtitles.length} subtitle entries`);
+          setSubtitleData(result.subtitles);
+        } else {
+          console.error("Failed to load subtitles:", result.error);
+        }
       } catch (error) {
-        console.error("Failed to fetch subtitle tracks:", error);
+        console.error("Failed to fetch subtitle data:", error);
       } finally {
         setFetchingSubtitles(false);
       }
     },
     []
+  );
+
+  // Helper function to process subtitle text for HTML rendering
+  const processSubtitleText = useCallback((text: string) => {
+    // Convert \n to <br> tags for line breaks
+    return text.replace(/\n/g, '<br>');
+  }, []);
+
+  // Find current subtitle based on video time
+  const findCurrentSubtitle = useCallback(
+    (currentTimeSeconds: number) => {
+      if (subtitleData.length === 0) return null;
+
+      // Find subtitle that should be displayed at current time
+      // For now, we'll use a simple approach - find the subtitle with the closest timestamp that's <= current time
+      let currentSub = null;
+      for (let i = 0; i < subtitleData.length; i++) {
+        const subtitle = subtitleData[i];
+        if (subtitle.timestamp <= currentTimeSeconds) {
+          currentSub = subtitle;
+        } else {
+          break;
+        }
+      }
+      
+      // Only show subtitle if we're within a reasonable time window (e.g., 5 seconds)
+      if (currentSub && currentTimeSeconds - currentSub.timestamp <= 5) {
+        return processSubtitleText(currentSub.text);
+      }
+      
+      return null;
+    },
+    [subtitleData, processSubtitleText]
   );
 
   useEffect(() => {
@@ -323,8 +367,8 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
         );
         setStreamUrl(streamUrl);
 
-        // Start fetching subtitle tracks asynchronously without blocking playback
-        loadSubtitleTracks(currentMedia.id, sourceToUse.Id!);
+        // Start fetching subtitle data asynchronously without blocking playback
+        loadSubtitleData(currentMedia.id, sourceToUse.Id!);
       }
     } catch (error) {
       console.error("Failed to load media:", error);
@@ -332,6 +376,13 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
       setLoading(false);
     }
   };
+
+  // Update current subtitle based on video time
+  useEffect(() => {
+    const subtitle = findCurrentSubtitle(currentTime);
+    console.log(subtitle)
+    setCurrentSubtitle(subtitle);
+  }, [currentTime, findCurrentSubtitle]);
 
   // Handle skip timestamp
   useEffect(() => {
@@ -396,19 +447,15 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
               onError={(event) => {
                 console.warn("Video error caught:", event);
               }}
-            >
-              {subtitleTracks.map((track, index) => (
-                <track
-                  key={`${track.language}-${index}`}
-                  kind={track.kind}
-                  label={track.label}
-                  src={track.src}
-                  srcLang={track.language}
-                  default={track.default}
-                />
-              ))}
-            </MuxVideo>
+            />
           </MediaPlayerVideo>
+        )}
+        {/* Current Subtitle */}
+        {currentSubtitle && (
+          <div 
+            className="fixed bottom-[10%] left-1/2 transform -translate-x-1/2 z-[10000] text-white text-center bg-black/20 px-4 py-2 rounded text-3xl font-medium shadow-xl backdrop-blur-md"
+            dangerouslySetInnerHTML={{ __html: currentSubtitle }}
+          />
         )}
         <MediaPlayerControls className="flex-col items-start gap-2.5 px-6 pb-4 z-[9999]">
           <Button

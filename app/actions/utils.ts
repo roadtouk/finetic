@@ -130,7 +130,7 @@ export async function getSubtitleTracks(
         (stream) => stream.Type === "Subtitle"
       ) || [];
     const subtitleTracks = subtitleStreams.map((stream) => {
-      const src = `${serverUrl}/Videos/${itemId}/${mediaSourceId}/Subtitles/${stream.Index}/Stream.vtt?api_key=${user.AccessToken}`;
+      const src = `${serverUrl}/Videos/${itemId}/${mediaSourceId}/Subtitles/${stream.Index}/Stream.js?api_key=${user.AccessToken}`;
       return {
         kind: "subtitles",
         label:
