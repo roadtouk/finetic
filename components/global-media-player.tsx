@@ -39,7 +39,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useAuth } from "@/hooks/useAuth";
-import { useMPVPlayer } from "@/hooks/useMPVPlayer";
 
 interface GlobalMediaPlayerProps {
   onToggleAIAsk?: () => void;
@@ -55,36 +54,6 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
     setCurrentTimestamp,
   } = useMediaPlayer();
 
-  // Check if we're in Electron environment
-  const isElectron =
-    typeof window !== "undefined" && (window as any).electronAPI?.isElectron;
-
-  // MPV Player integration
-  const {
-    isPlaying: mpvIsPlaying,
-    position: mpvPosition,
-    duration: mpvDuration,
-    volume: mpvVolume,
-    error: mpvError,
-    isLoading: mpvIsLoading,
-    loadVideo: mpvLoadVideo,
-    play: mpvPlay,
-    pause: mpvPause,
-    stop: mpvStop,
-    seek: mpvSeek,
-    setVolume: mpvSetVolume,
-  } = useMPVPlayer();
-
-  // Log which player is being used
-  React.useEffect(() => {
-    if (isElectron) {
-      console.log(
-        "🎬 Using Electron environment - MPV player support available"
-      );
-    } else {
-      console.log("🌐 Using web environment - HLS video player");
-    }
-  }, [isElectron]);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [mediaDetails, setMediaDetails] = useState<JellyfinItem | null>(null);
   const [selectedVersion, setSelectedVersion] =
@@ -257,16 +226,6 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
     // Stop progress tracking before closing
     await stopProgressTracking();
 
-    // Stop MPV playback if active
-    if (isElectron) {
-      try {
-        console.log("🛑 Stopping MPV playback");
-        await mpvStop();
-      } catch (error) {
-        console.warn("Failed to stop MPV:", error);
-      }
-    }
-
     // Clean up blob URLs
     cleanupBlobUrls();
 
@@ -279,7 +238,7 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
     setDuration(0);
     setFetchingSubtitles(false);
     setCurrentMediaWithSource(null);
-  }, [stopProgressTracking, cleanupBlobUrls, isElectron, mpvStop]);
+  }, [stopProgressTracking, cleanupBlobUrls]);
 
   const handleVideoEnded = useCallback(async () => {
     await stopProgressTracking();
@@ -316,67 +275,6 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
 
     setLoading(true);
     try {
-      // Handle test case for MPV testing
-      if (currentMedia.id === "test-big-buck-bunny") {
-        console.log("🧪 Loading test video for MPV testing");
-
-        // Create mock media details for test
-        const mockDetails = {
-          Id: "test-big-buck-bunny",
-          Name: "Big Buck Bunny (Test Video)",
-          Type: "Movie",
-          MediaSources: [
-            {
-              Id: "test-source-1",
-              Name: "Test Source",
-              Container: "mp4",
-              Size: 276134947,
-              Bitrate: 2000000,
-              RunTimeTicks: 5960000000, // ~10 minutes
-            },
-          ],
-          RunTimeTicks: 5960000000,
-          ProductionYear: 2008,
-        };
-
-        setMediaDetails(mockDetails as any);
-        setSelectedVersion(mockDetails.MediaSources[0] as any);
-
-        // Set mock current media with source
-        setCurrentMediaWithSource({
-          id: currentMedia.id,
-          name: currentMedia.name,
-          type: currentMedia.type,
-          mediaSourceId: "test-source-1",
-        });
-
-        // Use the test video URL directly
-        const testStreamUrl =
-          "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
-        setStreamUrl(testStreamUrl);
-
-        // Load in MPV if in Electron
-        if (isElectron && testStreamUrl) {
-          console.log(
-            "🎬 Loading test video in MPV for enhanced playback:",
-            testStreamUrl
-          );
-          try {
-            await mpvLoadVideo(testStreamUrl, {
-              volume: mpvVolume,
-            });
-            console.log("✅ MPV test video loaded successfully");
-          } catch (mpvError) {
-            console.warn(
-              "⚠️ MPV failed to load test video, continuing with HTML video:",
-              mpvError
-            );
-          }
-        }
-
-        setLoading(false);
-        return;
-      }
 
       // Regular Jellyfin media handling
       const details = await fetchMediaDetails(currentMedia.id);
@@ -414,25 +312,6 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
         // Generate stream URL
         const streamUrl = await getStreamUrl(currentMedia.id, sourceToUse.Id!);
         setStreamUrl(streamUrl);
-
-        // If in Electron, also load video in MPV for enhanced features
-        if (isElectron && streamUrl) {
-          console.log(
-            "🎬 Loading video in MPV for enhanced playback:",
-            streamUrl
-          );
-          try {
-            await mpvLoadVideo(streamUrl, {
-              volume: mpvVolume,
-            });
-            console.log("✅ MPV video loaded successfully");
-          } catch (mpvError) {
-            console.warn(
-              "⚠️ MPV failed to load video, continuing with HTML video:",
-              mpvError
-            );
-          }
-        }
 
         // Start fetching subtitle tracks asynchronously without blocking playback
         loadSubtitleTracks(currentMedia.id, sourceToUse.Id!);
@@ -530,26 +409,6 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
             <ArrowLeft className="h-4 w-4" />
             Go Back
           </Button>
-          {/* MPV status indicator */}
-          {isElectron && !mpvError && (
-            <div className="fixed right-4 top-4 z-10 bg-green-600/80 backdrop-blur-sm rounded-md px-3 py-2 text-white text-sm flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              MPV Enhanced
-              {mpvDuration > 0 && (
-                <span className="text-xs opacity-75">
-                  ({Math.floor(mpvPosition)}s / {Math.floor(mpvDuration)}s)
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* MPV error indicator */}
-          {isElectron && mpvError && (
-            <div className="fixed right-4 top-4 z-10 bg-red-600/80 backdrop-blur-sm rounded-md px-3 py-2 text-white text-sm flex items-center gap-2">
-              <div className="w-2 h-2 bg-red-400 rounded-full"></div>
-              MPV Error
-            </div>
-          )}
 
           {/* Fetching subtitles indicator */}
           {fetchingSubtitles && (

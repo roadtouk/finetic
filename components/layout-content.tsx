@@ -1,11 +1,16 @@
 "use client";
 
-import { useAtom } from 'jotai';
+import { useAtom } from "jotai";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import AIAsk from "@/components/ai-ask";
 import { GlobalMediaPlayer } from "@/components/global-media-player";
-import { isAIAskOpenAtom, isElectronMacAtom, isElectronFullscreenAtom, isFullscreenAtom } from '@/lib/atoms';
+import {
+  isAIAskOpenAtom,
+  isElectronMacAtom,
+  isElectronFullscreenAtom,
+  isFullscreenAtom,
+} from "@/lib/atoms";
 
 interface LayoutContentProps {
   children: React.ReactNode;
@@ -52,10 +57,10 @@ export function LayoutContent({ children }: LayoutContentProps) {
           isElectronMac={isElectronMac}
           isElectronFullscreen={isElectronFullscreen}
         />
-        <SidebarInset className="flex-1 overflow-hidden">
-          <div className="flex-1 overflow-y-auto no-scrollbar">
-            {children}
-          </div>
+        <SidebarInset
+          className={`flex-1 overflow-hidden ${isElectronMac && !isElectronFullscreen ? "pl-2.5" : ""}`}
+        >
+          <div className="flex-1 overflow-y-auto no-scrollbar">{children}</div>
         </SidebarInset>
       </SidebarProvider>
       <AIAsk isOpen={isAIAskOpen} onOpenChange={setIsAIAskOpen} />

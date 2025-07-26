@@ -1,10 +1,7 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, BrowserView, ipcMain, shell } = require('electron');
 const { join, resolve } = require('path');
 const isDev = process.env.NODE_ENV === 'development';
-const MPV = require('node-mpv');
-
 let mainWindow;
-let mpvPlayer;
 
 // Enable live reload for Electron in development
 if (isDev) {
@@ -37,58 +34,6 @@ async function createWindow() {
   });
   
   console.log('Window created with dimensions:', mainWindow.getSize());
-
-  // Initialize MPV player
-try {
-    console.log('Initializing MPV player...');
-    
-    // Check if MPV binary is available
-    const { execSync } = require('child_process');
-    try {
-      const mpvVersion = execSync('mpv --version', { encoding: 'utf8' });
-      console.log('MPV binary found:', mpvVersion.split('\n')[0]);
-    } catch (mpvError) {
-      console.warn('MPV binary not found in PATH:', mpvError.message);
-    }
-    
-    // Initialize with explicit binary path and embedding options
-    const mpvOptions = {
-      debug: isDev,
-      verbose: isDev,
-      // Try to specify the binary path explicitly
-      binary: '/opt/homebrew/bin/mpv', // Common Homebrew path on macOS
-      // Options to try to embed MPV in the Electron window
-      socket: '/tmp/mpv-socket', // Use IPC socket for better control
-      time_update: 1, // Get time updates every second
-    };
-    
-    console.log('MPV options:', mpvOptions);
-    mpvPlayer = new MPV(mpvOptions);
-    
-    // Log the MPV player object methods for debugging
-    console.log('MPV Player initialized. Available methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(mpvPlayer)));
-    
-    // The node-mpv library doesn't require explicit start() or connect() calls
-    // The player is ready to use after construction
-    console.log('MPV player initialized successfully');
-  } catch (error) {
-    console.error('Failed to initialize MPV player:', error.message);
-    console.error('Full error:', error);
-    
-    // Try without explicit binary path
-    try {
-      console.log('Retrying MPV initialization without binary path...');
-      mpvPlayer = new MPV({
-        debug: isDev,
-        verbose: isDev,
-      });
-      console.log('MPV player initialized successfully on retry');
-    } catch (retryError) {
-      console.error('Retry also failed:', retryError.message);
-      // Set mpvPlayer to null so other parts of the code know it's not available
-      mpvPlayer = null;
-    }
-  }
 
   // Always load from localhost for now (you'll need to run 'npm start' separately)
   try {
@@ -136,9 +81,6 @@ try {
   // Handle window closed
   mainWindow.on('closed', () => {
     mainWindow = null;
-    if (mpvPlayer) {
-      mpvPlayer.quit();
-    }
   });
 
   // Handle fullscreen changes
@@ -171,195 +113,6 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
-  }
-});
-
-app.on('before-quit', async () => {
-  if (mpvPlayer) {
-    try {
-      await mpvPlayer.quit();
-    } catch (error) {
-      console.error('Error quitting MPV player:', error);
-    }
-  }
-});
-
-// IPC handlers for MPV controls
-ipcMain.handle('mpv-load', async (event, url, options = {}) => {
-  if (!mpvPlayer) {
-    throw new Error('MPV player not initialized');
-  }
-  
-  try {
-    // For external MPV window (current behavior)
-    await mpvPlayer.load(url, 'replace');
-    
-    // Set additional options if provided
-    if (options.subtitles) {
-      await mpvPlayer.addSubtitles(options.subtitles);
-    }
-    
-    if (options.volume !== undefined) {
-      await mpvPlayer.volume(options.volume);
-    }
-    
-    return { success: true };
-  } catch (error) {
-    console.error('Error loading video in MPV:', error);
-    throw error;
-  }
-});
-
-// IPC handler to create an embedded MPV player
-ipcMain.handle('mpv-load-embedded', async (event, url, options = {}) => {
-  if (!mpvPlayer) {
-    throw new Error('MPV player not initialized');
-  }
-  
-  try {
-    console.log('Loading video in embedded mode:', url);
-    
-    // Note: For true embedding, you would need to:
-    // 1. Create a child window or use BrowserView
-    // 2. Use MPV with --wid option to embed in that window
-    // 3. This is more complex and requires platform-specific code
-    
-    // For now, we'll use the standard approach but with minimal window decorations
-    await mpvPlayer.load(url, 'replace');
-    
-    // Try to minimize the MPV window decorations
-    try {
-      await mpvPlayer.setProperty('border', false);
-      await mpvPlayer.setProperty('title-bar', false);
-    } catch (propError) {
-      console.warn('Could not set MPV window properties:', propError.message);
-    }
-    
-    if (options.subtitles) {
-      await mpvPlayer.addSubtitles(options.subtitles);
-    }
-    
-    if (options.volume !== undefined) {
-      await mpvPlayer.volume(options.volume);
-    }
-    
-    return { success: true, embedded: false }; // embedded: false indicates external window
-  } catch (error) {
-    console.error('Error loading video in embedded MPV:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('mpv-play', async () => {
-  if (!mpvPlayer) {
-    throw new Error('MPV player not initialized');
-  }
-  
-  try {
-    await mpvPlayer.play();
-    return { success: true };
-  } catch (error) {
-    console.error('Error playing video:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('mpv-pause', async () => {
-  if (!mpvPlayer) {
-    throw new Error('MPV player not initialized');
-  }
-  
-  try {
-    await mpvPlayer.pause();
-    return { success: true };
-  } catch (error) {
-    console.error('Error pausing video:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('mpv-stop', async () => {
-  if (!mpvPlayer) {
-    throw new Error('MPV player not initialized');
-  }
-  
-  try {
-    await mpvPlayer.stop();
-    return { success: true };
-  } catch (error) {
-    console.error('Error stopping video:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('mpv-seek', async (event, position) => {
-  if (!mpvPlayer) {
-    throw new Error('MPV player not initialized');
-  }
-  
-  try {
-    await mpvPlayer.seek(position);
-    return { success: true };
-  } catch (error) {
-    console.error('Error seeking video:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('mpv-set-volume', async (event, volume) => {
-  if (!mpvPlayer) {
-    throw new Error('MPV player not initialized');
-  }
-  
-  try {
-    await mpvPlayer.volume(volume);
-    return { success: true };
-  } catch (error) {
-    console.error('Error setting volume:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('mpv-get-position', async () => {
-  if (!mpvPlayer) {
-    throw new Error('MPV player not initialized');
-  }
-  
-  try {
-    const position = await mpvPlayer.getProperty('time-pos');
-    const duration = await mpvPlayer.getProperty('duration');
-    return { position, duration };
-  } catch (error) {
-    console.error('Error getting position:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('mpv-fullscreen', async (event, enable) => {
-  if (!mpvPlayer) {
-    throw new Error('MPV player not initialized');
-  }
-  
-  try {
-    await mpvPlayer.fullscreen(enable);
-    return { success: true };
-  } catch (error) {
-    console.error('Error toggling fullscreen:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('mpv-add-subtitles', async (event, subtitlePath) => {
-  if (!mpvPlayer) {
-    throw new Error('MPV player not initialized');
-  }
-  
-  try {
-    await mpvPlayer.addSubtitles(subtitlePath);
-    return { success: true };
-  } catch (error) {
-    console.error('Error adding subtitles:', error);
-    throw error;
   }
 });
 
