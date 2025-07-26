@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Poppins } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { SidebarInset } from "@/components/ui/sidebar";
+import { SettingsProvider } from "@/contexts/settings-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,7 +43,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <SettingsProvider>
+            {children}
+          </SettingsProvider>
         </ThemeProvider>
       </body>
     </html>

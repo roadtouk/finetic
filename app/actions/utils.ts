@@ -66,7 +66,8 @@ export async function getDownloadUrl(itemId: string): Promise<string> {
 export async function getStreamUrl(
   itemId: string,
   mediaSourceId: string,
-  quality?: string
+  quality?: string,
+  videoBitrate?: number
 ): Promise<string> {
   const { serverUrl, user } = await getAuthData();
 
@@ -75,7 +76,11 @@ export async function getStreamUrl(
 
   let url = `${serverUrl}/Videos/${itemId}/master.m3u8?api_key=${user.AccessToken}&MediaSourceId=${mediaSourceId}&PlaySessionId=${playSessionId}&VideoCodec=h264,hevc&AudioCodec=aac,mp3&TranscodingProfile=Default`;
 
-  if (quality) {
+  // Apply custom bitrate if specified (takes precedence over quality presets)
+  if (videoBitrate && videoBitrate > 0) {
+    url += `&videoBitRate=${videoBitrate}`;
+  } else if (quality) {
+    // Fallback to existing quality presets if no custom bitrate is set
     switch (quality) {
       case "2160p":
         url += "&width=3840&height=2160&videoBitRate=20000000";

@@ -40,7 +40,16 @@ import {
   Sun,
   Moon,
   Monitor,
+  Settings,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useSettings, BITRATE_OPTIONS } from "@/contexts/settings-context";
 
 interface JellyfinLibrary {
   Id: string;
@@ -51,6 +60,7 @@ interface JellyfinLibrary {
 
 export function AppSidebar({ isElectronMac, isElectronFullscreen }: { isElectronMac: boolean; isElectronFullscreen: boolean }) {
   const { setTheme } = useTheme();
+  const { videoBitrate, setVideoBitrate } = useSettings();
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [serverUrl, setServerUrl] = useState<string | null>(null);
@@ -240,6 +250,28 @@ export function AppSidebar({ isElectronMac, isElectronFullscreen }: { isElectron
                       <Monitor className="h-4 w-4" />
                       <span>System</span>
                     </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="gap-2">
+                    <Settings className="h-4 w-4" />
+                    <span>Video Bitrate</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <div className="p-2">
+                      <Select value={videoBitrate} onValueChange={setVideoBitrate}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {BITRATE_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
                 <DropdownMenuSeparator />

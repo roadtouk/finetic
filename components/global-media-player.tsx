@@ -39,6 +39,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useAuth } from "@/hooks/useAuth";
+import { useSettings, BITRATE_OPTIONS } from "@/contexts/settings-context";
 
 interface GlobalMediaPlayerProps {
   onToggleAIAsk?: () => void;
@@ -53,6 +54,7 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
     setCurrentMediaWithSource,
     setCurrentTimestamp,
   } = useMediaPlayer();
+  const { videoBitrate } = useSettings();
 
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [mediaDetails, setMediaDetails] = useState<JellyfinItem | null>(null);
@@ -268,14 +270,13 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
     if (currentMedia && isPlayerVisible) {
       loadMedia();
     }
-  }, [currentMedia, isPlayerVisible]);
+  }, [currentMedia, isPlayerVisible, videoBitrate]);
 
   const loadMedia = async () => {
     if (!currentMedia) return;
 
     setLoading(true);
     try {
-
       // Regular Jellyfin media handling
       const details = await fetchMediaDetails(currentMedia.id);
       if (!details) {
@@ -309,8 +310,17 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
           mediaSourceId: sourceToUse.Id || null,
         });
 
-        // Generate stream URL
-        const streamUrl = await getStreamUrl(currentMedia.id, sourceToUse.Id!);
+        // Generate stream URL with bitrate setting
+        const bitrateOption = BITRATE_OPTIONS.find(
+          (option) => option.value === videoBitrate
+        );
+        const bitrate = bitrateOption?.bitrate || 0; // 0 means auto/no limit
+        const streamUrl = await getStreamUrl(
+          currentMedia.id,
+          sourceToUse.Id!,
+          undefined,
+          bitrate
+        );
         setStreamUrl(streamUrl);
 
         // Start fetching subtitle tracks asynchronously without blocking playback

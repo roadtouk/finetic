@@ -21,6 +21,7 @@ import { useComposedRefs } from "@/lib/compose-refs";
 import { cn } from "@/lib/utils";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 import { Slot } from "@radix-ui/react-slot";
+import { useSettings, BITRATE_OPTIONS } from "@/contexts/settings-context";
 import {
   AlertTriangleIcon,
   CaptionsOffIcon,
@@ -2848,6 +2849,7 @@ function MediaPlayerSettings(props: MediaPlayerSettingsProps) {
   const context = useMediaPlayerContext(SETTINGS_NAME);
   const store = useStoreContext(SETTINGS_NAME);
   const dispatch = useMediaDispatch();
+  const { videoBitrate, setVideoBitrate } = useSettings();
 
   const mediaPlaybackRate = useMediaSelector(
     (state) => state.mediaPlaybackRate ?? 1
@@ -2993,52 +2995,73 @@ function MediaPlayerSettings(props: MediaPlayerSettingsProps) {
             ))}
           </DropdownMenuSubContent>
         </DropdownMenuSub>
-        {context.isVideo && mediaRenditionList.length > 0 && (
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
-              <span className="flex-1">Quality</span>
-              <Badge variant="outline" className="rounded-sm">
-                {selectedRenditionLabel}
-              </Badge>
-            </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent>
-              <DropdownMenuItem
-                className="justify-between"
-                onSelect={() => onRenditionChange("auto")}
-              >
-                Auto
-                {!selectedRenditionId && <CheckIcon />}
-              </DropdownMenuItem>
-              {mediaRenditionList
-                .slice()
-                .sort((a, b) => {
-                  const aHeight = a.height ?? 0;
-                  const bHeight = b.height ?? 0;
-                  return bHeight - aHeight;
-                })
-                .map((rendition) => {
-                  const label = rendition.height
-                    ? `${rendition.height}p`
-                    : rendition.width
-                      ? `${rendition.width}p`
-                      : (rendition.id ?? "Unknown");
+      {context.isVideo && mediaRenditionList.length > 0 && (
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <span className="flex-1">Quality</span>
+            <Badge variant="outline" className="rounded-sm">
+              {selectedRenditionLabel}
+            </Badge>
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            <DropdownMenuItem
+              className="justify-between"
+              onSelect={() => onRenditionChange("auto")}
+            >
+              Auto
+              {!selectedRenditionId && <CheckIcon />}
+            </DropdownMenuItem>
+            {mediaRenditionList
+              .slice()
+              .sort((a, b) => {
+                const aHeight = a.height ?? 0;
+                const bHeight = b.height ?? 0;
+                return bHeight - aHeight;
+              })
+              .map((rendition) => {
+                const label = rendition.height
+                  ? `${rendition.height}p`
+                  : rendition.width
+                  ? `${rendition.width}p`
+                  : (rendition.id ?? "Unknown");
 
-                  const selected = rendition.id === selectedRenditionId;
+                const selected = rendition.id === selectedRenditionId;
 
-                  return (
-                    <DropdownMenuItem
-                      key={rendition.id}
-                      className="justify-between"
-                      onSelect={() => onRenditionChange(rendition.id ?? "")}
-                    >
-                      {label}
-                      {selected && <CheckIcon />}
-                    </DropdownMenuItem>
-                  );
-                })}
-            </DropdownMenuSubContent>
-          </DropdownMenuSub>
-        )}
+                return (
+                  <DropdownMenuItem
+                    key={rendition.id}
+                    className="justify-between"
+                    onSelect={() => onRenditionChange(rendition.id ?? "")}
+                  >
+                    {label}
+                    {selected && <CheckIcon />}
+                  </DropdownMenuItem>
+                );
+              })}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+      )}
+
+      <DropdownMenuSub>
+        <DropdownMenuSubTrigger>
+          <span className="flex-1">Bitrate</span>
+          <Badge variant="outline" className="rounded-sm">
+            {BITRATE_OPTIONS.find(option => option.value === videoBitrate)?.label ?? "Auto"}
+          </Badge>
+        </DropdownMenuSubTrigger>
+        <DropdownMenuSubContent>
+          {BITRATE_OPTIONS.map((option) => (
+            <DropdownMenuItem
+              key={option.value}
+              className="justify-between"
+              onSelect={() => setVideoBitrate(option.value)}
+            >
+              {option.label}
+              {videoBitrate === option.value && <CheckIcon />}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuSubContent>
+      </DropdownMenuSub>
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
             <span className="flex-1">Captions</span>
