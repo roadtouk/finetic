@@ -188,7 +188,6 @@ export function AppSidebar({
                 [1, 2].map((index) => (
                   <SidebarMenuItem key={`skeleton-${index}`}>
                     <SidebarMenuButton disabled>
-                      <div className="h-4 w-4 bg-gray-300 rounded animate-pulse" />
                       <div className="h-4 w-16 bg-gray-300 rounded animate-pulse" />
                     </SidebarMenuButton>
                   </SidebarMenuItem>
