@@ -332,7 +332,7 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
 
   return (
     <div
-      className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 flex flex-col items-center px-4 w-full ${isAskOpen ? "z-[9999999]" : "z-50"}`}
+      className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 flex flex-col items-center px-4 w-min ${isAskOpen ? "z-[9999999]" : "z-50"}`}
     >
       {/* Ask question expanded panel */}
       <AnimatePresence>
