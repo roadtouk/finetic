@@ -18,6 +18,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { MediaInfoDialog } from "@/components/media-info-dialog";
+import { ImageEditorDialog } from "@/components/image-editor-dialog";
 import { Info, Download, Play, ArrowLeft } from "lucide-react";
 import { getDownloadUrl, getStreamUrl, getSubtitleTracks } from "@/app/actions";
 import { getMediaDetailsFromName, cutOffText } from "@/lib/utils";
@@ -158,6 +159,11 @@ await playMedia({
           <MediaInfoDialog mediaSource={selectedVersion} />
         </DialogContent>
       </Dialog>
+
+      <ImageEditorDialog 
+        itemId={media.Id!} 
+        itemName={media.Name || "Unknown"} 
+      />
     </div>
   );
 }

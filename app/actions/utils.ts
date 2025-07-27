@@ -195,3 +195,78 @@ export async function getLibraryById(libraryId: string): Promise<any | null> {
     return null;
   }
 }
+
+export interface RemoteImage {
+  ProviderName: string;
+  CommunityRating: number;
+  Height: number;
+  Width: number;
+  Language: string;
+  RatingType: string;
+  Type: string;
+  Url: string;
+  VoteCount: number;
+}
+
+export interface RemoteImagesResponse {
+  Images: RemoteImage[];
+}
+
+export async function fetchRemoteImages(
+  itemId: string,
+  type: 'Primary' | 'Backdrop' | 'Logo' | 'Thumb' = 'Primary',
+  startIndex: number = 0,
+  limit: number = 30,
+  includeAllLanguages: boolean = false
+): Promise<RemoteImagesResponse> {
+  const { serverUrl, user } = await getAuthData();
+  
+  const params = new URLSearchParams({
+    type,
+    startIndex: startIndex.toString(),
+    limit: limit.toString(),
+    IncludeAllLanguages: includeAllLanguages.toString()
+  });
+  
+  const url = `${serverUrl}/Items/${itemId}/RemoteImages?${params.toString()}`;
+  
+  const response = await fetch(url, {
+    headers: {
+      'Authorization': `MediaBrowser Token="${user.AccessToken}"`
+    }
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to fetch remote images: ${response.statusText}`);
+  }
+  
+  return response.json();
+}
+
+export async function downloadRemoteImage(
+  itemId: string,
+  imageType: 'Primary' | 'Backdrop' | 'Logo' | 'Thumb',
+  imageUrl: string,
+  providerName: string
+): Promise<void> {
+  const { serverUrl, user } = await getAuthData();
+  
+  const params = new URLSearchParams({
+    Type: imageType,
+    ImageUrl: imageUrl,
+    ProviderName: providerName
+  });
+  
+  const url = `${serverUrl}/Items/${itemId}/RemoteImages/Download?${params.toString()}`;
+  
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `MediaBrowser Token="${user.AccessToken}"`
+    }
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to download remote image: ${response.statusText}`);
+  }
+}

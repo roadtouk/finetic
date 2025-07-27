@@ -45,4 +45,12 @@ export {
   getSubtitleTracks,
   getUserLibraries,
   getLibraryById,
+  fetchRemoteImages,
+  downloadRemoteImage,
+} from './utils';
+
+// Types
+export type {
+  RemoteImage,
+  RemoteImagesResponse,
 } from './utils';
