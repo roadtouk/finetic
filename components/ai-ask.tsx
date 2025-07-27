@@ -332,13 +332,13 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
 
   return (
     <div
-      className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 flex flex-col items-center px-4 w-min ${isAskOpen ? "z-[9999999]" : "z-50"}`}
+      className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 flex flex-col items-center px-4 w-full max-w-xl ${isAskOpen ? "z-[9999999]" : "z-50"}`}
     >
       {/* Ask question expanded panel */}
       <AnimatePresence>
         {isAskOpen && (
           <motion.div
-            className="mb-3 w-full max-w-lg"
+            className="mb-3 w-full"
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -434,7 +434,7 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
                       value={input}
                       onChange={handleInputChange}
                       placeholder={`Ask something like "go to Inception" or "play Breaking Bad"`}
-                      className="rounded-full bg-background/80 backdrop-blur-md border px-4"
+                      className="rounded-xl bg-background/80 backdrop-blur-md border px-4"
                       disabled={askLoading}
                       autoFocus
                     />
@@ -462,11 +462,11 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
         initial={false}
         animate={isAskOpen ? { scale: 1.05 } : { scale: 1 }}
         transition={{ duration: 0.2 }}
-        className="flex items-center gap-2 w-full max-w-md justify-center"
+        className="flex items-center gap-2 w-full justify-center"
       >
         <Button
           variant="outline"
-          className="px-4 py-2 h-auto rounded-full flex items-center gap-2 backdrop-blur-[6px] border dark:bg-background/70 bg-background/90"
+          className="px-4 py-2 h-auto rounded-full flex items-center gap-2 backdrop-blur-[6px] border dark:bg-background/70 bg-background/90 dark:hover:bg-background/60!"
           onClick={handleOpenAsk}
         >
             <Ship className="h-4 w-4" />

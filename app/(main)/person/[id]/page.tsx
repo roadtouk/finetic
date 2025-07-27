@@ -110,7 +110,7 @@ export default async function PersonPage({
             {/* Person information */}
             <div className="w-full md:w-2/3 lg:w-3/4 pt-10 md:pt-8 text-center md:text-start">
               <div className="mb-4 flex justify-center md:justify-start">
-                <h1 className="text-4xl md:text-5xl font-semibold font-poppins md:text-white text-foreground md:pl-8">
+                <h1 className="text-4xl md:text-5xl font-semibold font-poppins text-foreground md:pl-8">
                   {person.Name}
                 </h1>
               </div>

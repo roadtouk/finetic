@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { getImageUrl } from "@/app/actions";
 import { Film, PlayCircle, Tv, Calendar, Star, User } from "lucide-react";
 import { Badge } from "./ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 
 interface Item {
@@ -41,55 +42,66 @@ export function SearchSuggestionItem({
       onClick={onClick}
       className="flex items-center gap-3 p-3 hover:bg-accent rounded-lg cursor-pointer transition-colors"
     >
-      {/* Poster Image */}
-      <div
-        className={`aspect-[2/3] h-16 bg-muted rounded overflow-hidden flex-shrink-0`}
-      >
-        {imageUrl ? (
-          <img
+      {/* Image/Avatar */}
+      {item.Type === "Person" ? (
+        <Avatar className="size-[43px] flex-shrink-0 border">
+          <AvatarImage
             src={imageUrl}
             alt={item.Name}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
+            className="object-cover"
           />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            {item.Type === "Movie" ? (
-              <Film className="h-6 w-6 text-muted-foreground" />
-            ) : item.Type === "Episode" ? (
-              <PlayCircle className="h-6 w-6 text-muted-foreground" />
-            ) : item.Type === "Person" ? (
-              <User className="h-6 w-6 text-muted-foreground" />
-            ) : (
-              <Tv className="h-6 w-6 text-muted-foreground" />
-            )}
-          </div>
-        )}
-      </div>
+          <AvatarFallback>
+            <User className="h-5 w-5 text-muted-foreground" />
+          </AvatarFallback>
+        </Avatar>
+      ) : (
+        <div
+          className={`aspect-[2/3] h-16 bg-muted rounded overflow-hidden flex-shrink-0`}
+        >
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={item.Name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              {item.Type === "Movie" ? (
+                <Film className="h-6 w-6 text-muted-foreground" />
+              ) : item.Type === "Episode" ? (
+                <PlayCircle className="h-6 w-6 text-muted-foreground" />
+              ) : (
+                <Tv className="h-6 w-6 text-muted-foreground" />
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Content Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <h4 className="text-foreground font-medium truncate">{item.Name}</h4>
           {item.Type === "Movie" ? (
-            <Badge variant={"outline"}>
+            <Badge variant={"outline"} className="bg-background/50">
               <Film className="h-3 w-3 mr-0.5 text-blue-400" />
               Movie
             </Badge>
           ) : item.Type === "Series" ? (
-            <Badge variant={"outline"}>
+            <Badge variant={"outline"} className="bg-background/50">
               <Tv className="h-3 w-3 mr-0.5 text-emerald-400" />
               Series
             </Badge>
           ) : item.Type === "Person" ? (
-            <Badge variant={"outline"}>
+            <Badge variant={"outline"} className="bg-background/50">
               <User className="h-3 w-3 mr-0.5 text-purple-400" />
               Person
             </Badge>
           ) : item.Type === "Episode" ? (
-            <Badge variant={"outline"}>
+            <Badge variant={"outline"} className="bg-background/50">
               <PlayCircle className="h-3 w-3 mr-0.5 text-orange-400" />
               Episode
             </Badge>
@@ -101,13 +113,6 @@ export function SearchSuggestionItem({
             <div className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
               {item.ProductionYear}
-            </div>
-          )}
-
-          {item.RunTimeTicks && formatRuntime(item.RunTimeTicks) && (
-            <div className="flex items-center gap-1">
-              <PlayCircle className="h-3 w-3" />
-              {formatRuntime(item.RunTimeTicks)}
             </div>
           )}
 

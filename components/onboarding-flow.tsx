@@ -19,7 +19,7 @@ export function OnboardingFlow() {
       
       // Check if user is already authenticated
       if (authenticated && serverUrl) {
-        router.replace("/home");
+        router.replace("/");
         return;
       } else if (serverUrl && !authenticated) {
         setCurrentStep("login");
@@ -36,7 +36,7 @@ export function OnboardingFlow() {
   };
 
   const handleLoginSuccess = () => {
-    router.replace("/home");
+    router.replace("/");
   };
 
   const handleBackToServer = () => {

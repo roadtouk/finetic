@@ -20,8 +20,11 @@ export function AuroraBackground({
   className = "fixed inset-0 z-0 pointer-events-none opacity-20",
 }: AuroraBackgroundProps) {
   // Memoize colorStops to prevent unnecessary re-renders
-  const memoizedColorStops = useMemo(() => colorStops, [JSON.stringify(colorStops)]);
-  
+  const memoizedColorStops = useMemo(
+    () => colorStops,
+    [JSON.stringify(colorStops)]
+  );
+
   const [mounted, setMounted] = useState(false);
   const [themeResolved, setThemeResolved] = useState(false);
   const { theme, resolvedTheme } = useTheme();
@@ -32,7 +35,12 @@ export function AuroraBackground({
 
   // Wait for theme to be resolved
   useEffect(() => {
-    if (mounted && (theme === "dark" || theme === "light" || (theme === "system" && resolvedTheme))) {
+    if (
+      mounted &&
+      (theme === "dark" ||
+        theme === "light" ||
+        (theme === "system" && resolvedTheme))
+    ) {
       // Add a small delay to ensure theme is fully applied
       const timer = setTimeout(() => setThemeResolved(true), 50);
       return () => clearTimeout(timer);
@@ -53,16 +61,17 @@ export function AuroraBackground({
   if (!mounted || !themeResolved) {
     // Show placeholder if theme is dark or if it's system and we haven't resolved yet
     // (better to show dark placeholder and hide it if needed than show white flash)
-    const shouldShowPlaceholder = theme === "dark" || theme === "system" || !theme;
-    
+    const shouldShowPlaceholder =
+      theme === "dark" || theme === "system" || !theme;
+
     if (shouldShowPlaceholder) {
       return (
-        <div 
-          className={className} 
-          style={{ 
-            backgroundColor: 'oklch(0.141 0.005 285.823)', // dark background color
-            opacity: 0.05 // very subtle so it doesn't interfere if theme turns out to be light
-          }} 
+        <div
+          className={className}
+          style={{
+            backgroundColor: "oklch(0.141 0.005 285.823)", // dark background color
+            opacity: 0.05, // very subtle so it doesn't interfere if theme turns out to be light
+          }}
         />
       );
     }
@@ -70,15 +79,14 @@ export function AuroraBackground({
   }
 
   return (
-    <div 
-      className={className} 
-      style={{ 
-        backgroundColor: 'transparent',
-        transition: 'opacity 0.5s ease-in-out'
+    <div
+      className={className}
+      style={{
+        backgroundColor: "transparent",
+        transition: "opacity 0.5s ease-in-out",
       }}
     >
       <Aurora
-        imageUrl={imageUrl}
         colorStops={memoizedColorStops}
         amplitude={amplitude}
         blend={blend}

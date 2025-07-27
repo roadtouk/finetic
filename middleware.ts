@@ -1,15 +1,15 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
   // Get the pathname of the request (e.g. /, /protected)
   const path = request.nextUrl.pathname;
 
   // Define public paths that don't require authentication
-  const isPublicPath = path === '/login' || path === '/setup' || path === '/';
+  const isPublicPath = path === "/login" || path === "/setup" || path === "/";
 
   // Get the token from the cookie
-  const token = request.cookies.get('jellyfin-auth')?.value || '';
+  const token = request.cookies.get("jellyfin-auth")?.value || "";
 
   // Check if user is authenticated
   let isAuthenticated = false;
@@ -24,14 +24,14 @@ export function middleware(request: NextRequest) {
   }
 
   // Redirect logic
-  if (isPublicPath && isAuthenticated && path === '/login') {
+  if (isPublicPath && isAuthenticated && path === "/login") {
     // If user is authenticated and trying to access login, redirect to main page
-    return NextResponse.redirect(new URL('/movies', request.nextUrl));
+    return NextResponse.redirect(new URL("/", request.nextUrl));
   }
 
   if (!isPublicPath && !isAuthenticated) {
     // If user is not authenticated and trying to access protected route, redirect to login
-    return NextResponse.redirect(new URL('/login', request.nextUrl));
+    return NextResponse.redirect(new URL("/login", request.nextUrl));
   }
 
   return NextResponse.next();
@@ -47,6 +47,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    "/((?!api|_next/static|_next/image|favicon.ico).*)",
   ],
 };

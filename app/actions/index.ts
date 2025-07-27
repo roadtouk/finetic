@@ -20,6 +20,7 @@ export {
   reportPlaybackStart,
   reportPlaybackProgress,
   reportPlaybackStopped,
+  fetchLibraryItems,
 } from './media';
 
 // TV show actions
@@ -42,4 +43,6 @@ export {
   getDownloadUrl,
   getStreamUrl,
   getSubtitleTracks,
+  getUserLibraries,
+  getLibraryById,
 } from './utils';

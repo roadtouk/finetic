@@ -359,3 +359,52 @@ export async function reportPlaybackStopped(
     return false;
   }
 }
+
+export async function fetchLibraryItems(
+  libraryId: string,
+  limit: number = 50,
+  startIndex: number = 0
+): Promise<{ items: JellyfinItem[]; totalRecordCount: number }> {
+  try {
+    const { serverUrl, user } = await getAuthData();
+    const jellyfinInstance = createJellyfinInstance();
+    const api = jellyfinInstance.createApi(serverUrl);
+    api.accessToken = user.AccessToken;
+
+    const { data } = await getItemsApi(api).getItems({
+      userId: user.Id,
+      parentId: libraryId,
+      includeItemTypes: [BaseItemKind.Movie, BaseItemKind.Series],
+      recursive: true,
+      sortBy: [ItemSortBy.SortName],
+      sortOrder: [SortOrder.Ascending],
+      limit,
+      startIndex,
+      fields: [
+        ItemFields.CanDelete,
+        ItemFields.PrimaryImageAspectRatio,
+        ItemFields.Overview,
+        ItemFields.DateCreated
+      ],
+    });
+
+    return {
+      items: data.Items || [],
+      totalRecordCount: data.TotalRecordCount || 0,
+    };
+  } catch (error) {
+    console.error("Failed to fetch library items:", error);
+
+    // If it's an authentication error, throw an error with a special flag
+    if (isAuthError(error)) {
+      console.log("Authentication error detected, clearing auth data");
+      const authError = new Error(
+        "Authentication expired. Please sign in again."
+      );
+      (authError as any).isAuthError = true;
+      throw authError;
+    }
+
+    return { items: [], totalRecordCount: 0 };
+  }
+}

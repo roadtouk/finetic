@@ -28,7 +28,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getUser, getServerUrl, logout } from "@/app/actions";
+import { getUser, getServerUrl, logout, getUserLibraries } from "@/app/actions";
 import {
   Film,
   Tv,
@@ -87,26 +87,8 @@ export function AppSidebar({
 
         // Fetch libraries if we have both user and server URL
         if (userData && serverUrlData) {
-          const response = await fetch(
-            `${serverUrlData}/Library/VirtualFolders`,
-            {
-              headers: {
-                "X-Emby-Authorization": `MediaBrowser Client="Jellyfin Web Client", Device="Browser", DeviceId="web-client", Version="1.0.0", Token="${userData.AccessToken}"`,
-              },
-            }
-          );
-
-          if (response.ok) {
-            const data = await response.json();
-            // Only show movie and TV show libraries
-            const supportedLibraries = (data || []).filter(
-              (library: JellyfinLibrary) => {
-                const type = library.CollectionType?.toLowerCase();
-                return type === "movies" || type === "tvshows";
-              }
-            );
-            setLibraries(supportedLibraries);
-          }
+          const librariesData = await getUserLibraries();
+          setLibraries(librariesData);
         }
       } catch (error) {
         console.error("Failed to fetch data:", error);
@@ -148,7 +130,7 @@ export function AppSidebar({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               asChild
             >
-              <Link href="/home">
+              <Link href="/">
                 <div className="text-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                   <Image
                     src="/logo/finetic.png"
@@ -177,7 +159,7 @@ export function AppSidebar({
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link href="/home">
+                  <Link href="/">
                     <Home className="h-4 w-4" />
                     <span>Home</span>
                   </Link>

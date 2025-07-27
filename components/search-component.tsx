@@ -288,7 +288,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
                 setShowSuggestions(true);
               }
             }}
-            className="pl-10 pr-16 border-border text-foreground placeholder:text-muted-foreground focus:border-ring rounded-full h-11 backdrop-blur-md dark:bg-background/70! bg-background/90"
+            className="pl-10 pr-16 border-border text-foreground placeholder:text-muted-foreground h-11 rounded-xl backdrop-blur-md dark:bg-background/70! bg-background/90"
           />
           <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10">
             <Kbd.Root variant="outline" size="lg">
@@ -312,7 +312,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 rounded-lg">
               <DropdownMenuItem asChild>
-                <Link href="/home" className="gap-2">
+                <Link href="/" className="gap-2">
                   <Home className="h-4 w-4" />
                   <span>Home</span>
                 </Link>
@@ -377,7 +377,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
 
       {/* Search Suggestions Dropdown */}
       {(showSuggestions || isLoading) && (
-        <div className="absolute top-full left-0 right-0 mt-2 dark:bg-background/70! bg-background/90 backdrop-blur-md rounded-lg border shadow-xl shadow-accent/30 z-[9999] max-h-96 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-2 dark:bg-background/70! bg-background/90 backdrop-blur-md rounded-xl border shadow-xl shadow-accent/30 z-[9999] max-h-96 overflow-y-auto">
           {isLoading && loadingComponent}
 
           {!isLoading && suggestions.length > 0 && (

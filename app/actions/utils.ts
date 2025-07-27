@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { Jellyfin } from "@jellyfin/sdk";
 import { UserLibraryApi } from "@jellyfin/sdk/lib/generated-client/api/user-library-api";
+import { getUserViewsApi } from "@jellyfin/sdk/lib/utils/api/user-views-api";
 import { LibraryApi } from "@jellyfin/sdk/lib/generated-client/api/library-api";
 import { getSubtitleApi } from "@jellyfin/sdk/lib/utils/api/subtitle-api";
 import { createJellyfinInstance } from "@/lib/utils";
@@ -18,23 +19,6 @@ export async function getAuthData() {
 
   const parsed = JSON.parse(authData.value);
   return { serverUrl: parsed.serverUrl, user: parsed.user };
-}
-
-// Helper function to detect device type for streaming optimization
-function getDeviceStreamingParams() {
-  // Since this runs on server, we'll use conservative iOS-friendly defaults
-  // Client-side device detection would be more accurate but this ensures compatibility
-  return {
-    videoCodec: 'h264', // Most compatible codec across all devices
-    audioCodec: 'aac',  // Most compatible audio codec
-    container: 'ts',    // MPEG-TS for HLS compatibility
-    profile: 'high',    // H.264 High profile for good quality/compatibility balance
-    level: '4.1',       // Widely supported H.264 level
-    maxBitrate: 10000000, // 10Mbps cap for mobile devices
-    audioBitrate: 128000, // 128kbps AAC
-    audioSampleRate: 48000, // 48kHz sample rate
-    audioChannels: 2    // Stereo audio
-  };
 }
 
 export async function getImageUrl(
@@ -91,61 +75,25 @@ export async function getStreamUrl(
   // Generate a unique PlaySessionId for each stream request
   const playSessionId = crypto.randomUUID();
 
-  // Enhanced iOS/iPad compatibility with optimized transcoding parameters
-  let url = `${serverUrl}/Videos/${itemId}/master.m3u8?api_key=${user.AccessToken}&MediaSourceId=${mediaSourceId}&PlaySessionId=${playSessionId}`;
-  
-  // iOS/iPad optimized codec settings
-  url += `&VideoCodec=h264`; // Prioritize H.264 for better iOS compatibility
-  url += `&AudioCodec=aac`; // AAC is the most compatible audio codec for iOS
-  url += `&Container=ts`; // Use MPEG-TS container for HLS
-  url += `&TranscodingProfile=Default`;
-  
-  // Add iOS-specific transcoding parameters for better compatibility
-  url += `&SegmentContainer=ts`; // Ensure segments use MPEG-TS
-  url += `&MinSegments=2`; // Minimum segments for smoother playback
-  url += `&BreakOnNonKeyFrames=true`; // Better seeking on iOS
-  url += `&h264-profile=high`; // H.264 High profile for better quality/compatibility balance
-  url += `&h264-level=4.1`; // H.264 level 4.1 is widely supported on iOS devices
-  url += `&RequireAvc=true`; // Force AVC (H.264) encoding
-  
-  // Add adaptive bitrate parameters for mobile devices
-  url += `&EnableAdaptiveBitrateStreaming=true`;
-  url += `&AllowVideoStreamCopy=false`; // Force transcoding for compatibility
-  url += `&AllowAudioStreamCopy=false`; // Force audio transcoding for compatibility
+  let url = `${serverUrl}/Videos/${itemId}/master.m3u8?api_key=${user.AccessToken}&MediaSourceId=${mediaSourceId}&PlaySessionId=${playSessionId}&VideoCodec=h264,hevc&AudioCodec=aac,mp3&TranscodingProfile=Default`;
 
   // Apply custom bitrate if specified (takes precedence over quality presets)
   if (videoBitrate && videoBitrate > 0) {
     url += `&videoBitRate=${videoBitrate}`;
-    // Add mobile-friendly max bitrate limit
-    if (videoBitrate > 10000000) {
-      url += `&maxVideoBitRate=10000000`; // Cap at 10Mbps for mobile devices
-    }
   } else if (quality) {
     // Fallback to existing quality presets if no custom bitrate is set
     switch (quality) {
       case "2160p":
-        url += "&width=3840&height=2160&videoBitRate=15000000&maxVideoBitRate=20000000";
+        url += "&width=3840&height=2160&videoBitRate=20000000";
         break;
       case "1080p":
-        url += "&width=1920&height=1080&videoBitRate=6000000&maxVideoBitRate=8000000";
+        url += "&width=1920&height=1080&videoBitRate=8000000";
         break;
       case "720p":
-        url += "&width=1280&height=720&videoBitRate=3000000&maxVideoBitRate=4000000";
-        break;
-      default:
-        // Default mobile-friendly settings
-        url += "&width=1280&height=720&videoBitRate=3000000&maxVideoBitRate=4000000";
+        url += "&width=1280&height=720&videoBitRate=4000000";
         break;
     }
-  } else {
-    // Default mobile-optimized settings when no quality is specified
-    url += "&width=1280&height=720&videoBitRate=3000000&maxVideoBitRate=4000000";
   }
-  
-  // Add audio quality settings optimized for mobile
-  url += `&audioBitRate=128000`; // 128kbps AAC audio
-  url += `&audioSampleRate=48000`; // 48kHz sample rate
-  url += `&audioChannels=2`; // Stereo audio
 
   return url;
 }
@@ -200,5 +148,50 @@ export async function getSubtitleTracks(
   } catch (error) {
     console.error("Failed to fetch subtitle tracks:", error);
     return [];
+  }
+}
+
+export async function getUserLibraries(): Promise<any[]> {
+  try {
+    const { serverUrl, user } = await getAuthData();
+    const jellyfinInstance = createJellyfinInstance();
+    const api = jellyfinInstance.createApi(serverUrl);
+    api.accessToken = user.AccessToken;
+
+    const { data } = await getUserViewsApi(api).getUserViews({
+      userId: user.Id,
+      includeExternalContent: false,
+    });
+
+    // Filter for movie and TV show libraries only
+    const supportedLibraries = (data.Items || []).filter((library: any) => {
+      const type = library.CollectionType?.toLowerCase();
+      return type === "movies" || type === "tvshows";
+    });
+
+    return supportedLibraries;
+  } catch (error) {
+    console.error("Failed to fetch user libraries:", error);
+    return [];
+  }
+}
+
+export async function getLibraryById(libraryId: string): Promise<any | null> {
+  try {
+    const { serverUrl, user } = await getAuthData();
+    const jellyfinInstance = createJellyfinInstance();
+    const api = jellyfinInstance.createApi(serverUrl);
+    api.accessToken = user.AccessToken;
+
+    const { data } = await getUserViewsApi(api).getUserViews({
+      userId: user.Id,
+      includeExternalContent: false,
+    });
+
+    const library = (data.Items || []).find((lib: any) => lib.Id === libraryId);
+    return library || null;
+  } catch (error) {
+    console.error("Failed to fetch library by ID:", error);
+    return null;
   }
 }

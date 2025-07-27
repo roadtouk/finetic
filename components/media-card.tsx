@@ -14,6 +14,7 @@ export function MediaCard({
   continueWatching = false,
   showProgress = false,
   resumePosition,
+  fullWidth = false,
 }: {
   item: BaseItemDto;
   serverUrl: string;
@@ -21,6 +22,7 @@ export function MediaCard({
   continueWatching?: boolean;
   showProgress?: boolean;
   resumePosition?: number;
+  fullWidth?: boolean;
 }) {
   const { playMedia, setIsPlayerVisible } = useMediaPlayer();
 
@@ -77,7 +79,7 @@ export function MediaCard({
   return (
     <div
       className={`cursor-pointer group overflow-hidden transition select-none ${
-        continueWatching ? "w-72" : "w-36"
+        continueWatching ? "w-72" : fullWidth ? "w-full" : "w-36"
       }`}
     >
       <div

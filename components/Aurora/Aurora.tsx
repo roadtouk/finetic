@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Renderer, Program, Mesh, Color, Triangle } from "ogl";
-import { Vibrant } from "node-vibrant/browser";
 
 const VERT = `#version 300 es
 in vec2 position;
@@ -111,7 +110,6 @@ void main() {
 `;
 
 interface AuroraProps {
-  imageUrl?: string;
   colorStops?: string[];
   amplitude?: number;
   blend?: number;
@@ -119,24 +117,8 @@ interface AuroraProps {
   speed?: number;
 }
 
-// Cache for extracted colors to avoid re-extracting
-const colorCache = new Map<string, string[]>();
-
-// Helper function to interpolate between two colors
-function interpolateColor(color1: string, color2: string, factor: number): string {
-  const c1 = new Color(color1);
-  const c2 = new Color(color2);
-  
-  const r = Math.round((c1.r * 255) * (1 - factor) + (c2.r * 255) * factor);
-  const g = Math.round((c1.g * 255) * (1 - factor) + (c2.g * 255) * factor);
-  const b = Math.round((c1.b * 255) * (1 - factor) + (c2.b * 255) * factor);
-  
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-}
-
 export default function Aurora(props: AuroraProps) {
   const {
-    imageUrl,
     colorStops = ["#5227FF", "#7cff67", "#5227FF"],
     amplitude = 1.0,
     blend = 0.5,
@@ -145,118 +127,6 @@ export default function Aurora(props: AuroraProps) {
   propsRef.current = props;
 
   const ctnDom = useRef<HTMLDivElement>(null);
-  const transitionProgressRef = useRef(0);
-  const startColorsRef = useRef<string[]>(colorStops);
-  const isTransitioningRef = useRef(false);
-  const currentColorsRef = useRef<string[]>(colorStops);
-  const [targetColors, setTargetColors] = useState<string[]>(colorStops);
-  const [isExtracting, setIsExtracting] = useState(false);
-  const currentImageRef = useRef<string>("");
-
-  // Color extraction function
-  const extractColors = useCallback(
-    async (url: string) => {
-      // Check cache first
-      if (colorCache.has(url)) {
-        const cachedColors = colorCache.get(url)!;
-        setTargetColors(cachedColors);
-        return;
-      }
-
-      // Prevent multiple simultaneous extractions
-      if (isExtracting) {
-        return;
-      }
-
-      setIsExtracting(true);
-      currentImageRef.current = url;
-
-      try {
-        // Use a timeout to prevent hanging
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error("Color extraction timeout")), 3000);
-        });
-
-        const extractionPromise = Vibrant.from(url).getPalette();
-
-        const palette = (await Promise.race([
-          extractionPromise,
-          timeoutPromise,
-        ])) as any;
-
-        // Check if this is still the current image (prevents race conditions)
-        if (currentImageRef.current !== url) {
-          return;
-        }
-
-        // Extract colors in order of preference: Vibrant, DarkVibrant, Muted
-        const colors: string[] = [];
-
-        if (palette.Vibrant) colors.push(palette.Vibrant.hex);
-        if (palette.DarkVibrant) colors.push(palette.DarkVibrant.hex);
-        if (palette.Muted) colors.push(palette.Muted.hex);
-        if (palette.DarkMuted) colors.push(palette.DarkMuted.hex);
-        if (palette.LightVibrant) colors.push(palette.LightVibrant.hex);
-        if (palette.LightMuted) colors.push(palette.LightMuted.hex);
-
-        // Ensure we have at least 3 colors for the aurora
-        while (colors.length < 3) {
-          colors.push(colors[colors.length - 1] || colorStops[0]);
-        }
-
-        // Use the first 3 colors for aurora
-        const finalColors = colors.slice(0, 3);
-
-        // Cache the result
-        colorCache.set(url, finalColors);
-
-        // Only update if this is still the current image
-        if (currentImageRef.current === url) {
-          setTargetColors(finalColors);
-        }
-      } catch (error) {
-        console.warn(
-          "Failed to extract colors from image, using default colors:",
-          error
-        );
-        if (currentImageRef.current === url) {
-          setTargetColors(colorStops);
-        }
-      } finally {
-        setIsExtracting(false);
-      }
-    },
-    [colorStops, isExtracting]
-  );
-
-  // Extract colors from image when imageUrl changes
-  useEffect(() => {
-    if (!imageUrl) {
-      setTargetColors(colorStops);
-      return;
-    }
-
-    // Debounce the extraction to prevent rapid calls
-    const timeoutId = setTimeout(() => {
-      extractColors(imageUrl);
-    }, 100);
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [imageUrl, extractColors]);
-
-  // Handle color transitions
-  useEffect(() => {
-    if (JSON.stringify(targetColors) === JSON.stringify(currentColorsRef.current)) {
-      return;
-    }
-
-    // Start transition
-    startColorsRef.current = [...currentColorsRef.current];
-    transitionProgressRef.current = 0;
-    isTransitioningRef.current = true;
-  }, [targetColors]);
 
   useEffect(() => {
     const ctn = ctnDom.current;
@@ -271,13 +141,8 @@ export default function Aurora(props: AuroraProps) {
     gl.clearColor(0, 0, 0, 0);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    
-    // Prevent white flash by setting canvas styles immediately
     gl.canvas.style.backgroundColor = "transparent";
-    gl.canvas.style.opacity = "0";
-    gl.canvas.style.transition = "opacity 0.3s ease-in-out";
 
-    // eslint-disable-next-line prefer-const
     let program: Program | undefined;
 
     function resize() {
@@ -315,55 +180,21 @@ export default function Aurora(props: AuroraProps) {
 
     const mesh = new Mesh(gl, { geometry, program });
     ctn.appendChild(gl.canvas);
-    
-    // Show canvas after first render to prevent flash
-    let hasRendered = false;
 
     let animateId = 0;
     const update = (t: number) => {
       animateId = requestAnimationFrame(update);
       const { time = t * 0.01, speed = 1.0 } = propsRef.current;
-      
-      // Handle color transition
-      if (isTransitioningRef.current) {
-        transitionProgressRef.current += 0.02; // Adjust speed as needed (0.02 = ~1 second transition)
-        
-        if (transitionProgressRef.current >= 1) {
-          // Transition complete
-          transitionProgressRef.current = 1;
-          isTransitioningRef.current = false;
-          currentColorsRef.current = [...targetColors];
-        } else {
-          // Interpolate colors during transition
-          const progress = transitionProgressRef.current;
-          // Use easing function for smoother transition
-          const easedProgress = progress * progress * (3 - 2 * progress); // smoothstep
-          
-          currentColorsRef.current = startColorsRef.current.map((startColor, index) => {
-            const targetColor = targetColors[index] || startColor;
-            return interpolateColor(startColor, targetColor, easedProgress);
-          });
-        }
-      }
-      
       if (program) {
         program.uniforms.uTime.value = time * speed * 0.1;
         program.uniforms.uAmplitude.value = propsRef.current.amplitude ?? 1.0;
         program.uniforms.uBlend.value = propsRef.current.blend ?? blend;
-        
-        // Use current interpolated colors
-        program.uniforms.uColorStops.value = currentColorsRef.current.map((hex: string) => {
+        const stops = propsRef.current.colorStops ?? colorStops;
+        program.uniforms.uColorStops.value = stops.map((hex: string) => {
           const c = new Color(hex);
           return [c.r, c.g, c.b];
         });
-        
         renderer.render({ scene: mesh });
-        
-        // Show canvas after first render
-        if (!hasRendered) {
-          hasRendered = true;
-          gl.canvas.style.opacity = "1";
-        }
       }
     };
     animateId = requestAnimationFrame(update);
@@ -378,7 +209,7 @@ export default function Aurora(props: AuroraProps) {
       }
       gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
-  }, [amplitude, blend, colorStops, targetColors]);
+  }, [amplitude]);
 
   return <div ref={ctnDom} className="w-full h-full" />;
 }
