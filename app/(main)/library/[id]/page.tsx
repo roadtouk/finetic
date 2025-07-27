@@ -18,11 +18,17 @@ export default async function LibraryPage({
   const authData = await getAuthData();
   const { serverUrl, user } = authData;
 
-  // Fetch both library details and items
-  const [libraryDetails, libraryItems] = await Promise.all([
+  // Fetch both library details and items  
+  const [libraryDetails, initialLibraryItems] = await Promise.all([
     getLibraryById(id),
-    fetchLibraryItems(id),
+    fetchLibraryItems(id), // First fetch to get totalRecordCount
   ]);
+
+  // Fetch all items using the total count
+  const libraryItems = await fetchLibraryItems(id, initialLibraryItems.totalRecordCount);
+
+  console.log(libraryItems.items.length)
+  console.log(libraryItems.totalRecordCount)
 
   const libraryName = libraryDetails?.Name || "Library";
 
