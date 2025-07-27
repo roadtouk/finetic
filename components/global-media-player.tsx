@@ -87,6 +87,15 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
     }>
   >([]);
 
+  // Chapter state
+  const [chapters, setChapters] = useState<
+    Array<{
+      startTime: number;
+      endTime: number;
+      text: string;
+    }>
+  >([]);
+
   // Progress tracking state
   const [playSessionId, setPlaySessionId] = useState<string | null>(null);
   const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
@@ -101,6 +110,25 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
 
   // Helper function to convert Jellyfin ticks to seconds
   const ticksToSeconds = (ticks: number) => ticks / 10000000;
+
+  // Helper function to convert Jellyfin chapters to expected format
+  const convertJellyfinChapters = useCallback((jellyfinChapters: any[]) => {
+    if (!jellyfinChapters || jellyfinChapters.length === 0) return [];
+    
+    return jellyfinChapters.map((chapter, index) => {
+      const startTime = ticksToSeconds(chapter.StartPositionTicks);
+      const nextChapter = jellyfinChapters[index + 1];
+      const endTime = nextChapter 
+        ? ticksToSeconds(nextChapter.StartPositionTicks)
+        : duration; // Use video duration for the last chapter
+      
+      return {
+        startTime,
+        endTime,
+        text: chapter.Name || `Chapter ${index + 1}`
+      };
+    });
+  }, [duration]);
 
   const { serverUrl } = useAuth();
 
@@ -208,8 +236,14 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
   const handleDurationChange = useCallback(() => {
     if (videoRef.current) {
       setDuration(videoRef.current.duration);
+      
+      // Update chapters end times when duration is available
+      if (mediaDetails?.Chapters && mediaDetails.Chapters.length > 0) {
+        const convertedChapters = convertJellyfinChapters(mediaDetails.Chapters);
+        setChapters(convertedChapters);
+      }
     }
-  }, []);
+  }, [mediaDetails, convertJellyfinChapters]);
 
   // Set video to resume position if provided
   const handleVideoLoadedMetadata = useCallback(() => {
@@ -376,6 +410,14 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
         // Don't load any subtitle by default - let user choose
         setSubtitleData([]);
         setCurrentSubtitle(null);
+
+        // Process chapters if available
+        if (details.Chapters && details.Chapters.length > 0) {
+          const convertedChapters = convertJellyfinChapters(details.Chapters);
+          setChapters(convertedChapters);
+        } else {
+          setChapters([]);
+        }
       }
     } catch (error) {
       console.error("Failed to load media:", error);
@@ -426,6 +468,7 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
         className="w-screen"
         customSubtitleTracks={subtitleTracks}
         customSubtitlesEnabled={subtitleTracks.length > 0}
+        chapters={chapters}
         onCustomSubtitleChange={(subtitleTrack) => {
           if (!subtitleTrack) {
             // Turn off subtitles

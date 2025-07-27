@@ -184,6 +184,7 @@ interface MediaPlayerContextValue {
   customSubtitleTracks?: CustomSubtitleTrack[];
   customSubtitlesEnabled: boolean;
   onCustomSubtitleChange?: (track: CustomSubtitleTrack | null) => void;
+  chapters?: ChapterCue[];
 }
 
 const MediaPlayerContext = React.createContext<MediaPlayerContextValue | null>(
@@ -203,6 +204,12 @@ interface CustomSubtitleTrack {
   language: string;
   kind: string;
   active: boolean;
+}
+
+interface ChapterCue {
+  startTime: number;
+  endTime: number;
+  text: string;
 }
 
 interface MediaPlayerRootProps
@@ -227,6 +234,7 @@ interface MediaPlayerRootProps
   customSubtitleTracks?: CustomSubtitleTrack[];
   customSubtitlesEnabled?: boolean;
   onCustomSubtitleChange?: (track: CustomSubtitleTrack | null) => void;
+  chapters?: ChapterCue[];
 }
 
 function MediaPlayerRoot(props: MediaPlayerRootProps) {
@@ -274,6 +282,7 @@ function MediaPlayerRootImpl(props: MediaPlayerRootProps) {
     customSubtitleTracks,
     customSubtitlesEnabled = false,
     onCustomSubtitleChange,
+    chapters,
     children,
     className,
     ref,
@@ -796,6 +805,7 @@ function MediaPlayerRootImpl(props: MediaPlayerRootProps) {
       customSubtitleTracks,
       customSubtitlesEnabled,
       onCustomSubtitleChange,
+      chapters,
     }),
     [
       mediaId,
@@ -811,6 +821,7 @@ function MediaPlayerRootImpl(props: MediaPlayerRootProps) {
       customSubtitleTracks,
       customSubtitlesEnabled,
       onCustomSubtitleChange,
+      chapters,
     ]
   );
 
@@ -1531,9 +1542,12 @@ function MediaPlayerSeek(props: MediaPlayerSeekProps) {
   const mediaBuffered = useMediaSelector((state) => state.mediaBuffered ?? []);
   const mediaEnded = useMediaSelector((state) => state.mediaEnded ?? false);
 
-  const chapterCues = useMediaSelector(
+  // Use chapters from context instead of media-chrome state
+  const contextChapters = context.chapters ?? [];
+  const mediaChaptersCues = useMediaSelector(
     (state) => state.mediaChaptersCues ?? []
   );
+  const chapterCues = contextChapters.length > 0 ? contextChapters : mediaChaptersCues;
   const mediaPreviewTime = useMediaSelector((state) => state.mediaPreviewTime);
   const mediaPreviewImage = useMediaSelector(
     (state) => state.mediaPreviewImage
