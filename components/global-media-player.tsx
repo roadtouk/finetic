@@ -68,6 +68,7 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
       language: string;
       src: string;
       default?: boolean;
+      active: boolean;
     }>
   >([]);
   const [loading, setLoading] = useState(false);
@@ -256,31 +257,11 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
     handleClose();
   }, [stopProgressTracking, handleClose]);
 
-  // Load subtitle data asynchronously after playback starts
-  const loadSubtitleData = useCallback(
-    async (itemId: string, mediaSourceId: string) => {
-      setFetchingSubtitles(true);
-      try {
-        const result = await getSubtitleContent(itemId, mediaSourceId, 0);
-        if (result.success) {
-          console.log(`Loaded ${result.subtitles.length} subtitle entries`);
-          setSubtitleData(result.subtitles);
-        } else {
-          console.error("Failed to load subtitles:", result.error);
-        }
-      } catch (error) {
-        console.error("Failed to fetch subtitle data:", error);
-      } finally {
-        setFetchingSubtitles(false);
-      }
-    },
-    []
-  );
 
   // Helper function to process subtitle text for HTML rendering
   const processSubtitleText = useCallback((text: string) => {
     // Convert \n to <br> tags for line breaks
-    return text.replace(/\n/g, '<br>');
+    return text.replace(/\n/g, "<br>");
   }, []);
 
   // Find current subtitle based on video time
@@ -299,12 +280,12 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
           break;
         }
       }
-      
+
       // Only show subtitle if we're within a reasonable time window (e.g., 5 seconds)
       if (currentSub && currentTimeSeconds - currentSub.timestamp <= 5) {
         return processSubtitleText(currentSub.text);
       }
-      
+
       return null;
     },
     [subtitleData, processSubtitleText]
@@ -368,7 +349,17 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
         setStreamUrl(streamUrl);
 
         // Start fetching subtitle data asynchronously without blocking playback
-        loadSubtitleData(currentMedia.id, sourceToUse.Id!);
+      const subtitleTracksList = await getSubtitleTracks(currentMedia.id, sourceToUse.Id!);
+      // Mark all subtitle tracks as inactive initially
+      const tracksWithActiveState = subtitleTracksList.map(track => ({
+        ...track,
+        active: false
+      }));
+      setSubtitleTracks(tracksWithActiveState);
+
+      // Don't load any subtitle by default - let user choose
+      setSubtitleData([]);
+      setCurrentSubtitle(null);
       }
     } catch (error) {
       console.error("Failed to load media:", error);
@@ -380,7 +371,7 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
   // Update current subtitle based on video time
   useEffect(() => {
     const subtitle = findCurrentSubtitle(currentTime);
-    console.log(subtitle)
+    console.log(subtitle);
     setCurrentSubtitle(subtitle);
   }, [currentTime, findCurrentSubtitle]);
 
@@ -417,6 +408,35 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
           console.warn("Media player error caught:", error);
         }}
         className="w-screen"
+        customSubtitleTracks={subtitleTracks}
+        customSubtitlesEnabled={subtitleTracks.length > 0}
+        onCustomSubtitleChange={(subtitleTrack) => {
+          if (!subtitleTrack) {
+            // Turn off subtitles
+            setSubtitleData([]);
+            setCurrentSubtitle(null);
+            // Update all tracks to inactive
+            setSubtitleTracks(prev => prev.map(track => ({ ...track, active: false })));
+            return;
+          }
+          
+          const trackIndex = subtitleTracks.findIndex((track) => track.label === subtitleTrack.label);
+          if (trackIndex !== -1) {
+            setFetchingSubtitles(true);
+            getSubtitleContent(currentMedia.id, selectedVersion?.Id!, trackIndex).then(result => {
+              setFetchingSubtitles(false);
+              if (result.success) {
+                setSubtitleData(result.subtitles);
+                setCurrentSubtitle(null); // Reset current subtitle to show from data
+                // Update track states - mark selected as active, others as inactive
+                setSubtitleTracks(prev => prev.map((track, idx) => ({
+                  ...track,
+                  active: idx === trackIndex
+                })));
+              }
+            });
+          }
+        }}
       >
         {loading || !streamUrl || !mediaDetails ? (
           <MediaPlayerLoading delayMs={200}>
@@ -452,7 +472,7 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
         )}
         {/* Current Subtitle */}
         {currentSubtitle && (
-          <div 
+          <div
             className="fixed bottom-[10%] left-1/2 transform -translate-x-1/2 z-[10000] text-white text-center bg-black/20 px-4 py-2 rounded text-3xl font-medium shadow-xl backdrop-blur-md"
             dangerouslySetInnerHTML={{ __html: currentSubtitle }}
           />

@@ -181,6 +181,9 @@ interface MediaPlayerContextValue {
   disabled: boolean;
   isVideo: boolean;
   withoutTooltip: boolean;
+  customSubtitleTracks?: CustomSubtitleTrack[];
+  customSubtitlesEnabled: boolean;
+  onCustomSubtitleChange?: (track: CustomSubtitleTrack | null) => void;
 }
 
 const MediaPlayerContext = React.createContext<MediaPlayerContextValue | null>(
@@ -193,6 +196,13 @@ function useMediaPlayerContext(consumerName: string) {
     throw new Error(`\`${consumerName}\` must be used within \`${ROOT_NAME}\``);
   }
   return context;
+}
+
+interface CustomSubtitleTrack {
+  label: string;
+  language: string;
+  kind: string;
+  active: boolean;
 }
 
 interface MediaPlayerRootProps
@@ -214,6 +224,9 @@ interface MediaPlayerRootProps
   autoHide?: boolean;
   disabled?: boolean;
   withoutTooltip?: boolean;
+  customSubtitleTracks?: CustomSubtitleTrack[];
+  customSubtitlesEnabled?: boolean;
+  onCustomSubtitleChange?: (track: CustomSubtitleTrack | null) => void;
 }
 
 function MediaPlayerRoot(props: MediaPlayerRootProps) {
@@ -258,6 +271,9 @@ function MediaPlayerRootImpl(props: MediaPlayerRootProps) {
     autoHide = false,
     disabled = false,
     withoutTooltip = false,
+    customSubtitleTracks,
+    customSubtitlesEnabled = false,
+    onCustomSubtitleChange,
     children,
     className,
     ref,
@@ -780,6 +796,9 @@ function MediaPlayerRootImpl(props: MediaPlayerRootProps) {
       disabled,
       isVideo,
       withoutTooltip,
+      customSubtitleTracks,
+      customSubtitlesEnabled,
+      onCustomSubtitleChange,
     }),
     [
       mediaId,
@@ -792,6 +811,9 @@ function MediaPlayerRootImpl(props: MediaPlayerRootProps) {
       disabled,
       isVideo,
       withoutTooltip,
+      customSubtitleTracks,
+      customSubtitlesEnabled,
+      onCustomSubtitleChange,
     ]
   );
 
@@ -3066,34 +3088,68 @@ function MediaPlayerSettings(props: MediaPlayerSettingsProps) {
           <DropdownMenuSubTrigger>
             <span className="flex-1">Captions</span>
             <Badge variant="outline" className="rounded-sm">
-              {selectedSubtitleLabel.split(" ")[0]}
+              {context.customSubtitlesEnabled ? (
+                context.customSubtitleTracks && context.customSubtitleTracks.length > 0
+                  ? (context.customSubtitleTracks.find(track => track.active)?.label || "On")
+                  : "Off"
+              ) : (
+                selectedSubtitleLabel.split(" ")[0]
+              )}
             </Badge>
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
             <DropdownMenuItem
               className="justify-between"
-              onSelect={onSubtitlesToggle}
+              onSelect={() => {
+                if (context.customSubtitlesEnabled) {
+                  context.onCustomSubtitleChange?.(null);
+                } else {
+                  onSubtitlesToggle();
+                }
+              }}
             >
               Off
-              {!isSubtitlesActive && <CheckIcon />}
+              {context.customSubtitlesEnabled ? (
+                !context.customSubtitleTracks?.some(track => track.active)
+              ) : (
+                !isSubtitlesActive
+              ) && <CheckIcon />}
             </DropdownMenuItem>
-            {mediaSubtitlesList.map((subtitleTrack) => {
-              const isSelected = mediaSubtitlesShowing.some(
-                (showingSubtitle) =>
-                  showingSubtitle.label === subtitleTrack.label
-              );
-              return (
-                <DropdownMenuItem
-                  key={`${subtitleTrack.kind}-${subtitleTrack.label}-${subtitleTrack.language}-${crypto.randomUUID()}`}
-                  className="justify-between"
-                  onSelect={() => onShowSubtitleTrack(subtitleTrack)}
-                >
-                  {subtitleTrack.label}
-                  {isSelected && <CheckIcon />}
-                </DropdownMenuItem>
-              );
-            })}
-            {mediaSubtitlesList.length === 0 && (
+            {context.customSubtitlesEnabled ? (
+              context.customSubtitleTracks?.map((subtitleTrack) => {
+                return (
+                  <DropdownMenuItem
+                    key={`${subtitleTrack.kind}-${subtitleTrack.label}-${subtitleTrack.language}`}
+                    className="justify-between"
+                    onSelect={() => context.onCustomSubtitleChange?.(subtitleTrack)}
+                  >
+                    {subtitleTrack.label}
+                    {subtitleTrack.active && <CheckIcon />}
+                  </DropdownMenuItem>
+                );
+              })
+            ) : (
+              mediaSubtitlesList.map((subtitleTrack) => {
+                const isSelected = mediaSubtitlesShowing.some(
+                  (showingSubtitle) =>
+                    showingSubtitle.label === subtitleTrack.label
+                );
+                return (
+                  <DropdownMenuItem
+                    key={`${subtitleTrack.kind}-${subtitleTrack.label}-${subtitleTrack.language}-${crypto.randomUUID()}`}
+                    className="justify-between"
+                    onSelect={() => onShowSubtitleTrack(subtitleTrack)}
+                  >
+                    {subtitleTrack.label}
+                    {isSelected && <CheckIcon />}
+                  </DropdownMenuItem>
+                );
+              })
+            )}
+            {(context.customSubtitlesEnabled ? 
+              (!context.customSubtitleTracks || context.customSubtitleTracks.length === 0) : 
+              mediaSubtitlesList.length === 0
+            ) && (
               <DropdownMenuItem disabled>
                 No captions available
               </DropdownMenuItem>
