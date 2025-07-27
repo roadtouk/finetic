@@ -44,7 +44,10 @@ export function MediaCard({
     imageItemId = item.ParentThumbItemId || item.Id;
   }
 
-  const imageUrl = `${serverUrl}/Items/${imageItemId}/Images/${imageType}?fillHeight=760&fillWidth=506&quality=50`;
+  // Adjust image URL parameters based on container type
+  const imageUrl = continueWatching
+    ? `${serverUrl}/Items/${imageItemId}/Images/${imageType}?maxHeight=324&maxWidth=576&quality=100`
+    : `${serverUrl}/Items/${imageItemId}/Images/${imageType}?maxHeight=432&maxWidth=288&quality=100`;
 
   // Calculate progress percentage from resume position
   let progressPercentage = percentageWatched;
@@ -84,15 +87,16 @@ export function MediaCard({
       >
         <Link href={linkHref} draggable={false} className="block w-full h-full">
           {serverUrl ? (
-            <img
-              src={imageUrl}
-              className={`w-full h-full object-cover transition duration-200 shadow-lg hover:brightness-85 shadow-sm group-hover:shadow-md ${
+            <div
+              className={`w-full h-full transition duration-200 shadow-lg hover:brightness-85 shadow-sm group-hover:shadow-md ${
                 progressPercentage > 0 ? "rounded-t-md" : "rounded-md"
               }`}
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
+              style={{
+                backgroundImage: `url(${imageUrl})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
               }}
-              draggable="false"
             />
           ) : (
             <div className="w-full h-full bg-gray-800 flex items-center justify-center rounded-lg shadow-lg">
@@ -141,7 +145,9 @@ export function MediaCard({
             {item.Name}
           </div>
           <div className="text-xs text-muted-foreground mt-0.5">
-            {item.Type === "Movie" || item.Type === "Series" || item.Type === "Season"
+            {item.Type === "Movie" ||
+            item.Type === "Series" ||
+            item.Type === "Season"
               ? item.ProductionYear
               : item.SeriesName}
           </div>
