@@ -74,7 +74,7 @@ export function MediaCard({
   return (
     <div
       className={`cursor-pointer group overflow-hidden transition select-none ${
-        continueWatching ? "w-64" : "w-36"
+        continueWatching ? "w-72" : "w-36"
       }`}
     >
       <div
