@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/popover";
 import { useAuth } from "@/hooks/useAuth";
 import { useSettings, BITRATE_OPTIONS } from "@/contexts/settings-context";
+import { detectDevice, getDeviceName, isHLSSupported } from "@/lib/device-detection";
 
 interface GlobalMediaPlayerProps {
   onToggleAIAsk?: () => void;
