@@ -3017,87 +3017,89 @@ function MediaPlayerSettings(props: MediaPlayerSettingsProps) {
             ))}
           </DropdownMenuSubContent>
         </DropdownMenuSub>
-      {context.isVideo && mediaRenditionList.length > 0 && (
+        {context.isVideo && mediaRenditionList.length > 0 && (
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <span className="flex-1">Quality</span>
+              <Badge variant="outline" className="rounded-sm">
+                {selectedRenditionLabel}
+              </Badge>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuItem
+                className="justify-between"
+                onSelect={() => onRenditionChange("auto")}
+              >
+                Auto
+                {!selectedRenditionId && <CheckIcon />}
+              </DropdownMenuItem>
+              {mediaRenditionList
+                .slice()
+                .sort((a, b) => {
+                  const aHeight = a.height ?? 0;
+                  const bHeight = b.height ?? 0;
+                  return bHeight - aHeight;
+                })
+                .map((rendition) => {
+                  const label = rendition.height
+                    ? `${rendition.height}p`
+                    : rendition.width
+                      ? `${rendition.width}p`
+                      : (rendition.id ?? "Unknown");
+
+                  const selected = rendition.id === selectedRenditionId;
+
+                  return (
+                    <DropdownMenuItem
+                      key={rendition.id}
+                      className="justify-between"
+                      onSelect={() => onRenditionChange(rendition.id ?? "")}
+                    >
+                      {label}
+                      {selected && <CheckIcon />}
+                    </DropdownMenuItem>
+                  );
+                })}
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+        )}
+
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
-            <span className="flex-1">Quality</span>
+            <span className="flex-1">Bitrate</span>
             <Badge variant="outline" className="rounded-sm">
-              {selectedRenditionLabel}
+              {BITRATE_OPTIONS.find((option) => option.value === videoBitrate)
+                ?.label ?? "Auto"}
             </Badge>
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
-            <DropdownMenuItem
-              className="justify-between"
-              onSelect={() => onRenditionChange("auto")}
-            >
-              Auto
-              {!selectedRenditionId && <CheckIcon />}
-            </DropdownMenuItem>
-            {mediaRenditionList
-              .slice()
-              .sort((a, b) => {
-                const aHeight = a.height ?? 0;
-                const bHeight = b.height ?? 0;
-                return bHeight - aHeight;
-              })
-              .map((rendition) => {
-                const label = rendition.height
-                  ? `${rendition.height}p`
-                  : rendition.width
-                  ? `${rendition.width}p`
-                  : (rendition.id ?? "Unknown");
-
-                const selected = rendition.id === selectedRenditionId;
-
-                return (
-                  <DropdownMenuItem
-                    key={rendition.id}
-                    className="justify-between"
-                    onSelect={() => onRenditionChange(rendition.id ?? "")}
-                  >
-                    {label}
-                    {selected && <CheckIcon />}
-                  </DropdownMenuItem>
-                );
-              })}
+            {BITRATE_OPTIONS.map((option) => (
+              <DropdownMenuItem
+                key={option.value}
+                className="justify-between"
+                onSelect={() => setVideoBitrate(option.value)}
+              >
+                {option.label}
+                {videoBitrate === option.value && <CheckIcon />}
+              </DropdownMenuItem>
+            ))}
           </DropdownMenuSubContent>
         </DropdownMenuSub>
-      )}
-
-      <DropdownMenuSub>
-        <DropdownMenuSubTrigger>
-          <span className="flex-1">Bitrate</span>
-          <Badge variant="outline" className="rounded-sm">
-            {BITRATE_OPTIONS.find(option => option.value === videoBitrate)?.label ?? "Auto"}
-          </Badge>
-        </DropdownMenuSubTrigger>
-        <DropdownMenuSubContent>
-          {BITRATE_OPTIONS.map((option) => (
-            <DropdownMenuItem
-              key={option.value}
-              className="justify-between"
-              onSelect={() => setVideoBitrate(option.value)}
-            >
-              {option.label}
-              {videoBitrate === option.value && <CheckIcon />}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuSubContent>
-      </DropdownMenuSub>
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
             <span className="flex-1">Captions</span>
             <Badge variant="outline" className="rounded-sm">
-              {context.customSubtitlesEnabled ? (
-                context.customSubtitleTracks && context.customSubtitleTracks.length > 0
-                  ? (context.customSubtitleTracks.find(track => track.active)?.label || "On")
+              {context.customSubtitlesEnabled
+                ? context.customSubtitleTracks &&
+                  context.customSubtitleTracks.length > 0
+                  ? context.customSubtitleTracks
+                      .find((track) => track.active)
+                      ?.label?.split(" ")[0] || "On"
                   : "Off"
-              ) : (
-                selectedSubtitleLabel.split(" ")[0]
-              )}
+                : selectedSubtitleLabel.split(" ")[0]}
             </Badge>
           </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
+          <DropdownMenuSubContent className="max-h-64 overflow-y-auto">
             <DropdownMenuItem
               className="justify-between"
               onSelect={() => {
@@ -3109,47 +3111,45 @@ function MediaPlayerSettings(props: MediaPlayerSettingsProps) {
               }}
             >
               Off
-              {context.customSubtitlesEnabled ? (
-                !context.customSubtitleTracks?.some(track => track.active)
-              ) : (
-                !isSubtitlesActive
-              ) && <CheckIcon />}
+              {context.customSubtitlesEnabled
+                ? !context.customSubtitleTracks?.some((track) => track.active)
+                : !isSubtitlesActive && <CheckIcon />}
             </DropdownMenuItem>
-            {context.customSubtitlesEnabled ? (
-              context.customSubtitleTracks?.map((subtitleTrack) => {
-                return (
-                  <DropdownMenuItem
-                    key={`${subtitleTrack.kind}-${subtitleTrack.label}-${subtitleTrack.language}`}
-                    className="justify-between"
-                    onSelect={() => context.onCustomSubtitleChange?.(subtitleTrack)}
-                  >
-                    {subtitleTrack.label}
-                    {subtitleTrack.active && <CheckIcon />}
-                  </DropdownMenuItem>
-                );
-              })
-            ) : (
-              mediaSubtitlesList.map((subtitleTrack) => {
-                const isSelected = mediaSubtitlesShowing.some(
-                  (showingSubtitle) =>
-                    showingSubtitle.label === subtitleTrack.label
-                );
-                return (
-                  <DropdownMenuItem
-                    key={`${subtitleTrack.kind}-${subtitleTrack.label}-${subtitleTrack.language}-${crypto.randomUUID()}`}
-                    className="justify-between"
-                    onSelect={() => onShowSubtitleTrack(subtitleTrack)}
-                  >
-                    {subtitleTrack.label}
-                    {isSelected && <CheckIcon />}
-                  </DropdownMenuItem>
-                );
-              })
-            )}
-            {(context.customSubtitlesEnabled ? 
-              (!context.customSubtitleTracks || context.customSubtitleTracks.length === 0) : 
-              mediaSubtitlesList.length === 0
-            ) && (
+            {context.customSubtitlesEnabled
+              ? context.customSubtitleTracks?.map((subtitleTrack) => {
+                  return (
+                    <DropdownMenuItem
+                      key={`${subtitleTrack.kind}-${subtitleTrack.label}-${subtitleTrack.language}`}
+                      className="justify-between"
+                      onSelect={() =>
+                        context.onCustomSubtitleChange?.(subtitleTrack)
+                      }
+                    >
+                      {subtitleTrack.label}
+                      {subtitleTrack.active && <CheckIcon />}
+                    </DropdownMenuItem>
+                  );
+                })
+              : mediaSubtitlesList.map((subtitleTrack) => {
+                  const isSelected = mediaSubtitlesShowing.some(
+                    (showingSubtitle) =>
+                      showingSubtitle.label === subtitleTrack.label
+                  );
+                  return (
+                    <DropdownMenuItem
+                      key={`${subtitleTrack.kind}-${subtitleTrack.label}-${subtitleTrack.language}-${crypto.randomUUID()}`}
+                      className="justify-between"
+                      onSelect={() => onShowSubtitleTrack(subtitleTrack)}
+                    >
+                      {subtitleTrack.label}
+                      {isSelected && <CheckIcon />}
+                    </DropdownMenuItem>
+                  );
+                })}
+            {(context.customSubtitlesEnabled
+              ? !context.customSubtitleTracks ||
+                context.customSubtitleTracks.length === 0
+              : mediaSubtitlesList.length === 0) && (
               <DropdownMenuItem disabled>
                 No captions available
               </DropdownMenuItem>
