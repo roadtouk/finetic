@@ -10,6 +10,8 @@
 ## Key Features
 
 - **Navigator**: Interactive AI chat powered by Google's Gemini model for content discovery and control
+
+https://github.com/AyaanZaveri/finetic/raw/refs/heads/main/screenshots/navigator.mp4
 - **Media Player**: Feature-rich player with direct and transcoded playback, subtitle support, chapters
 - **Library Management**: Browse and organize your movies, TV shows, and episodes
 - **Theme Support**: Light and dark mode themes
