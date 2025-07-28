@@ -270,3 +270,140 @@ export async function downloadRemoteImage(
     throw new Error(`Failed to download remote image: ${response.statusText}`);
   }
 }
+
+export interface CurrentImage {
+  ImageType: string;
+  ImageIndex?: number;
+  ImageTag: string;
+  Path: string;
+  BlurHash: string;
+  Height: number;
+  Width: number;
+  Size: number;
+}
+
+export async function fetchCurrentImages(
+  itemId: string
+): Promise<CurrentImage[]> {
+  const { serverUrl, user } = await getAuthData();
+  
+  const url = `${serverUrl}/Items/${itemId}/Images`;
+  
+  const response = await fetch(url, {
+    headers: {
+      'Authorization': `MediaBrowser Token="${user.AccessToken}"`
+    }
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to fetch current images: ${response.statusText}`);
+  }
+  
+  return response.json();
+}
+
+export async function reorderBackdropImage(
+  itemId: string,
+  currentIndex: number,
+  newIndex: number
+): Promise<void> {
+  const { serverUrl, user } = await getAuthData();
+  
+  const url = `${serverUrl}/Items/${itemId}/Images/Backdrop/${currentIndex}/Index?newIndex=${newIndex}`;
+  
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `MediaBrowser Token="${user.AccessToken}"`
+    }
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to reorder backdrop image: ${response.statusText}`);
+  }
+}
+
+export async function deleteImage(
+  itemId: string,
+  imageType: string,
+  imageIndex?: number
+): Promise<void> {
+  const { serverUrl, user } = await getAuthData();
+  
+  let url = `${serverUrl}/Items/${itemId}/Images/${imageType}`;
+  if (imageIndex !== undefined) {
+    url += `/${imageIndex}`;
+  }
+  
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `MediaBrowser Token="${user.AccessToken}"`
+    }
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to delete ${imageType} image: ${response.statusText}`);
+  }
+}
+
+export interface UserPolicy {
+  IsAdministrator: boolean;
+  EnableMediaConversion: boolean;
+  EnableContentDeletion: boolean;
+}
+
+export interface UserWithPolicy {
+  Name: string;
+  ServerId: string;
+  Id: string;
+  HasPassword: boolean;
+  HasConfiguredPassword: boolean;
+  HasConfiguredEasyPassword: boolean;
+  EnableAutoLogin: boolean;
+  LastLoginDate: string;
+  LastActivityDate: string;
+  Configuration: any;
+  Policy: UserPolicy;
+}
+
+export async function getUserWithPolicy(
+  userId: string,
+  itemId: string
+): Promise<UserWithPolicy | null> {
+  const { serverUrl, user } = await getAuthData();
+  
+  const url = `${serverUrl}/Users/${userId}/Items/${itemId}`;
+  
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `MediaBrowser Token="${user.AccessToken}"`
+      }
+    });
+    
+    if (!response.ok) {
+      console.error(`Failed to fetch user policy: ${response.statusText}`);
+      return null;
+    }
+    
+    // The API endpoint you provided actually returns item data with user context
+    // Let's get the current user data instead, which includes the policy
+    const userUrl = `${serverUrl}/Users/${userId}`;
+    const userResponse = await fetch(userUrl, {
+      headers: {
+        'Authorization': `MediaBrowser Token="${user.AccessToken}"`
+      }
+    });
+    
+    if (!userResponse.ok) {
+      console.error(`Failed to fetch user data: ${userResponse.statusText}`);
+      return null;
+    }
+    
+    return userResponse.json();
+  } catch (error) {
+    console.error('Failed to fetch user with policy:', error);
+    return null;
+  }
+}

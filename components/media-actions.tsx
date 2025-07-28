@@ -20,7 +20,7 @@ import {
 import { MediaInfoDialog } from "@/components/media-info-dialog";
 import { ImageEditorDialog } from "@/components/image-editor-dialog";
 import { Info, Download, Play, ArrowLeft } from "lucide-react";
-import { getDownloadUrl, getStreamUrl, getSubtitleTracks } from "@/app/actions";
+import { getDownloadUrl, getStreamUrl, getSubtitleTracks, getUserWithPolicy, getUser, type UserPolicy } from "@/app/actions";
 import { getMediaDetailsFromName, cutOffText } from "@/lib/utils";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 
@@ -35,6 +35,7 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
   const { isPlayerVisible, setIsPlayerVisible, playMedia } = useMediaPlayer();
   const [selectedVersion, setSelectedVersion] =
     useState<MediaSourceInfo | null>(null);
+  const [userPolicy, setUserPolicy] = useState<UserPolicy | null>(null);
 
   // Initialize selectedVersion when media changes
   useEffect(() => {
@@ -44,6 +45,27 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
       setSelectedVersion(media.MediaSources[0]);
     }
   }, [media]);
+
+  // Fetch user policy when component mounts
+  useEffect(() => {
+    const fetchUserPolicy = async () => {
+      try {
+        const currentUser = await getUser();
+        if (currentUser?.Id && media?.Id) {
+          const userWithPolicy = await getUserWithPolicy(currentUser.Id, media.Id);
+          if (userWithPolicy?.Policy) {
+            setUserPolicy(userWithPolicy.Policy);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch user policy:', error);
+      }
+    };
+
+    if (media?.Id) {
+      fetchUserPolicy();
+    }
+  }, [media?.Id]);
 
   if (!media) {
     return null;
@@ -162,7 +184,8 @@ await playMedia({
 
       <ImageEditorDialog 
         itemId={media.Id!} 
-        itemName={media.Name || "Unknown"} 
+        itemName={media.Name || "Unknown"}
+        userPolicy={userPolicy || undefined}
       />
     </div>
   );

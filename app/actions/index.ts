@@ -47,10 +47,17 @@ export {
   getLibraryById,
   fetchRemoteImages,
   downloadRemoteImage,
+  fetchCurrentImages,
+  reorderBackdropImage,
+  deleteImage,
+  getUserWithPolicy,
 } from './utils';
 
 // Types
 export type {
   RemoteImage,
   RemoteImagesResponse,
+  CurrentImage,
+  UserPolicy,
+  UserWithPolicy,
 } from './utils';
