@@ -433,7 +433,7 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
                     <Input
                       value={input}
                       onChange={handleInputChange}
-                      placeholder={`Ask something like "go to Inception" or "play Breaking Bad"`}
+                      placeholder={`Ask something like "play Inception" or "go to Breaking Bad"`}
                       className="rounded-xl bg-background/80 backdrop-blur-md border px-4"
                       disabled={askLoading}
                       autoFocus

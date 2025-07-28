@@ -5,17 +5,14 @@
   Finetic
   <br>
 </h1>
-
-<h4 align="center">Navigate Your Media In A New Way</h4>
+<h4 align="center">A Modern Jellyfin Client</h4>
 
 ## Key Features
 
-- **🎬 Media Streaming**: Stream movies and TV shows directly from your Jellyfin server
-- **🤖 AI Assistant**: Interactive AI chat powered by Google's Gemini model for content discovery and control
-- **🎵 Advanced Media Player**: Feature-rich player with direct and transcoded playback, subtitle support, chapters
-- **🔍 Smart Search**: Search through your media library with intelligent suggestions
-- **📚 Library Management**: Browse and organize your movies, TV shows, and episodes
-- **🌓 Theme Support**: Light and dark mode themes
+- **Navigator**: Interactive AI chat powered by Google's Gemini model for content discovery and control
+- **Media Player**: Feature-rich player with direct and transcoded playback, subtitle support, chapters
+- **Library Management**: Browse and organize your movies, TV shows, and episodes
+- **Theme Support**: Light and dark mode themes
 
 ## Built With
 
@@ -28,7 +25,7 @@
 
 ### Prerequisites
 
-- Node.js 18+ or Bun
+- Node.js 18+
 - A running Jellyfin server
 - Google AI API key (for AI features)
 
@@ -37,7 +34,7 @@
 1. **Clone the repository:**
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/AyaanZaveri/finetic
    cd finetic
    ```
 
@@ -99,12 +96,86 @@ npm run start
 
 ### AI Assistant
 
-- Press `Ctrl + K` to open the AI assistant
+- Press `⌘ + K` to open the AI assistant
 - Ask questions like:
-  - "Play the latest Marvel movie"
-  - "Show me sci-fi TV shows"
+  - "Play Inception"
+  - "Go to Breaking Bad"
   - "Skip to the action scene"
+  - "Explain what's happening right now"
   - "What's this movie about?"
+
+#### Available AI Tools
+
+The AI assistant has access to a comprehensive set of tools for media library interaction:
+
+**🔍 Content Discovery & Search**
+- `searchMedia` - Search for movies, TV shows, or episodes by name or keyword
+- `getPeople` - Search for people (directors, actors) related to media content
+- `getGenres` - Get list of all genres available in the library
+
+**📺 Library Browse & Management**
+- `getMovies` - Get a list of recent movies from the library
+- `getTVShows` - Get a list of recent TV shows from the library
+- `continueWatching` - Fetch list of media items currently being watched/continued
+- `getWatchlist` - Get user's watchlist or favorites (popular/highly-rated content)
+- `getMediaDetails` - Get detailed information about a specific movie or TV show
+- `getSeasons` - Get seasons for a TV show
+- `getEpisodes` - Get episodes for a TV show season
+
+**🎬 Playback & Navigation**
+- `navigateToMedia` - Navigate to a specific movie, TV show, or episode page
+- `playMedia` - Play a specific movie, TV show, or episode directly in the media player
+
+**🎯 Subtitle Analysis**
+- `skipToSubtitleContent` - Intelligently analyze subtitles and find the best timestamp based on user descriptions (doesn't require exact text matches)
+- `explainScene` - Analyze subtitles around current timestamp to explain what's happening in the scene
+- `analyzeMedia` - Analyze the entire movie/episode using subtitles to answer questions about plot, characters, themes, etc.
+
+**🌓 App Controls**
+- `themeToggle` - Toggle or set the application theme between light, dark, or system mode
+
+#### Smart Subtitle Features
+
+When media is actively playing, the AI can:
+- **Scene Navigation**: "Skip to the part where they talk about love" or "Take me to the action sequence"
+- **Context Explanation**: "What's happening in this scene?" or "Who is talking right now?"
+- **Content Analysis**: "What is this movie about?" or "Summarize this episode"
+- Uses semantic understanding to find scenes based on descriptions, not just exact text matches
+
+#### Search Intelligence
+
+The AI automatically expands common abbreviations and handles vague descriptions:
+- "b99" → "Brooklyn Nine-Nine"
+- "the movie with the blue people" → "Avatar"
+- "the show about meth" → "Breaking Bad"
+- "the wizard movie" → "Harry Potter"
+
+#### Example Queries
+
+**Content Discovery:**
+- "Show me my continue watching list"
+- "What genres are available?"
+- "Find movies with Tom Hanks"
+- "Show me recent sci-fi movies"
+
+**Navigation & Playback:**
+- "Go to Breaking Bad"
+- "Play Inception"
+- "Show me seasons of The Office"
+
+**Smart Scene Navigation (during playback):**
+- "Skip to when they arrive at the destination"
+- "Take me to the emotional conversation scene"
+- "Jump to the plot twist"
+
+**Scene Analysis (during playback):**
+- "What's happening right now?"
+- "Explain this scene"
+- "What did I miss?"
+- "Who are the main characters in this movie?"
+
+**App Control:**
+- "Toggle the theme"
 
 ### Media Player
 
@@ -127,7 +198,7 @@ npm run start
 
 ## Contributing
 
-We welcome contributions! Please feel free to:
+Please feel free to:
 
 - Report bugs and issues
 - Suggest new features
@@ -137,10 +208,3 @@ We welcome contributions! Please feel free to:
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- Built with Next.js and the React ecosystem
-- UI components from Radix UI
-- AI powered by Google's Gemini model
-- Media backend integration with Jellyfin
