@@ -1,25 +1,28 @@
-# Finetic
+<h1 align="center">
+  <br>
+    <a href="https://github.com/AyaanZaveri/finetic"><img src="https://github.com/AyaanZaveri/finetic/blob/main/public/logo/desktop/finetic.png?raw=true" alt="Finetic" width="200"></a>
+  <br>
+  Finetic
+  <br>
+</h1>
 
-Finetic is a modern media streaming web application built with Next.js, designed to provide a seamless media experience with AI-powered interactions.
+<h4 align="center">Navigate Your Media In A New Way</h4>
 
 ## Key Features
 
 - **🎬 Media Streaming**: Stream movies and TV shows directly from your Jellyfin server
 - **🤖 AI Assistant**: Interactive AI chat powered by Google's Gemini model for content discovery and control
-- **🎵 Advanced Media Player**: Feature-rich player with subtitle support, chapter navigation, and progress tracking
+- **🎵 Advanced Media Player**: Feature-rich player with direct and transcoded playback, subtitle support, chapters
 - **🔍 Smart Search**: Search through your media library with intelligent suggestions
 - **📚 Library Management**: Browse and organize your movies, TV shows, and episodes
-- **⏯️ Continue Watching**: Resume playback from where you left off
 - **🌓 Theme Support**: Light and dark mode themes
 
-## Technology Stack
+## Built With
 
 - **Frontend**: Next.js 15, React 19, TypeScript
-- **Styling**: Tailwind CSS with Framer Motion animations
+- **Styling**: Tailwind v4, shadcn/ui, Framer Motion
 - **AI**: Google Gemini 2.0 Flash with AI SDK
-- **Media Backend**: Jellyfin integration
 - **State Management**: Jotai for global state
-- **UI Components**: Radix UI primitives with custom styling
 
 ## Getting Started
 
@@ -49,9 +52,9 @@ Finetic is a modern media streaming web application built with Next.js, designed
    ```
 
 3. **Configure environment variables:**
-   
+
    Create a `.env.local` file in the root directory and add your configuration:
-   
+
    ```env
    GOOGLE_GENERATIVE_AI_API_KEY=your_google_ai_api_key
    ```
@@ -106,6 +109,10 @@ npm run start
 ### Media Player
 
 - Click any media item to start playback
+- **Playback Options**:
+  - **Direct Play**: Stream media files directly when supported by your browser
+  - **Transcoding**: Automatic transcoding for unsupported formats or network optimization
+  - The player automatically selects the best playback method based on your device and network conditions
 - Use keyboard shortcuts for control:
   - `Space` - Play/Pause
   - `←/→` - Seek backward/forward
