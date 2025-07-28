@@ -9,6 +9,23 @@
 
 https://github.com/user-attachments/assets/07fb5741-1edf-4655-9001-6df3e2b1c72b
 
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <img src="screenshots/series/light.png" alt="Light Theme" width="500">
+        <br>
+        <em>Light Theme</em>
+      </td>
+      <td align="center">
+        <img src="screenshots/series/dark.png" alt="Dark Theme" width="500">
+        <br>
+        <em>Dark Theme</em>
+      </td>
+    </tr>
+  </table>
+</div>
+
 ## Key Features
 
 - **Navigator**: Interactive AI chat powered by Gemini for navigation
