@@ -5,13 +5,13 @@
   Finetic
   <br>
 </h1>
-<h4 align="center">A Modern Jellyfin Client</h4>
+<h4 align="center">A Modern Jellyfin Client built w/ Next.js</h4>
+
+https://github.com/user-attachments/assets/07fb5741-1edf-4655-9001-6df3e2b1c72b
 
 ## Key Features
 
-- **Navigator**: Interactive AI chat powered by Google's Gemini model for content discovery and control
-
-https://github.com/AyaanZaveri/finetic/raw/refs/heads/main/screenshots/navigator.mp4
+- **Navigator**: Interactive AI chat powered by Gemini for navigation
 - **Media Player**: Feature-rich player with direct and transcoded playback, subtitle support, chapters
 - **Library Management**: Browse and organize your movies, TV shows, and episodes
 - **Theme Support**: Light and dark mode themes
@@ -165,7 +165,7 @@ The AI automatically expands common abbreviations and handles vague descriptions
 - "Play Inception"
 - "Show me seasons of The Office"
 
-**Smart Scene Navigation (during playback):**
+**Scene Navigation (during playback):**
 - "Skip to when they arrive at the destination"
 - "Take me to the emotional conversation scene"
 - "Jump to the plot twist"
@@ -191,12 +191,6 @@ The AI automatically expands common abbreviations and handles vague descriptions
   - `←/→` - Seek backward/forward
   - `↑/↓` - Volume control
   - `F` - Toggle fullscreen
-
-### Library Navigation
-
-- Browse movies and TV shows from the main dashboard
-- Use the search bar to find specific content
-- Access your "Continue Watching" list for resumed content
 
 ## Contributing
 
