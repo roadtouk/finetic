@@ -308,8 +308,10 @@ export async function reorderBackdropImage(
   newIndex: number
 ): Promise<void> {
   const { serverUrl, user } = await getAuthData();
+  console.log(`Reordering backdrop image for item ${itemId} from index ${currentIndex} to ${newIndex}`);
   
   const url = `${serverUrl}/Items/${itemId}/Images/Backdrop/${currentIndex}/Index?newIndex=${newIndex}`;
+  console.log(`Reorder URL: ${url}`);
   
   const response = await fetch(url, {
     method: 'POST',
@@ -317,6 +319,8 @@ export async function reorderBackdropImage(
       'Authorization': `MediaBrowser Token="${user.AccessToken}"`
     }
   });
+
+  console.log(`Reorder response status: ${response.status}`);
   
   if (!response.ok) {
     throw new Error(`Failed to reorder backdrop image: ${response.statusText}`);

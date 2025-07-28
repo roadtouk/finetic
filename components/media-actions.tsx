@@ -20,7 +20,14 @@ import {
 import { MediaInfoDialog } from "@/components/media-info-dialog";
 import { ImageEditorDialog } from "@/components/image-editor-dialog";
 import { Info, Download, Play, ArrowLeft } from "lucide-react";
-import { getDownloadUrl, getStreamUrl, getSubtitleTracks, getUserWithPolicy, getUser, type UserPolicy } from "@/app/actions";
+import {
+  getDownloadUrl,
+  getStreamUrl,
+  getSubtitleTracks,
+  getUserWithPolicy,
+  getUser,
+  type UserPolicy,
+} from "@/app/actions";
 import { getMediaDetailsFromName, cutOffText } from "@/lib/utils";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 
@@ -52,13 +59,16 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
       try {
         const currentUser = await getUser();
         if (currentUser?.Id && media?.Id) {
-          const userWithPolicy = await getUserWithPolicy(currentUser.Id, media.Id);
+          const userWithPolicy = await getUserWithPolicy(
+            currentUser.Id,
+            media.Id
+          );
           if (userWithPolicy?.Policy) {
             setUserPolicy(userWithPolicy.Policy);
           }
         }
       } catch (error) {
-        console.error('Failed to fetch user policy:', error);
+        console.error("Failed to fetch user policy:", error);
       }
     };
 
@@ -110,13 +120,13 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
           // Set the current media in context, GlobalMediaPlayer will handle the rest
           if (media) {
             console.log("Playing media:", media.Name);
-await playMedia({
-  id: media.Id!,
-  name: media.Name!,
-  type: media.Type as "Movie" | "Series" | "Episode",
-  resumePositionTicks: media.UserData?.PlaybackPositionTicks,
-  selectedVersion: selectedVersion,
-});
+            await playMedia({
+              id: media.Id!,
+              name: media.Name!,
+              type: media.Type as "Movie" | "Series" | "Episode",
+              resumePositionTicks: media.UserData?.PlaybackPositionTicks,
+              selectedVersion: selectedVersion,
+            });
             setIsPlayerVisible(true);
           }
         }}
@@ -182,11 +192,12 @@ await playMedia({
         </DialogContent>
       </Dialog>
 
-      <ImageEditorDialog 
-        itemId={media.Id!} 
-        itemName={media.Name || "Unknown"}
-        userPolicy={userPolicy || undefined}
-      />
+      {userPolicy?.IsAdministrator && (
+        <ImageEditorDialog
+          itemId={media.Id!}
+          itemName={media.Name || "Unknown"}
+        />
+      )}
     </div>
   );
 }
