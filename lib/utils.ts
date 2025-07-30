@@ -110,3 +110,16 @@ export const convertTimestampToSeconds = (timestamp: string): number => {
   const parsed = parseFloat(timestamp);
   return isNaN(parsed) ? 0 : parsed;
 };
+
+// Convert ticks to formatted time string (HH:MM:SS or MM:SS)
+export const formatPlaybackPosition = (ticks: number): string => {
+  const totalSeconds = Math.floor(ticks / 10000000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+};

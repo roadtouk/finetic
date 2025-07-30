@@ -28,7 +28,11 @@ import {
   getUser,
   type UserPolicy,
 } from "@/app/actions";
-import { getMediaDetailsFromName, cutOffText } from "@/lib/utils";
+import {
+  getMediaDetailsFromName,
+  cutOffText,
+  formatPlaybackPosition,
+} from "@/lib/utils";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 
 interface MediaActionsProps {
@@ -43,6 +47,15 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
   const [selectedVersion, setSelectedVersion] =
     useState<MediaSourceInfo | null>(null);
   const [userPolicy, setUserPolicy] = useState<UserPolicy | null>(null);
+
+  // Determine if this is a resume or new play
+  const hasProgress =
+    media?.UserData?.PlaybackPositionTicks &&
+    media.UserData.PlaybackPositionTicks > 0 &&
+    !media.UserData.Played;
+  const positionTime = formatPlaybackPosition(
+    media?.UserData?.PlaybackPositionTicks || 0
+  );
 
   // Initialize selectedVersion when media changes
   useEffect(() => {
@@ -85,17 +98,20 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
   if (!media.MediaSources || media.MediaSources.length === 0) {
     if (episode && media.Id) {
       return (
-        <div className="mb-6 flex items-center gap-2">
+        <div className="mb-6 flex items-center">
           <Button
             variant="outline"
-            className="gap-2"
+            className="gap-0"
             onClick={() => {
               console.log("Play episode:", media.Name);
               // Could redirect to a streaming service or handle differently
             }}
           >
-            <Play className="h-4 w-4" />
-            Play Episode
+            <Play className="h-4 w-4 mr-2" />
+            {hasProgress ? "Resume" : "Play"} Episode
+            {hasProgress && (
+              <span className="text-sm opacity-75">from {positionTime}</span>
+            )}
           </Button>
         </div>
       );
@@ -115,15 +131,17 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
   // Helper function to get display name for a media source
   const getMediaSourceDisplayName = (source: MediaSourceInfo) => {
     const detailsFromName = getMediaDetailsFromName(source.Name!);
-    
+
     // If we can't parse details from the name, try to use DisplayTitle from video stream
     if (detailsFromName === "Unknown" && source.MediaStreams) {
-      const videoStream = source.MediaStreams.find(stream => stream.Type === "Video");
+      const videoStream = source.MediaStreams.find(
+        (stream) => stream.Type === "Video"
+      );
       if (videoStream?.DisplayTitle) {
         return getMediaDetailsFromName(videoStream.DisplayTitle);
       }
     }
-    
+
     return detailsFromName;
   };
 
@@ -145,9 +163,13 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
             setIsPlayerVisible(true);
           }
         }}
+        className="gap-2"
       >
         <Play className="h-4 w-4" />
-        Play
+        {hasProgress ? "Resume" : "Play"}
+        {hasProgress ? (
+          <span className="text-sm opacity-75">{positionTime}</span>
+        ) : null}
       </Button>
 
       {media.MediaSources.length > 1 ? (
