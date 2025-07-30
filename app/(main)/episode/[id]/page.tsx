@@ -10,8 +10,9 @@ import { VibrantLogo } from "@/components/vibrant-logo";
 import { VibrantBackdrop } from "@/components/vibrant-backdrop";
 import { RottenTomatoesIcon } from "@/components/icons/rotten-tomatoes";
 import { TextAnimate } from "@/components/magicui/text-animate";
-import { Star, Play } from "lucide-react";
+import { Star, Play, TvIcon } from "lucide-react";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 export default async function Episode({
   params,
@@ -94,6 +95,32 @@ export default async function Episode({
 
             {/* Episode Info */}
             <div className="w-full md:w-2/3 lg:w-3/4 pt-10 md:pt-8 text-center md:text-start mt-8">
+              {/* TV Show Name and Season */}
+              <div className="mb-4 flex justify-center md:justify-start">
+                <h2 className="text-sm font-medium text-muted-foreground md:pl-8 inline-flex items-center">
+                  <TvIcon
+                    className="w-3.5 h-3.5 mr-2 text-muted-foreground"
+                  />
+                  <Link
+                    href={`/show/${episode.SeriesId}`}
+                    className="hover:underline"
+                  >
+                    {episode.SeriesName}
+                  </Link>
+                  {episode.ParentIndexNumber && (
+                    <span className="inline-flex items-center">
+                      <span className="mx-2">•</span>
+                      <Link
+                        href={`/season/${episode.SeasonId}`}
+                        className="hover:underline"
+                      >
+                        {`Season ${episode.ParentIndexNumber}`}
+                      </Link>
+                    </span>
+                  )}
+                </h2>
+              </div>
+
               <div className="mb-4 flex justify-center md:justify-start">
                 <TextAnimate
                   as="h1"
@@ -164,7 +191,7 @@ export default async function Episode({
                 )}
               </div>
 
-              <div className="px-8 md:pl-8 md:pt-4 md:pr-16 flex flex-col justify-center md:items-start items-center">
+              <div className="px-8 md:pl-8 pt-4 md:pr-16 flex flex-col justify-center md:items-start items-center">
                 <MediaActions episode={episode} />
 
                 {episode.Taglines && (

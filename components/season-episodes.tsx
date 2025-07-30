@@ -379,7 +379,7 @@ const EpisodeCard = React.memo(function EpisodeCard({
   serverUrl: string;
   currentEpisodeId: string | null;
 }) {
-  const imageUrl = `${serverUrl}/Items/${episode.Id}/Images/Primary?width=288&height=162&quality=80`;
+  const imageUrl = `${serverUrl}/Items/${episode.Id}/Images/Primary?width=576&height=324&quality=95`;
   const isCurrentEpisode = currentEpisodeId === episode.Id;
 
   // Memoize the date formatting function

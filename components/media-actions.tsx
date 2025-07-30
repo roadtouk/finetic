@@ -112,6 +112,21 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
     window.open(await getDownloadUrl(selectedVersion.Id!), "_blank");
   };
 
+  // Helper function to get display name for a media source
+  const getMediaSourceDisplayName = (source: MediaSourceInfo) => {
+    const detailsFromName = getMediaDetailsFromName(source.Name!);
+    
+    // If we can't parse details from the name, try to use DisplayTitle from video stream
+    if (detailsFromName === "Unknown" && source.MediaStreams) {
+      const videoStream = source.MediaStreams.find(stream => stream.Type === "Video");
+      if (videoStream?.DisplayTitle) {
+        return getMediaDetailsFromName(videoStream.DisplayTitle);
+      }
+    }
+    
+    return detailsFromName;
+  };
+
   return (
     <div className="mb-6 flex items-center gap-2">
       <Button
@@ -142,7 +157,7 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
               variant="outline"
               className="overflow-hidden whitespace-nowrap text-ellipsis fill-foreground gap-1.5 px-4"
             >
-              {getMediaDetailsFromName(selectedVersion.Name!)}
+              {getMediaSourceDisplayName(selectedVersion)}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
@@ -170,7 +185,7 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
           variant="outline"
           className="overflow-hidden whitespace-nowrap text-ellipsis fill-foreground gap-1.5"
         >
-          {getMediaDetailsFromName(selectedVersion.Name!)}
+          {getMediaSourceDisplayName(selectedVersion)}
         </Button>
       )}
 

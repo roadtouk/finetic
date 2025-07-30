@@ -90,7 +90,7 @@ export function MediaCard({
         <Link href={linkHref} draggable={false} className="block w-full h-full">
           {serverUrl ? (
             <div
-              className={`w-full h-full transition duration-200 shadow-lg hover:brightness-85 shadow-sm group-hover:shadow-md ${
+              className={`w-full h-full transition duration-200 shadow-lg shadow-sm group-hover:shadow-md ${
                 progressPercentage > 0 ? "rounded-t-md" : "rounded-md"
               }`}
               style={{
