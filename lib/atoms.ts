@@ -51,3 +51,10 @@ export const skipToTimestampAtom = atom(null, (get, set, timestamp: number) => {
   // Clear the timestamp after a short delay to allow the player to consume it
   setTimeout(() => set(skipTimestampAtom, null), 100);
 });
+
+// Aurora background colors
+export const auroraColorsAtom = atom<string[]>([
+  "#AA5CC3",
+  "#00A4DC", 
+  "#AA5CC3"
+]);
