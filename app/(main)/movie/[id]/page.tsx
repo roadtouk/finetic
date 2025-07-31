@@ -151,9 +151,82 @@ export default async function Movie({
                   </p>
                 )}
 
-                <p className="text-md leading-relaxed mb-8 max-w-4xl">
+                <p className="text-md leading-relaxed mb-6 max-w-4xl">
                   {movie.Overview}
                 </p>
+
+                {/* Additional movie information */}
+                <div className="space-y-3 mb-6 max-w-4xl">
+                  {/* Genres */}
+                  {movie.Genres && movie.Genres.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-medium text-muted-foreground min-w-fit">
+                        Genres:
+                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {movie.Genres.map((genre, index) => (
+                          <Badge
+                            key={genre}
+                            variant="secondary"
+                            className="text-xs"
+                          >
+                            {genre}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Director */}
+                  {movie.People &&
+                    movie.People.filter((person) => person.Type === "Director")
+                      .length > 0 && (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-medium text-muted-foreground min-w-fit">
+                          Director:
+                        </span>
+                        <span className="text-sm">
+                          {movie.People.filter(
+                            (person) => person.Type === "Director"
+                          )
+                            .map((director) => director.Name)
+                            .join(", ")}
+                        </span>
+                      </div>
+                    )}
+
+                  {/* Writers */}
+                  {movie.People &&
+                    movie.People.filter((person) => person.Type === "Writer")
+                      .length > 0 && (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-medium text-muted-foreground min-w-fit">
+                          Writers:
+                        </span>
+                        <span className="text-sm">
+                          {movie.People.filter(
+                            (person) => person.Type === "Writer"
+                          )
+                            .map((writer) => writer.Name)
+                            .join(", ")}
+                        </span>
+                      </div>
+                    )}
+
+                  {/* Studios */}
+                  {movie.Studios && movie.Studios.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-medium text-muted-foreground min-w-fit">
+                        Studio:
+                      </span>
+                      <span className="text-sm">
+                        {movie.Studios.map(
+                          (studio: any) => studio.Name || studio
+                        ).join(", ")}
+                      </span>
+                    </div>
+                  )}
+                </div>
                 {/* Media actions */}
               </div>
             </div>

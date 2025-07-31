@@ -32,6 +32,7 @@ import {
   getMediaDetailsFromName,
   cutOffText,
   formatPlaybackPosition,
+  formatRuntime,
 } from "@/lib/utils";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 
@@ -53,9 +54,10 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
     media?.UserData?.PlaybackPositionTicks &&
     media.UserData.PlaybackPositionTicks > 0 &&
     !media.UserData.Played;
-  const positionTime = formatPlaybackPosition(
-    media?.UserData?.PlaybackPositionTicks || 0
-  );
+  const totalRuntimeTicks = media?.RunTimeTicks || 0;
+  const resumePositionTicks = media?.UserData?.PlaybackPositionTicks || 0;
+  const timeLeftTicks = totalRuntimeTicks - resumePositionTicks;
+  const timeLeft = formatRuntime(timeLeftTicks);
 
   // Initialize selectedVersion when media changes
   useEffect(() => {
@@ -110,7 +112,7 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
             <Play className="h-4 w-4 mr-2" />
             {hasProgress ? "Resume" : "Play"} Episode
             {hasProgress && (
-              <span className="text-sm opacity-75">from {positionTime}</span>
+              <span className="text-sm opacity-75">{timeLeft} left</span>
             )}
           </Button>
         </div>
@@ -168,7 +170,7 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
         <Play className="h-4 w-4" />
         {hasProgress ? "Resume" : "Play"}
         {hasProgress ? (
-          <span className="text-sm opacity-75">{positionTime}</span>
+          <span className="text-sm opacity-75 pr-1">{timeLeft} left</span>
         ) : null}
       </Button>
 

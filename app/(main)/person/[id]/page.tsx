@@ -82,7 +82,7 @@ export default async function PersonPage({
         {/* Aurora background */}
         <AuroraBackground
           imageUrl={primaryImage}
-          className={`fixed inset-0 z-0 pointer-events-none`}
+          className={`fixed inset-0 z-0 pointer-events-none opacity-30`}
         />
 
         {/* Backdrop section */}
