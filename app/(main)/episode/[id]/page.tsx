@@ -1,10 +1,15 @@
 import { fetchEpisodeDetails } from "@/app/actions/tv-shows";
-import { getImageUrl } from "@/app/actions/utils";
+import {
+  getImageUrl,
+  fetchSimilarItems,
+  getServerUrl,
+} from "@/app/actions";
 import { MediaActions } from "@/components/media-actions";
 import { SearchBar } from "@/components/search-component";
 import { Badge } from "@/components/ui/badge";
 import { CastScrollArea } from "@/components/cast-scrollarea";
 import { SeasonEpisodes } from "@/components/season-episodes";
+import { MediaSection } from "@/components/media-section";
 import { AuroraBackground } from "@/components/aurora-background";
 import { VibrantLogo } from "@/components/vibrant-logo";
 import { VibrantBackdrop } from "@/components/vibrant-backdrop";
@@ -13,6 +18,7 @@ import { TextAnimate } from "@/components/magicui/text-animate";
 import { Star, Play, TvIcon } from "lucide-react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 
 export default async function Episode({
   params,
@@ -34,6 +40,12 @@ export default async function Episode({
       "Backdrop"
     );
     const logoImage = await getImageUrl(episode.SeriesId!, "Logo");
+
+    // Fetch similar items and server URL for the More Like This section
+    const [similarItems, serverUrl] = await Promise.all([
+      fetchSimilarItems(episode.SeriesId!, 12),
+      getServerUrl(),
+    ]);
 
     return (
       <div className="min-h-screen overflow-hidden md:pr-1 pb-16">
@@ -74,7 +86,7 @@ export default async function Episode({
         </div>
 
         {/* Content section */}
-        <div className="relative z-10 -mt-54 md:pl-6 bg-background/95 dark:bg-background/50 backdrop-blur-xl rounded-2xl mx-4">
+        <div className="relative z-10 -mt-54 md:pl-6 bg-background/95 dark:bg-background/50 backdrop-blur-xl rounded-2xl mx-4 pb-6">
           <div className="flex flex-col md:flex-row mx-auto">
             {/* Episode Image */}
             <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 justify-center flex md:block z-50 mt-6">
@@ -214,9 +226,20 @@ export default async function Episode({
         </div>
 
         {/* Cast section */}
-        <div className="mt-16 md:px-0 ml-6">
+        <div className="mt-16 px-6">
           <CastScrollArea people={episode.People!} mediaId={id} />
         </div>
+
+        {similarItems && (
+          <div className="mt-16 px-6">
+            <MediaSection
+              sectionName="More Like This"
+              mediaItems={similarItems as BaseItemDto[]}
+              serverUrl={serverUrl!}
+            />
+          </div>
+        )}
+        {/* More Like This section */}
       </div>
     );
   } catch (error: any) {

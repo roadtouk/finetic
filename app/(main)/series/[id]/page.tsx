@@ -1,4 +1,9 @@
-import { fetchMediaDetails, getImageUrl, getServerUrl } from "@/app/actions";
+import {
+  fetchMediaDetails,
+  getImageUrl,
+  fetchSimilarItems,
+  getServerUrl,
+} from "@/app/actions";
 import { MediaActions } from "@/components/media-actions";
 import { SeriesPlayButton } from "@/components/series-play-button";
 import { SearchBar } from "@/components/search-component";
@@ -6,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { CastScrollArea } from "@/components/cast-scrollarea";
 import { fetchSeasons } from "@/app/actions/tv-shows";
 import { MediaCard } from "@/components/media-card";
+import { MediaSection } from "@/components/media-section";
 import { AuroraBackground } from "@/components/aurora-background";
 import { VibrantLogo } from "@/components/vibrant-logo";
 import { VibrantBackdrop } from "@/components/vibrant-backdrop";
@@ -13,6 +19,8 @@ import { RottenTomatoesIcon } from "@/components/icons/rotten-tomatoes";
 import { TextAnimate } from "@/components/magicui/text-animate";
 import { Star } from "lucide-react";
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 
 export default async function Show({
   params,
@@ -20,7 +28,6 @@ export default async function Show({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const serverUrl = await getServerUrl();
 
   try {
     const show = await fetchMediaDetails(id);
@@ -33,6 +40,12 @@ export default async function Show({
     const primaryImage = await getImageUrl(id, "Primary");
     const backdropImage = await getImageUrl(id, "Backdrop");
     const logoImage = await getImageUrl(id, "Logo");
+
+    // Fetch similar items and server URL for the More Like This section
+    const [similarItems, serverUrl] = await Promise.all([
+      fetchSimilarItems(id, 12),
+      getServerUrl(),
+    ]);
 
     return (
       <div className="min-h-screen overflow-hidden md:pr-1 pb-16">
@@ -59,7 +72,7 @@ export default async function Show({
               movieName={show.Name || ""}
               width={300}
               height={96}
-              className="absolute md:top-4/12 top-4/12 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 max-h-20 md:max-h-24 w-auto object-contain max-w-2/3 invisible md:visible"
+              className="absolute md:top-5/12 top-4/12 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 max-h-20 md:max-h-24 w-auto object-contain max-w-2/3 invisible md:visible"
             />
             {/* Enhanced gradient overlay for smooth transition to overview */}
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/30 to-black/90 md:rounded-xl" />
@@ -73,7 +86,7 @@ export default async function Show({
         </div>
 
         {/* Content section */}
-        <div className="relative z-10 -mt-54 md:pl-6 bg-background/95 dark:bg-background/50 backdrop-blur-xl rounded-2xl mx-4">
+        <div className="relative z-10 -mt-54 md:pl-6 bg-background/95 dark:bg-background/50 backdrop-blur-xl rounded-2xl mx-4 pb-6">
           <div className="flex flex-col md:flex-row mx-auto">
             {/* Show poster */}
             <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 justify-center flex md:block z-50 mt-6">
@@ -90,9 +103,15 @@ export default async function Show({
             {/* <div className="h-screen absolute left-0 right-0 bg-white backdrop-blur-3xl -z-10 mt-4 invisible md:visible"></div> */}
             <div className="w-full md:w-2/3 lg:w-3/4 pt-10 md:pt-8 text-center md:text-start mt-8">
               <div className="mb-4 flex justify-center md:justify-start">
-                <span className="text-4xl md:text-5xl font-semibold font-poppins text-foreground md:pl-8 drop-shadow-xl">
+                <TextAnimate
+                  as="h1"
+                  className="text-4xl md:text-5xl font-semibold font-poppins text-foreground md:pl-8 drop-shadow-xl"
+                  animation="blurInUp"
+                  by="character"
+                  once
+                >
                   {show.Name || ""}
-                </span>
+                </TextAnimate>
               </div>
 
               {/* Show badges */}
@@ -172,6 +191,32 @@ export default async function Show({
                     </div>
                   )}
 
+                  {/* Director */}
+                  {show.People &&
+                    show.People.filter((person) => person.Type === "Director")
+                      .length > 0 && (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-medium text-muted-foreground min-w-fit">
+                          Director:
+                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {show.People.filter(
+                            (person) => person.Type === "Director"
+                          ).map((director, index, array) => (
+                            <span key={director.Id} className="text-sm">
+                              <Link
+                                href={`/person/${director.Id}`}
+                                className="hover:underline cursor-pointer"
+                              >
+                                {director.Name}
+                              </Link>
+                              {index < array.length - 1 && ", "}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                   {/* Writers */}
                   {show.People &&
                     show.People.filter((person) => person.Type === "Writer")
@@ -180,13 +225,21 @@ export default async function Show({
                         <span className="text-sm font-medium text-muted-foreground min-w-fit">
                           Writers:
                         </span>
-                        <span className="text-sm">
+                        <div className="flex flex-wrap gap-1">
                           {show.People.filter(
                             (person) => person.Type === "Writer"
-                          )
-                            .map((writer) => writer.Name)
-                            .join(", ")}
-                        </span>
+                          ).map((writer, index, array) => (
+                            <span key={writer.Id} className="text-sm">
+                              <Link
+                                href={`/person/${writer.Id}`}
+                                className="hover:underline cursor-pointer"
+                              >
+                                {writer.Name}
+                              </Link>
+                              {index < array.length - 1 && ", "}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
 
@@ -228,12 +281,22 @@ export default async function Show({
               />
             ))}
           </div>
-
-          {/* Cast section */}
-          <div className="mt-16 md:px-0">
-            <CastScrollArea people={show.People!} mediaId={id} />
-          </div>
         </div>
+        {/* Cast section */}
+        <div className="mt-16 px-6">
+          <CastScrollArea people={show.People!} mediaId={id} />
+        </div>
+
+        {similarItems && (
+          <div className="mt-16 px-6">
+            <MediaSection
+              sectionName="More Like This"
+              mediaItems={similarItems as BaseItemDto[]}
+              serverUrl={serverUrl!}
+            />
+          </div>
+        )}
+        {/* More Like This section */}
       </div>
     );
   } catch (error: any) {

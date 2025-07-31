@@ -1,4 +1,9 @@
-import { fetchMediaDetails, getImageUrl, getServerUrl } from "@/app/actions";
+import {
+  fetchMediaDetails,
+  getImageUrl,
+  fetchSimilarItems,
+  getServerUrl,
+} from "@/app/actions";
 import { fetchEpisodes } from "@/app/actions/tv-shows";
 import { SearchBar } from "@/components/search-component";
 import { Badge } from "@/components/ui/badge";
@@ -6,11 +11,14 @@ import { AuroraBackground } from "@/components/aurora-background";
 import { VibrantLogo } from "@/components/vibrant-logo";
 import { SeasonEpisodes } from "@/components/season-episodes";
 import { SeriesPlayButton } from "@/components/series-play-button";
+import { MediaSection } from "@/components/media-section";
 import { Star, Play, TvIcon } from "lucide-react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CastScrollArea } from "@/components/cast-scrollarea";
+import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 
 export default async function SeasonPage({
   params,
@@ -31,6 +39,11 @@ export default async function SeasonPage({
     const primaryImage = await getImageUrl(id, "Primary");
     const backdropImage = await getImageUrl(season.SeriesId || id, "Backdrop");
     const logoImage = await getImageUrl(season.SeriesId || id, "Logo");
+
+    // Fetch similar items and server URL for the More Like This section
+    const [similarItems] = await Promise.all([
+      fetchSimilarItems(season.SeriesId || id, 12),
+    ]);
 
     return (
       <div className="min-h-screen overflow-hidden md:pr-1 pb-16">
@@ -71,7 +84,7 @@ export default async function SeasonPage({
         </div>
 
         {/* Content section */}
-        <div className="relative z-10 -mt-54 md:pl-6 bg-background/95 dark:bg-background/50 backdrop-blur-xl rounded-2xl mx-4">
+        <div className="relative z-10 -mt-54 md:pl-6 bg-background/95 dark:bg-background/50 backdrop-blur-xl rounded-2xl mx-4 pb-6">
           <div className="flex flex-col md:flex-row mx-auto">
             {/* Season poster */}
             <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 justify-center flex md:block z-50 mt-6">
@@ -150,6 +163,22 @@ export default async function SeasonPage({
           {/* Episodes section */}
           <SeasonEpisodes showId={season.SeriesId || id} currentSeasonId={id} />
         </div>
+
+        {/* Cast section */}
+        <div className="mt-16 px-6">
+          <CastScrollArea people={season.People!} mediaId={id} />
+        </div>
+
+        {/* More Like This section */}
+        {similarItems && (
+          <div className="mt-16 px-6">
+            <MediaSection
+              sectionName="More Like This"
+              mediaItems={similarItems as BaseItemDto[]}
+              serverUrl={serverUrl!}
+            />
+          </div>
+        )}
       </div>
     );
   } catch (error: any) {
