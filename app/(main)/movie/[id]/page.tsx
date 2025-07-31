@@ -9,7 +9,7 @@ import { SearchBar } from "@/components/search-component";
 import { Badge } from "@/components/ui/badge";
 import { CastScrollArea } from "@/components/cast-scrollarea";
 import { MediaSection } from "@/components/media-section";
-import { AuroraBackground } from "@/components/aurora-background";
+import { VibrantAuroraBackground } from "@/components/vibrant-aurora-background";
 import { VibrantLogo } from "@/components/vibrant-logo";
 import { VibrantBackdrop } from "@/components/vibrant-backdrop";
 import { RottenTomatoesIcon } from "@/components/icons/rotten-tomatoes";
@@ -45,9 +45,9 @@ export default async function Movie({
 
     return (
       <div className="min-h-screen overflow-hidden md:pr-1 pb-16">
-        {/* Aurora background based on backdrop image */}
-        <AuroraBackground
-          imageUrl={backdropImage}
+        {/* Aurora background based on poster colors */}
+        <VibrantAuroraBackground
+          posterUrl={primaryImage}
           className="fixed inset-0 z-0 pointer-events-none opacity-30"
         />
 
