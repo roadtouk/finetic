@@ -110,7 +110,7 @@ export function CastScrollArea({ people, mediaId }: CastScrollAreaProps) {
                 </div>
                 <figcaption className="pt-3 text-xs text-center text-muted-foreground max-w-24">
                   <p
-                    className="font-semibold text-foreground truncate transition-colors"
+                    className="font-semibold text-foreground truncate group-hover:underline"
                     title={person.Name!}
                   >
                     {person.Name}

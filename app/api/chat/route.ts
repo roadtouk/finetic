@@ -1,11 +1,13 @@
 import { google } from "@ai-sdk/google";
 import { convertToCoreMessages, streamText, tool } from "ai";
 import { z } from "zod";
-import { searchItems } from "@/app/actions/search";
+import { searchItems, searchPeople } from "@/app/actions/search";
 import {
   fetchMovies,
   fetchTVShows,
   fetchMediaDetails,
+  fetchPersonDetails,
+  fetchPersonFilmography,
   fetchResumeItems,
 } from "@/app/actions/media";
 import { fetchSeasons, fetchEpisodes } from "@/app/actions/tv-shows";
@@ -227,27 +229,30 @@ export async function POST(req: Request) {
             console.log("🔍 [getPeople] Tool called with query:", query);
             try {
               // Search for media first, then extract people from results
-              const results = await searchItems(query);
+              const results = await searchPeople(query);
               const people: Array<{ id: string; name: string; role?: string }> =
                 [];
 
+              console.log(results);
+
               // Extract people from search results
-              results.forEach((item) => {
-                if (item.People) {
-                  item.People.forEach((person) => {
-                    if (
-                      person.Name &&
-                      person.Name.toLowerCase().includes(query.toLowerCase())
-                    ) {
-                      people.push({
-                        id: person.Id || "",
-                        name: person.Name,
-                        role: person.Type! || person.Role,
-                      });
-                    }
-                  });
+              results.forEach((person) => {
+                if (person) {
+                  if (
+                    person.Name &&
+                    person.Name.toLowerCase().includes(query.toLowerCase()) &&
+                    person.Id // Only include people with valid IDs
+                  ) {
+                    people.push({
+                      id: person.Id,
+                      name: person.Name,
+                      role: person.Type!,
+                    });
+                  }
                 }
               });
+
+              console.log("[getPeople] Found people:", people);
 
               return {
                 success: true,
@@ -259,6 +264,84 @@ export async function POST(req: Request) {
                 success: false,
                 error: "Failed to search people",
                 people: [],
+              };
+            }
+          },
+        }),
+
+        getPersonDetails: tool({
+          description:
+            "Get detailed information about a specific person (actor, director, etc.)",
+          parameters: z.object({
+            personId: z.string().describe("The unique ID of the person"),
+          }),
+          execute: async ({ personId }) => {
+            console.log(
+              "👤 [getPersonDetails] Tool called with personId:",
+              personId
+            );
+            try {
+              const details = await fetchPersonDetails(personId);
+              if (!details) {
+                return {
+                  success: false,
+                  error: "Person not found",
+                };
+              }
+              return {
+                success: true,
+                person: {
+                  id: details.Id,
+                  name: details.Name,
+                  type: details.Type,
+                  overview: details.Overview,
+                  birthDate: details.PremiereDate,
+                  birthLocation: details.ProductionLocations?.[0],
+                },
+              };
+            } catch (error) {
+              return {
+                success: false,
+                error: "Failed to fetch person details",
+              };
+            }
+          },
+        }),
+
+        getPersonFilmography: tool({
+          description:
+            "Get filmography (movies and TV shows) for a specific person",
+          parameters: z.object({
+            personId: z.string().describe("The unique ID of the person"),
+            limit: z
+              .number()
+              .optional()
+              .describe("Number of items to retrieve (default: 20)"),
+          }),
+          execute: async ({ personId, limit = 20 }) => {
+            console.log("🎬 [getPersonFilmography] Tool called with:", {
+              personId,
+              limit,
+            });
+            try {
+              const filmography = await fetchPersonFilmography(personId);
+              return {
+                success: true,
+                filmography: filmography.slice(0, limit).map((item) => ({
+                  id: item.Id,
+                  name: item.Name,
+                  type: item.Type,
+                  year: item.ProductionYear,
+                  overview: item.Overview?.substring(0, 200) + "...",
+                  rating: item.CommunityRating,
+                })),
+                count: filmography.length,
+              };
+            } catch (error) {
+              return {
+                success: false,
+                error: "Failed to fetch person filmography",
+                filmography: [],
               };
             }
           },
@@ -748,12 +831,9 @@ Return ONLY the timestamp in HH:MM:SS format (e.g., 02:25.6 or 1:23:45.2):`;
                 explanation: explanation.trim(),
                 currentTime: {
                   timestamp: currentTimestamp,
-                  formatted: `${Math.floor(
-                    currentTimestamp / 60
-                  )}:${String(Math.floor(currentTimestamp % 60)).padStart(
-                    2,
-                    "0"
-                  )}`,
+                  formatted: `${Math.floor(currentTimestamp / 60)}:${String(
+                    Math.floor(currentTimestamp % 60)
+                  ).padStart(2, "0")}`,
                 },
                 contextSubtitles: relevantSubtitles.length,
                 closestDialogue: {
@@ -939,6 +1019,8 @@ Return ONLY the timestamp in HH:MM:SS format (e.g., 02:25.6 or 1:23:45.2):`;
       - getTVShows: Get a list of recent TV shows from the library  
       - continueWatching: Fetch list of media items that are currently being watched/continued
       - getPeople: Search for people (directors, actors) related to media content
+      - getPersonDetails: Get detailed information about a specific person (actor, director, etc.)
+      - getPersonFilmography: Get filmography (movies and TV shows) for a specific person
       - getGenres: Get list of all genres available in the library
       - getMediaDetails: Get detailed information about a specific movie or TV show
       - getSeasons: Get seasons for a TV show
@@ -953,6 +1035,9 @@ Return ONLY the timestamp in HH:MM:SS format (e.g., 02:25.6 or 1:23:45.2):`;
       - "Show me my continue watching list" → Use continueWatching tool
       - "What genres are available?" → Use getGenres tool
       - "Find movies with Tom Hanks" → Use getPeople tool with query "Tom Hanks"
+      - "Tell me about Tom Hanks" → Use getPeople to find person ID, then getPersonDetails
+      - "What movies has Tom Hanks been in?" → Use getPeople to find person ID, then getPersonFilmography
+      - "Show me Leonardo DiCaprio's filmography" → Use getPeople to find person ID, then getPersonFilmography
       - "Show me seasons of Breaking Bad" → Search for the show first, then use getSeasons
       - "What's in my watchlist?" → Use getWatchlist tool
       - "Show me recent movies" → Use getMovies tool
@@ -1032,6 +1117,12 @@ Return ONLY the timestamp in HH:MM:SS format (e.g., 02:25.6 or 1:23:45.2):`;
       2. Search for the media using searchMedia with the corrected query
       3. If found, use playMedia to start playing the content directly in the media player
       4. Be helpful and conversational
+
+      When users ask about a person's filmography (e.g., "What is Florence Pugh in?", "What movies has X been in?", "Show me Y's filmography"):
+      1. Use getPeople to search for the person and get their ID
+      2. If found and ID is valid, use getPersonFilmography with that person's ID
+      3. Present the results in a helpful format
+      4. If no valid ID is found, inform the user that the person couldn't be found in the library
 
       When you use the navigateToMedia tool, make sure to mention that you're navigating to the content by name only, without including the URL.
       When you use the playMedia tool, make sure to mention that you're starting playback of the content.`,

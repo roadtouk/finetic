@@ -1,7 +1,6 @@
 import { fetchLibraryItems, getLibraryById } from "@/app/actions";
 import { getAuthData } from "@/app/actions/utils";
 import { AuthErrorHandler } from "@/app/components/auth-error-handler";
-import { AuroraBackground } from "@/components/aurora-background";
 import Aurora from "@/components/Aurora/Aurora";
 import { LibraryMediaList } from "@/components/library-media-list";
 import { SearchBar } from "@/components/search-component";

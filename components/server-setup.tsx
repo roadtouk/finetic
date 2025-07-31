@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { AuroraBackground } from "@/components/aurora-background";
+import { VibrantAuroraBackground } from "@/components/vibrant-aurora-background";
 import { checkServerHealth, setServerUrl } from "@/app/actions";
 import { Loader2, Server, CheckCircle, Globe, Shield } from "lucide-react";
 
@@ -103,8 +103,7 @@ export function ServerSetup({ onNext }: ServerSetupProps) {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 relative w-full">
-      <AuroraBackground
-        colorStops={["#AA5CC3", "#00A4DC", "#AA5CC3"]}
+      <VibrantAuroraBackground
         amplitude={0.8}
         blend={0.4}
       />

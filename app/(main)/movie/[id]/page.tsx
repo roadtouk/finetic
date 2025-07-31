@@ -44,7 +44,7 @@ export default async function Movie({
     ]);
 
     return (
-      <div className="min-h-screen overflow-hidden md:pr-1 pb-16">
+      <div className="min-h-screen overflow-hidden md:pr-1 pb-8">
         {/* Aurora background based on poster colors */}
         <VibrantAuroraBackground
           posterUrl={primaryImage}
@@ -263,12 +263,12 @@ export default async function Movie({
           </div>
         </div>
         {/* Cast section */}
-        <div className="mt-16 px-6">
+        <div className="mt-12 px-6">
           <CastScrollArea people={movie.People!} mediaId={id} />
         </div>
 
         {similarItems && (
-          <div className="mt-16 px-6">
+          <div className="mt-8 px-6">
             <MediaSection
               sectionName="More Like This"
               mediaItems={similarItems as BaseItemDto[]}

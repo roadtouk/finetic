@@ -5,7 +5,7 @@ import {
 } from "@/app/actions";
 import { SearchBar } from "@/components/search-component";
 import { Badge } from "@/components/ui/badge";
-import { AuroraBackground } from "@/components/aurora-background";
+import { VibrantAuroraBackground } from "@/components/vibrant-aurora-background";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { BaseItemKind } from "@jellyfin/sdk/lib/generated-client/models/base-item-kind";
@@ -80,8 +80,8 @@ export default async function PersonPage({
     return (
       <div className="min-h-screen overflow-hidden md:pr-1 pb-16">
         {/* Aurora background */}
-        <AuroraBackground
-          imageUrl={primaryImage}
+        <VibrantAuroraBackground
+          posterUrl={primaryImage}
           className={`fixed inset-0 z-0 pointer-events-none opacity-30`}
         />
 

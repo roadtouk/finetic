@@ -2,7 +2,7 @@ import { fetchMovies, fetchTVShows } from "@/app/actions";
 import { fetchResumeItems } from "@/app/actions/media";
 import { getAuthData } from "@/app/actions/utils";
 import { AuthErrorHandler } from "@/app/components/auth-error-handler";
-import { AuroraBackground } from "@/components/aurora-background";
+import { VibrantAuroraBackground } from "@/components/vibrant-aurora-background";
 import { MediaSection } from "@/components/media-section";
 import { SearchBar } from "@/components/search-component";
 import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models/base-item-dto";
@@ -35,8 +35,8 @@ export default async function Home() {
   return (
     <AuthErrorHandler error={authError}>
       <div className="relative px-4 py-6 max-w-full overflow-hidden">
-        <AuroraBackground
-          colorStops={["#AA5CC3", "#00A4DC", "#AA5CC3"]}
+        <VibrantAuroraBackground
+          // colorStops={["#AA5CC3", "#00A4DC", "#AA5CC3"]}
           amplitude={0.8}
           blend={0.4}
         />

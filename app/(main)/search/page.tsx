@@ -1,5 +1,5 @@
 import { getServerUrl, searchItems } from "@/app/actions";
-import { AuroraBackground } from "@/components/aurora-background";
+import { VibrantAuroraBackground } from "@/components/vibrant-aurora-background";
 import { MediaCard } from "@/components/media-card";
 import { PersonCard } from "@/components/person-card";
 import { EpisodeCard } from "@/components/episode-card";
@@ -54,7 +54,7 @@ export default async function Search({
 
   return (
     <div className="relative px-4 py-6 max-w-full">
-      <AuroraBackground
+<VibrantAuroraBackground
         colorStops={["#AA5CC3", "#00A4DC", "#AA5CC3"]}
         amplitude={0.8}
         blend={0.4}

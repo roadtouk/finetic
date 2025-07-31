@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { CastScrollArea } from "@/components/cast-scrollarea";
 import { SeasonEpisodes } from "@/components/season-episodes";
 import { MediaSection } from "@/components/media-section";
-import { AuroraBackground } from "@/components/aurora-background";
+import { VibrantAuroraBackground } from "@/components/vibrant-aurora-background";
 import { VibrantLogo } from "@/components/vibrant-logo";
 import { VibrantBackdrop } from "@/components/vibrant-backdrop";
 import { RottenTomatoesIcon } from "@/components/icons/rotten-tomatoes";
@@ -48,10 +48,10 @@ export default async function Episode({
     ]);
 
     return (
-      <div className="min-h-screen overflow-hidden md:pr-1 pb-16">
+      <div className="min-h-screen overflow-hidden md:pr-1 pb-8">
         {/* Aurora background based on backdrop image */}
-        <AuroraBackground
-          imageUrl={backdropImage}
+        <VibrantAuroraBackground
+          posterUrl={backdropImage}
           className="fixed inset-0 z-0 pointer-events-none opacity-30"
         />
 
@@ -226,12 +226,12 @@ export default async function Episode({
         </div>
 
         {/* Cast section */}
-        <div className="mt-16 px-6">
+        <div className="mt-12 px-6">
           <CastScrollArea people={episode.People!} mediaId={id} />
         </div>
 
         {similarItems && (
-          <div className="mt-16 px-6">
+          <div className="mt-8 px-6">
             <MediaSection
               sectionName="More Like This"
               mediaItems={similarItems as BaseItemDto[]}

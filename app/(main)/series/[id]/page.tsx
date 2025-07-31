@@ -12,7 +12,7 @@ import { CastScrollArea } from "@/components/cast-scrollarea";
 import { fetchSeasons } from "@/app/actions/tv-shows";
 import { MediaCard } from "@/components/media-card";
 import { MediaSection } from "@/components/media-section";
-import { AuroraBackground } from "@/components/aurora-background";
+import { VibrantAuroraBackground } from "@/components/vibrant-aurora-background";
 import { VibrantLogo } from "@/components/vibrant-logo";
 import { VibrantBackdrop } from "@/components/vibrant-backdrop";
 import { RottenTomatoesIcon } from "@/components/icons/rotten-tomatoes";
@@ -48,10 +48,10 @@ export default async function Show({
     ]);
 
     return (
-      <div className="min-h-screen overflow-hidden md:pr-1 pb-16">
+      <div className="min-h-screen overflow-hidden md:pr-1 pb-8">
         {/* Aurora background based on backdrop image */}
-        <AuroraBackground
-          imageUrl={backdropImage}
+        <VibrantAuroraBackground
+          posterUrl={backdropImage}
           className="fixed inset-0 z-0 pointer-events-none opacity-30"
         />
 
@@ -283,12 +283,12 @@ export default async function Show({
           </div>
         </div>
         {/* Cast section */}
-        <div className="mt-16 px-6">
+        <div className="mt-12 px-6">
           <CastScrollArea people={show.People!} mediaId={id} />
         </div>
 
         {similarItems && (
-          <div className="mt-16 px-6">
+          <div className="mt-8 px-6">
             <MediaSection
               sectionName="More Like This"
               mediaItems={similarItems as BaseItemDto[]}

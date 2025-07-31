@@ -7,7 +7,7 @@ import {
 import { fetchEpisodes } from "@/app/actions/tv-shows";
 import { SearchBar } from "@/components/search-component";
 import { Badge } from "@/components/ui/badge";
-import { AuroraBackground } from "@/components/aurora-background";
+import { VibrantAuroraBackground } from "@/components/vibrant-aurora-background";
 import { VibrantLogo } from "@/components/vibrant-logo";
 import { SeasonEpisodes } from "@/components/season-episodes";
 import { SeriesPlayButton } from "@/components/series-play-button";
@@ -46,10 +46,10 @@ export default async function SeasonPage({
     ]);
 
     return (
-      <div className="min-h-screen overflow-hidden md:pr-1 pb-16">
+      <div className="min-h-screen overflow-hidden md:pr-1 pb-8">
         {/* Aurora background based on backdrop image */}
-        <AuroraBackground
-          imageUrl={backdropImage}
+        <VibrantAuroraBackground
+          posterUrl={backdropImage}
           className="fixed inset-0 z-0 pointer-events-none opacity-30"
         />
 
@@ -165,13 +165,13 @@ export default async function SeasonPage({
         </div>
 
         {/* Cast section */}
-        <div className="mt-16 px-6">
+        <div className="mt-12 px-6">
           <CastScrollArea people={season.People!} mediaId={id} />
         </div>
 
         {/* More Like This section */}
         {similarItems && (
-          <div className="mt-16 px-6">
+          <div className="mt-8 px-6">
             <MediaSection
               sectionName="More Like This"
               mediaItems={similarItems as BaseItemDto[]}
