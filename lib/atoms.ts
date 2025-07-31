@@ -52,9 +52,25 @@ export const skipToTimestampAtom = atom(null, (get, set, timestamp: number) => {
   setTimeout(() => set(skipTimestampAtom, null), 100);
 });
 
-// Aurora background colors
+// Aurora background colors with transition support
 export const auroraColorsAtom = atom<string[]>([
   "#AA5CC3",
   "#00A4DC", 
   "#AA5CC3"
 ]);
+
+export const previousAuroraColorsAtom = atom<string[]>([
+  "#AA5CC3",
+  "#00A4DC", 
+  "#AA5CC3"
+]);
+
+// Derived atom for updating colors with transition
+export const updateAuroraColorsAtom = atom(
+  null,
+  (get, set, newColors: string[]) => {
+    const currentColors = get(auroraColorsAtom);
+    set(previousAuroraColorsAtom, currentColors);
+    set(auroraColorsAtom, newColors);
+  }
+);

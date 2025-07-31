@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { Vibrant } from "node-vibrant/browser";
 import { AuroraBackground } from "@/components/aurora-background";
-import { auroraColorsAtom } from "@/lib/atoms";
+import { auroraColorsAtom, updateAuroraColorsAtom } from "@/lib/atoms";
 
 interface VibrantAuroraBackgroundProps {
   posterUrl?: string;
@@ -19,7 +19,8 @@ export function VibrantAuroraBackground({
   amplitude = 0.8,
   blend = 0.4,
 }: VibrantAuroraBackgroundProps) {
-  const [colorStops, setColorStops] = useAtom(auroraColorsAtom);
+  const [colorStops] = useAtom(auroraColorsAtom);
+  const updateColors = useSetAtom(updateAuroraColorsAtom);
 
   useEffect(() => {
     if (!posterUrl) return;
@@ -68,7 +69,7 @@ export function VibrantAuroraBackground({
             }
           }
           
-          setColorStops(finalColors);
+          updateColors(finalColors);
         }
       } catch (error) {
         console.warn("Failed to extract colors from poster:", error);
@@ -80,7 +81,7 @@ export function VibrantAuroraBackground({
   }, [posterUrl]);
 
   return (
-    <AuroraBackground
+  <AuroraBackground
       colorStops={colorStops}
       amplitude={amplitude}
       blend={blend}
