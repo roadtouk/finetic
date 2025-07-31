@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { MediaCard } from "@/components/media-card";
 import { Play, ChevronLeft, ChevronRight } from "lucide-react";
 import { ScrollArea, ScrollBar } from "./ui/scroll-area";
+import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 
 interface MediaSectionProps {
   sectionName: string;
-  mediaItems: any[];
+  mediaItems: BaseItemDto[] | any[];
   serverUrl: string;
   onViewAll?: () => void;
   isLoading?: boolean;

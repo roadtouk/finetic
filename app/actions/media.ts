@@ -11,11 +11,11 @@ import { ItemSortBy } from "@jellyfin/sdk/lib/generated-client/models/item-sort-
 import { SortOrder } from "@jellyfin/sdk/lib/generated-client/models/sort-order";
 import { UserLibraryApi } from "@jellyfin/sdk/lib/generated-client/api/user-library-api";
 import { getItemsApi } from "@jellyfin/sdk/lib/utils/api/items-api";
+import { getLibraryApi } from "@jellyfin/sdk/lib/utils/api/library-api";
 import { createJellyfinInstance } from "@/lib/utils";
 
 // Type aliases for easier use
 type JellyfinItem = BaseItemDto;
-
 
 // Helper function to get auth data from cookies
 async function getAuthData() {
@@ -191,7 +191,9 @@ export async function fetchPersonDetails(
   }
 }
 
-export async function fetchPersonFilmography(personId: string): Promise<JellyfinItem[]> {
+export async function fetchPersonFilmography(
+  personId: string
+): Promise<JellyfinItem[]> {
   try {
     const { serverUrl, user } = await getAuthData();
     const jellyfinInstance = createJellyfinInstance();
@@ -268,24 +270,24 @@ export async function reportPlaybackStart(
     api.accessToken = user.AccessToken;
 
     const response = await fetch(`${serverUrl}/Sessions/Playing`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `MediaBrowser Token="${user.AccessToken}"`
+        "Content-Type": "application/json",
+        Authorization: `MediaBrowser Token="${user.AccessToken}"`,
       },
       body: JSON.stringify({
         ItemId: itemId,
         MediaSourceId: mediaSourceId,
         PlaySessionId: playSessionId,
         CanSeek: true,
-        QueueableMediaTypes: ['Video', 'Audio'],
-        PlayMethod: 'Transcode'
-      })
+        QueueableMediaTypes: ["Video", "Audio"],
+        PlayMethod: "Transcode",
+      }),
     });
 
     return response.ok;
   } catch (error) {
-    console.error('Failed to report playback start:', error);
+    console.error("Failed to report playback start:", error);
     return false;
   }
 }
@@ -304,10 +306,10 @@ export async function reportPlaybackProgress(
     api.accessToken = user.AccessToken;
 
     const response = await fetch(`${serverUrl}/Sessions/Playing/Progress`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `MediaBrowser Token="${user.AccessToken}"`
+        "Content-Type": "application/json",
+        Authorization: `MediaBrowser Token="${user.AccessToken}"`,
       },
       body: JSON.stringify({
         ItemId: itemId,
@@ -315,13 +317,13 @@ export async function reportPlaybackProgress(
         PlaySessionId: playSessionId,
         PositionTicks: positionTicks,
         IsPaused: isPaused,
-        PlayMethod: 'Transcode'
-      })
+        PlayMethod: "Transcode",
+      }),
     });
 
     return response.ok;
   } catch (error) {
-    console.error('Failed to report playback progress:', error);
+    console.error("Failed to report playback progress:", error);
     return false;
   }
 }
@@ -339,23 +341,23 @@ export async function reportPlaybackStopped(
     api.accessToken = user.AccessToken;
 
     const response = await fetch(`${serverUrl}/Sessions/Playing/Stopped`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `MediaBrowser Token="${user.AccessToken}"`
+        "Content-Type": "application/json",
+        Authorization: `MediaBrowser Token="${user.AccessToken}"`,
       },
       body: JSON.stringify({
         ItemId: itemId,
         MediaSourceId: mediaSourceId,
         PlaySessionId: playSessionId,
         PositionTicks: positionTicks,
-        PlayMethod: 'Transcode'
-      })
+        PlayMethod: "Transcode",
+      }),
     });
 
     return response.ok;
   } catch (error) {
-    console.error('Failed to report playback stopped:', error);
+    console.error("Failed to report playback stopped:", error);
     return false;
   }
 }
@@ -384,7 +386,7 @@ export async function fetchLibraryItems(
         ItemFields.CanDelete,
         ItemFields.PrimaryImageAspectRatio,
         ItemFields.Overview,
-        ItemFields.DateCreated
+        ItemFields.DateCreated,
       ],
     });
 
@@ -392,6 +394,37 @@ export async function fetchLibraryItems(
       items: data.Items || [],
       totalRecordCount: data.TotalRecordCount || 0,
     };
+  } catch (error) {
+    console.error("Failed to fetch library items:", error);
+
+    // If it's an authentication error, throw an error with a special flag
+    if (isAuthError(error)) {
+      console.log("Authentication error detected, clearing auth data");
+      const authError = new Error(
+        "Authentication expired. Please sign in again."
+      );
+      (authError as any).isAuthError = true;
+      throw authError;
+    }
+
+    return { items: [], totalRecordCount: 0 };
+  }
+}
+
+export async function fetchSimilarItems(itemId: string, limit: number = 12) {
+  try {
+    const { serverUrl, user } = await getAuthData();
+    const jellyfinInstance = createJellyfinInstance();
+    const api = jellyfinInstance.createApi(serverUrl);
+    api.accessToken = user.AccessToken;
+
+    const { data } = await getLibraryApi(api).getSimilarItems({
+      itemId: itemId,
+      userId: user.Id,
+      limit,
+    });
+
+    return data.Items || [];
   } catch (error) {
     console.error("Failed to fetch library items:", error);
 

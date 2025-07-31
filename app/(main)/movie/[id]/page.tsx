@@ -1,8 +1,14 @@
-import { fetchMediaDetails, getImageUrl } from "@/app/actions";
+import {
+  fetchMediaDetails,
+  getImageUrl,
+  fetchSimilarItems,
+  getServerUrl,
+} from "@/app/actions";
 import { MediaActions } from "@/components/media-actions";
 import { SearchBar } from "@/components/search-component";
 import { Badge } from "@/components/ui/badge";
 import { CastScrollArea } from "@/components/cast-scrollarea";
+import { MediaSection } from "@/components/media-section";
 import { AuroraBackground } from "@/components/aurora-background";
 import { VibrantLogo } from "@/components/vibrant-logo";
 import { VibrantBackdrop } from "@/components/vibrant-backdrop";
@@ -10,6 +16,8 @@ import { RottenTomatoesIcon } from "@/components/icons/rotten-tomatoes";
 import { TextAnimate } from "@/components/magicui/text-animate";
 import { Star } from "lucide-react";
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 
 export default async function Movie({
   params,
@@ -28,6 +36,12 @@ export default async function Movie({
     const primaryImage = await getImageUrl(id, "Primary");
     const backdropImage = await getImageUrl(id, "Backdrop");
     const logoImage = await getImageUrl(id, "Logo");
+
+    // Fetch similar items and server URL for the More Like This section
+    const [similarItems, serverUrl] = await Promise.all([
+      fetchSimilarItems(id, 12),
+      getServerUrl(),
+    ]);
 
     return (
       <div className="min-h-screen overflow-hidden md:pr-1 pb-16">
@@ -68,7 +82,7 @@ export default async function Movie({
         </div>
 
         {/* Content section */}
-        <div className="relative z-10 -mt-54 md:pl-6 bg-background/95 dark:bg-background/50 backdrop-blur-xl rounded-2xl mx-4">
+        <div className="relative z-10 -mt-54 md:pl-6 bg-background/95 dark:bg-background/50 backdrop-blur-xl rounded-2xl mx-4 pb-6">
           <div className="flex flex-col md:flex-row mx-auto">
             {/* Movie poster */}
             <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 justify-center flex md:block z-50 mt-6">
@@ -185,13 +199,21 @@ export default async function Movie({
                         <span className="text-sm font-medium text-muted-foreground min-w-fit">
                           Director:
                         </span>
-                        <span className="text-sm">
+                        <div className="flex flex-wrap gap-1">
                           {movie.People.filter(
                             (person) => person.Type === "Director"
-                          )
-                            .map((director) => director.Name)
-                            .join(", ")}
-                        </span>
+                          ).map((director, index, array) => (
+                            <span key={director.Id} className="text-sm">
+                              <Link
+                                href={`/person/${director.Id}`}
+                                className="hover:underline cursor-pointer"
+                              >
+                                {director.Name}
+                              </Link>
+                              {index < array.length - 1 && ", "}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
 
@@ -203,13 +225,21 @@ export default async function Movie({
                         <span className="text-sm font-medium text-muted-foreground min-w-fit">
                           Writers:
                         </span>
-                        <span className="text-sm">
+                        <div className="flex flex-wrap gap-1">
                           {movie.People.filter(
                             (person) => person.Type === "Writer"
-                          )
-                            .map((writer) => writer.Name)
-                            .join(", ")}
-                        </span>
+                          ).map((writer, index, array) => (
+                            <span key={writer.Id} className="text-sm">
+                              <Link
+                                href={`/person/${writer.Id}`}
+                                className="hover:underline cursor-pointer"
+                              >
+                                {writer.Name}
+                              </Link>
+                              {index < array.length - 1 && ", "}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
 
@@ -233,9 +263,20 @@ export default async function Movie({
           </div>
         </div>
         {/* Cast section */}
-        <div className="mt-16 md:px-0 ml-6">
+        <div className="mt-16 px-6">
           <CastScrollArea people={movie.People!} mediaId={id} />
         </div>
+
+        {similarItems && (
+          <div className="mt-16 px-6">
+            <MediaSection
+              sectionName="More Like This"
+              mediaItems={similarItems as BaseItemDto[]}
+              serverUrl={serverUrl!}
+            />
+          </div>
+        )}
+        {/* More Like This section */}
       </div>
     );
   } catch (error: any) {

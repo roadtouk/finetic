@@ -21,6 +21,7 @@ export {
   reportPlaybackProgress,
   reportPlaybackStopped,
   fetchLibraryItems,
+  fetchSimilarItems,
 } from './media';
 
 // TV show actions
