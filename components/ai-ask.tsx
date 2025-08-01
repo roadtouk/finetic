@@ -3,6 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { AnimatePresence, motion } from "framer-motion";
 import React, { useEffect, useState } from "react";
+import { useAtom } from "jotai";
 import { BorderBeam } from "./magicui/border-beam";
 import { Button } from "./ui/button";
 import {
@@ -39,32 +40,21 @@ import { Badge } from "./ui/badge";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { useTheme } from "next-themes";
 import { MediaLinkCard } from "./media-link-card";
+import { isAIAskOpenAtom } from "@/lib/atoms";
 
 interface AIAskProps {
-  isOpen?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  // Props are optional now since we're using the atom
 }
 
-const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
+const AIAsk = ({}: AIAskProps = {}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [searchSummary, setSearchSummary] = useState<string>("");
   const [summaryLoading, setSummaryLoading] = useState(false);
-  const [internalIsOpen, setInternalIsOpen] = useState<boolean>(false);
+  const [isAskOpen, setIsAskOpen] = useAtom(isAIAskOpenAtom);
   const [currentTool, setCurrentTool] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { isPlayerVisible } = useMediaPlayer();
-
-  // Use external state if provided, otherwise use internal state
-  const isAskOpen =
-    externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
-  const setIsAskOpen = (open: boolean) => {
-    if (onOpenChange) {
-      onOpenChange(open);
-    } else {
-      setInternalIsOpen(open);
-    }
-  };
 
   // Function to handle opening AI Ask, with fullscreen exit if needed
   const handleOpenAsk = async () => {

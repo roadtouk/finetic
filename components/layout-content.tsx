@@ -63,7 +63,7 @@ export function LayoutContent({ children }: LayoutContentProps) {
           <div className="flex-1 overflow-y-auto no-scrollbar">{children}</div>
         </SidebarInset>
       </SidebarProvider>
-      <AIAsk isOpen={isAIAskOpen} onOpenChange={setIsAIAskOpen} />
+      <AIAsk />
       <GlobalMediaPlayer onToggleAIAsk={handleToggleAIAsk} />
     </div>
   );
