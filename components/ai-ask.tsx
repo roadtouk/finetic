@@ -300,6 +300,7 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
       getEpisodes: { icon: List, label: "Getting Episodes" },
       getWatchlist: { icon: Star, label: "Getting Watchlist" },
       themeToggle: { icon: Palette, label: "Changing Theme" },
+      findSimilarItems: { icon: Search, label: "Finding Similar" },
     };
     return toolMap[toolName] || { icon: Search, label: "Working..." };
   };
@@ -315,6 +316,15 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
         invocation.result.filmography
     );
 
+    // Check if this message has tool invocations with similar items data
+    const similarItemsInvocation = message.toolInvocations?.find(
+      (invocation: any) => 
+        invocation.toolName === "findSimilarItems" && 
+        "result" in invocation &&
+        invocation.result.success &&
+        invocation.result.similarItems
+    );
+
     if (filmographyInvocation) {
       const filmography = filmographyInvocation.result.filmography;
       return (
@@ -328,6 +338,29 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
                 year={item.year?.toString()}
                 rating={item.rating}
                 href={item.href}
+                type={item.type === "Movie" ? "movie" : "series"}
+                mediaId={item.id}
+                className="mb-2"
+              />
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (similarItemsInvocation) {
+      const similarItems = similarItemsInvocation.result.similarItems;
+      return (
+        <div className="space-y-3 w-full">
+          <Markdown>{message.content}</Markdown>
+          <div className="space-y-2">
+            {similarItems.map((item: any, itemIndex: number) => (
+              <MediaLinkCard
+                key={`similar-${item.id}-${itemIndex}`}
+                title={item.name}
+                year={item.year?.toString()}
+                rating={item.rating}
+                href={item.type === "Movie" ? `/movie/${item.id}` : `/series/${item.id}`}
                 type={item.type === "Movie" ? "movie" : "series"}
                 mediaId={item.id}
                 className="mb-2"

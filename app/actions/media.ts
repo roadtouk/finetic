@@ -438,6 +438,6 @@ export async function fetchSimilarItems(itemId: string, limit: number = 12) {
       throw authError;
     }
 
-    return { items: [], totalRecordCount: 0 };
+    return [];
   }
 }

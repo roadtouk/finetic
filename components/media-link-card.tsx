@@ -3,6 +3,7 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Star, Film, Tv } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -10,6 +11,8 @@ import Image from "next/image";
 import { getImageUrl } from "@/app/actions";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
+import { useAtom } from "jotai";
+import { isAIAskOpenAtom } from "@/lib/atoms";
 
 interface MediaLinkCardProps {
   title: string;
@@ -34,6 +37,14 @@ export const MediaLinkCard: React.FC<MediaLinkCardProps> = ({
   const [imageUrl, setImageUrl] = React.useState<string | null>(null);
   const [imageLoading, setImageLoading] = React.useState(true);
   const { serverUrl } = useAuth();
+  const [isAIAskOpen, setIsAIAskOpen] = useAtom(isAIAskOpenAtom);
+
+  const handleClick = () => {
+    // Close the AIAsk component when the media link card is clicked
+    if (isAIAskOpen) {
+      setIsAIAskOpen(false);
+    }
+  };
 
   return (
     <Link
@@ -43,15 +54,24 @@ export const MediaLinkCard: React.FC<MediaLinkCardProps> = ({
       )}
       draggable={false}
       href={href}
+      onClick={handleClick}
     >
       <div className="flex gap-3 items-center w-full">
         {/* Poster */}
-        <div className="relative h-min w-10 rounded-md overflow-hidden bg-muted/30 flex-shrink-0">
+        <div className="relative h-16 w-10 rounded-sm overflow-hidden bg-muted/30 flex-shrink-0">
+          {imageLoading && (
+            <Skeleton className="absolute inset-0 w-full h-full" />
+          )}
           <img
             src={`${serverUrl}/Items/${mediaId}/Images/Primary?maxHeight=324&maxWidth=576&quality=50`}
             alt={title}
-            className="object-cover transition-transform duration-200"
+            className={cn(
+              "object-cover transition-transform duration-200 w-full h-full",
+              imageLoading ? "opacity-0" : "opacity-100"
+            )}
             sizes="64px"
+            onLoad={() => setImageLoading(false)}
+            onError={() => setImageLoading(false)}
           />
         </div>
 

@@ -9,6 +9,7 @@ import {
   fetchPersonDetails,
   fetchPersonFilmography,
   fetchResumeItems,
+  fetchSimilarItems,
 } from "@/app/actions/media";
 import { fetchSeasons, fetchEpisodes } from "@/app/actions/tv-shows";
 import { getSubtitleContent } from "@/app/actions/subtitles";
@@ -1006,6 +1007,36 @@ Return ONLY the timestamp in HH:MM:SS format (e.g., 02:25.6 or 1:23:45.2):`;
             }
           },
         }),
+
+        findSimilarItems: tool({
+          description: "Find similar items by media ID",
+          parameters: z.object({
+            mediaId: z.string().describe("The unique ID of the media item"),
+          }),
+          execute: async ({ mediaId }) => {
+            console.log("🔗 [findSimilarItems] Tool called with mediaId:", mediaId);
+            try {
+              const results = await fetchSimilarItems(mediaId);
+              return {
+                success: true,
+                similarItems: results?.map((item) => ({
+                  id: item.Id,
+                  name: item.Name,
+                  type: item.Type,
+                  year: item.ProductionYear,
+                  overview: item.Overview,
+                })),
+                count: results.length,
+              };
+            } catch (error) {
+              return {
+                success: false,
+                error: "Failed to find similar items",
+                similarItems: [],
+              };
+            }
+          },
+        }),
       },
       system: `You are Finetic, an AI assistant for a media library application (similar to Plex/Jellyfin). 
       Help users navigate to movies and TV shows, search for content, and provide information about media.
@@ -1032,6 +1063,7 @@ Return ONLY the timestamp in HH:MM:SS format (e.g., 02:25.6 or 1:23:45.2):`;
       - explainScene: Analyze subtitles around current timestamp to explain what's happening in the scene
       - analyzeMedia: Analyze the entire movie/episode using subtitles to answer questions about plot, characters, themes, etc.
       - themeToggle: Toggle or set the application theme between light, dark, or system mode
+      - findSimilarItems: Find similar movies and TV shows based on a media ID
       
       USAGE EXAMPLES:
       - "Show me my continue watching list" → Use continueWatching tool
@@ -1061,6 +1093,8 @@ Return ONLY the timestamp in HH:MM:SS format (e.g., 02:25.6 or 1:23:45.2):`;
       - "Change to light theme" → Use themeToggle tool with action "light"
       - "Toggle the theme" → Use themeToggle tool with action "toggle"
       - "Switch to system theme" → Use themeToggle tool with action "system"
+      - "Find similar movies to Inception" → Use searchMedia to find Inception, then use findSimilarItems with its ID
+      - "What's similar to this movie?" → Use findSimilarItems with the current media ID (if available)
 
       SEARCH CORRECTION: Before searching, automatically correct common abbreviations and shorthand terms to their full proper names:
       - "b99" → "Brooklyn Nine-Nine"
