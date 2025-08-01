@@ -214,58 +214,58 @@ export interface RemoteImagesResponse {
 
 export async function fetchRemoteImages(
   itemId: string,
-  type: 'Primary' | 'Backdrop' | 'Logo' | 'Thumb' = 'Primary',
+  type: "Primary" | "Backdrop" | "Logo" | "Thumb" = "Primary",
   startIndex: number = 0,
   limit: number = 30,
   includeAllLanguages: boolean = false
 ): Promise<RemoteImagesResponse> {
   const { serverUrl, user } = await getAuthData();
-  
+
   const params = new URLSearchParams({
     type,
     startIndex: startIndex.toString(),
     limit: limit.toString(),
-    IncludeAllLanguages: includeAllLanguages.toString()
+    IncludeAllLanguages: includeAllLanguages.toString(),
   });
-  
+
   const url = `${serverUrl}/Items/${itemId}/RemoteImages?${params.toString()}`;
-  
+
   const response = await fetch(url, {
     headers: {
-      'Authorization': `MediaBrowser Token="${user.AccessToken}"`
-    }
+      Authorization: `MediaBrowser Token="${user.AccessToken}"`,
+    },
   });
-  
+
   if (!response.ok) {
     throw new Error(`Failed to fetch remote images: ${response.statusText}`);
   }
-  
+
   return response.json();
 }
 
 export async function downloadRemoteImage(
   itemId: string,
-  imageType: 'Primary' | 'Backdrop' | 'Logo' | 'Thumb',
+  imageType: "Primary" | "Backdrop" | "Logo" | "Thumb",
   imageUrl: string,
   providerName: string
 ): Promise<void> {
   const { serverUrl, user } = await getAuthData();
-  
+
   const params = new URLSearchParams({
     Type: imageType,
     ImageUrl: imageUrl,
-    ProviderName: providerName
+    ProviderName: providerName,
   });
-  
+
   const url = `${serverUrl}/Items/${itemId}/RemoteImages/Download?${params.toString()}`;
-  
+
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Authorization': `MediaBrowser Token="${user.AccessToken}"`
-    }
+      Authorization: `MediaBrowser Token="${user.AccessToken}"`,
+    },
   });
-  
+
   if (!response.ok) {
     throw new Error(`Failed to download remote image: ${response.statusText}`);
   }
@@ -286,19 +286,19 @@ export async function fetchCurrentImages(
   itemId: string
 ): Promise<CurrentImage[]> {
   const { serverUrl, user } = await getAuthData();
-  
+
   const url = `${serverUrl}/Items/${itemId}/Images`;
-  
+
   const response = await fetch(url, {
     headers: {
-      'Authorization': `MediaBrowser Token="${user.AccessToken}"`
-    }
+      Authorization: `MediaBrowser Token="${user.AccessToken}"`,
+    },
   });
-  
+
   if (!response.ok) {
     throw new Error(`Failed to fetch current images: ${response.statusText}`);
   }
-  
+
   return response.json();
 }
 
@@ -308,20 +308,22 @@ export async function reorderBackdropImage(
   newIndex: number
 ): Promise<void> {
   const { serverUrl, user } = await getAuthData();
-  console.log(`Reordering backdrop image for item ${itemId} from index ${currentIndex} to ${newIndex}`);
-  
+  console.log(
+    `Reordering backdrop image for item ${itemId} from index ${currentIndex} to ${newIndex}`
+  );
+
   const url = `${serverUrl}/Items/${itemId}/Images/Backdrop/${currentIndex}/Index?newIndex=${newIndex}`;
   console.log(`Reorder URL: ${url}`);
-  
+
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Authorization': `MediaBrowser Token="${user.AccessToken}"`
-    }
+      Authorization: `MediaBrowser Token="${user.AccessToken}"`,
+    },
   });
 
   console.log(`Reorder response status: ${response.status}`);
-  
+
   if (!response.ok) {
     throw new Error(`Failed to reorder backdrop image: ${response.statusText}`);
   }
@@ -333,21 +335,23 @@ export async function deleteImage(
   imageIndex?: number
 ): Promise<void> {
   const { serverUrl, user } = await getAuthData();
-  
+
   let url = `${serverUrl}/Items/${itemId}/Images/${imageType}`;
   if (imageIndex !== undefined) {
     url += `/${imageIndex}`;
   }
-  
+
   const response = await fetch(url, {
-    method: 'DELETE',
+    method: "DELETE",
     headers: {
-      'Authorization': `MediaBrowser Token="${user.AccessToken}"`
-    }
+      Authorization: `MediaBrowser Token="${user.AccessToken}"`,
+    },
   });
-  
+
   if (!response.ok) {
-    throw new Error(`Failed to delete ${imageType} image: ${response.statusText}`);
+    throw new Error(
+      `Failed to delete ${imageType} image: ${response.statusText}`
+    );
   }
 }
 
@@ -376,38 +380,63 @@ export async function getUserWithPolicy(
   itemId: string
 ): Promise<UserWithPolicy | null> {
   const { serverUrl, user } = await getAuthData();
-  
+
   const url = `${serverUrl}/Users/${userId}/Items/${itemId}`;
-  
+
   try {
     const response = await fetch(url, {
       headers: {
-        'Authorization': `MediaBrowser Token="${user.AccessToken}"`
-      }
+        Authorization: `MediaBrowser Token="${user.AccessToken}"`,
+      },
     });
-    
+
     if (!response.ok) {
       console.error(`Failed to fetch user policy: ${response.statusText}`);
       return null;
     }
-    
+
     // The API endpoint you provided actually returns item data with user context
     // Let's get the current user data instead, which includes the policy
     const userUrl = `${serverUrl}/Users/${userId}`;
     const userResponse = await fetch(userUrl, {
       headers: {
-        'Authorization': `MediaBrowser Token="${user.AccessToken}"`
-      }
+        Authorization: `MediaBrowser Token="${user.AccessToken}"`,
+      },
     });
-    
+
     if (!userResponse.ok) {
       console.error(`Failed to fetch user data: ${userResponse.statusText}`);
       return null;
     }
-    
+
     return userResponse.json();
   } catch (error) {
-    console.error('Failed to fetch user with policy:', error);
+    console.error("Failed to fetch user with policy:", error);
     return null;
+  }
+}
+
+export async function fetchScheduledTasks(): Promise<any[]> {
+  const { serverUrl, user } = await getAuthData();
+
+  const url = `${serverUrl}/ScheduledTasks`;
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `MediaBrowser Token="${user.AccessToken}"`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch scheduled tasks: ${response.statusText}`
+      );
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error("Error fetching scheduled tasks:", error);
+    return [];
   }
 }
