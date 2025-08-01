@@ -36,7 +36,6 @@ export default async function Home() {
     <AuthErrorHandler error={authError}>
       <div className="relative px-4 py-6 max-w-full overflow-hidden">
         <VibrantAuroraBackground
-          // colorStops={["#AA5CC3", "#00A4DC", "#AA5CC3"]}
           amplitude={0.8}
           blend={0.4}
         />

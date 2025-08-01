@@ -54,11 +54,7 @@ export default async function Search({
 
   return (
     <div className="relative px-4 py-6 max-w-full">
-<VibrantAuroraBackground
-        colorStops={["#AA5CC3", "#00A4DC", "#AA5CC3"]}
-        amplitude={0.8}
-        blend={0.4}
-      />
+      <VibrantAuroraBackground amplitude={0.8} blend={0.4} />
 
       <div className="relative z-[9999] mb-8">
         <div className="mb-6">
