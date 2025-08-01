@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { Play } from "lucide-react";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
+
+import { decode } from "blurhash";
 
 export function MediaCard({
   item,
@@ -25,6 +27,7 @@ export function MediaCard({
   fullWidth?: boolean;
 }) {
   const { playMedia, setIsPlayerVisible } = useMediaPlayer();
+  console.log("MediaCard item:", item);
 
   let linkHref = "";
   if (item.Type === "Movie") {
@@ -46,10 +49,38 @@ export function MediaCard({
     imageItemId = item.ParentThumbItemId || item.Id;
   }
 
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [blurDataUrl, setBlurDataUrl] = useState<string | null>(null);
+
   // Adjust image URL parameters based on container type
   const imageUrl = continueWatching
     ? `${serverUrl}/Items/${imageItemId}/Images/${imageType}?maxHeight=324&maxWidth=576&quality=100`
     : `${serverUrl}/Items/${imageItemId}/Images/${imageType}?maxHeight=432&maxWidth=288&quality=100`;
+
+  // Get blur hash
+  const imageTag = item.Type === "Episode" ? item.ParentThumbImageTag : item.ImageTags?.[imageType]!;
+  const blurHash = item.ImageBlurHashes?.[imageType]?.[imageTag] || "";
+
+  // Decode blur hash
+  useEffect(() => {
+    if (blurHash && !blurDataUrl) {
+      try {
+        const pixels = decode(blurHash, 32, 32);
+        const canvas = document.createElement('canvas');
+        canvas.width = 32;
+        canvas.height = 32;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          const imageData = ctx.createImageData(32, 32);
+          imageData.data.set(pixels);
+          ctx.putImageData(imageData, 0, 0);
+          setBlurDataUrl(canvas.toDataURL());
+        }
+      } catch (error) {
+        console.error('Error decoding blur hash:', error);
+      }
+    }
+  }, [blurHash, blurDataUrl]);
 
   // Calculate progress percentage from resume position
   let progressPercentage = percentageWatched;
@@ -89,17 +120,31 @@ export function MediaCard({
       >
         <Link href={linkHref} draggable={false} className="block w-full h-full">
           {serverUrl ? (
-            <div
-              className={`w-full h-full transition duration-200 shadow-lg shadow-sm group-hover:shadow-md ${
-                progressPercentage > 0 ? "rounded-t-md" : "rounded-md"
-              }`}
-              style={{
-                backgroundImage: `url(${imageUrl})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
-              }}
-            />
+            <>
+              {/* Blur hash placeholder */}
+              {blurDataUrl && !imageLoaded && (
+                <div
+                  className={`absolute inset-0 w-full h-full ${
+                    progressPercentage > 0 ? "rounded-t-md" : "rounded-md"
+                  }`}
+                  style={{
+                    backgroundImage: `url(${blurDataUrl})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    filter: "blur(0px)",
+                  }}
+                />
+              )}
+              {/* Actual image */}
+              <img
+                src={imageUrl}
+                alt={item.Name || ""}
+                className={`w-full h-full object-cover transition-opacity duration-300 shadow-lg shadow-sm group-hover:shadow-md ${
+                  progressPercentage > 0 ? "rounded-t-md" : "rounded-md"
+                } ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+                onLoad={() => setImageLoaded(true)}
+              />
+            </>
           ) : (
             <div className="w-full h-full bg-gray-800 flex items-center justify-center rounded-lg shadow-lg">
               <div className="text-white/60 text-sm">No Image</div>
