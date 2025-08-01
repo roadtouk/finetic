@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { JellyfinItem, MediaSourceInfo } from "@/types/jellyfin";
 import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   MediaPlayer,
   MediaPlayerControls,
@@ -616,20 +617,33 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
         )}
 
         {/* Skip Intro Button */}
-        {shouldShowSkipIntro() && (
-          <div className="fixed bottom-24 right-6 z-[1000000]">
-            <Button
-              onClick={handleSkipIntro}
-              className="text-white text-center bg-black/20 rounded text-lg px-8 py-6 font-medium shadow-xl backdrop-blur-md hover:bg-black/40 transition"
+        <AnimatePresence>
+          {shouldShowSkipIntro() && (
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.8 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.8 }}
+              transition={{
+                type: "spring",
+                damping: 10,
+                stiffness: 100,
+                duration: 0.3
+              }}
+              className="fixed bottom-24 right-6 z-[1000000]"
             >
-              Skip Intro
-            </Button>
-          </div>
-        )}
+              <Button
+                onClick={handleSkipIntro}
+                className="text-white text-center bg-black/30 rounded-lg text-lg px-8 py-6 font-medium shadow-xl backdrop-blur-md hover:bg-black/40 transition"
+              >
+                Skip Intro
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <MediaPlayerControls className="flex-col items-start gap-2.5 px-6 pb-4 z-[9999]">
           <Button
             variant="ghost"
-            className="fixed left-4 top-4 z-10"
+            className="fixed left-4 top-4 z-10 hover:backdrop-blur-md"
             onClick={handleClose}
           >
             <ArrowLeft className="h-4 w-4" />

@@ -77,7 +77,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
         </TextShimmer>
       </div>
     ),
-    []
+    [serverUrl]
   );
 
   // Debounced search
