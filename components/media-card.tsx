@@ -59,7 +59,7 @@ export function MediaCard({
 
   // Get blur hash
   const imageTag = item.Type === "Episode" ? item.ParentThumbImageTag : item.ImageTags?.[imageType]!;
-  const blurHash = item.ImageBlurHashes?.[imageType]?.[imageTag] || "";
+  const blurHash = item.ImageBlurHashes?.[imageType]?.[imageTag!] || "";
 
   // Decode blur hash
   useEffect(() => {
@@ -124,7 +124,7 @@ export function MediaCard({
               {/* Blur hash placeholder */}
               {blurDataUrl && !imageLoaded && (
                 <div
-                  className={`absolute inset-0 w-full h-full ${
+                  className={`absolute inset-0 w-full h-full transition-opacity duration-300 ${
                     progressPercentage > 0 ? "rounded-t-md" : "rounded-md"
                   }`}
                   style={{
@@ -141,7 +141,7 @@ export function MediaCard({
                 alt={item.Name || ""}
                 className={`w-full h-full object-cover transition-opacity duration-300 shadow-lg shadow-sm group-hover:shadow-md ${
                   progressPercentage > 0 ? "rounded-t-md" : "rounded-md"
-                } ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+                } opacity-100`}
                 onLoad={() => setImageLoaded(true)}
               />
             </>
