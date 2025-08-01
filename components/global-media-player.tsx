@@ -22,7 +22,14 @@ import {
   MediaPlayerTooltip,
 } from "@/components/ui/media-player";
 import MuxVideo from "@mux/mux-video-react";
-import { ArrowLeft, RotateCcw, RotateCw, Users, Ship } from "lucide-react";
+import {
+  ArrowLeft,
+  RotateCcw,
+  RotateCw,
+  Users,
+  Ship,
+  FastForward,
+} from "lucide-react";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 import {
   getStreamUrl,
@@ -624,7 +631,7 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
               exit={{ opacity: 0, y: 20, scale: 0.8 }}
               transition={{
                 type: "spring",
-                damping: 10,
+                damping: 20,
                 stiffness: 100,
                 duration: 0.8,
               }}
@@ -632,8 +639,9 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
             >
               <Button
                 onClick={handleSkipIntro}
-                className="text-white text-center bg-black/30 rounded-lg text-lg px-8 py-6 font-medium shadow-xl hover:bg-black/40 transition"
+                className="text-white text-center bg-black/30 rounded-lg text-lg py-6 px-6! font-medium shadow-xl hover:bg-black/40 transition"
               >
+                <FastForward className="w-4 h-4 fill-white scale-110 mr-1.5" />
                 Skip Intro
               </Button>
             </motion.div>
