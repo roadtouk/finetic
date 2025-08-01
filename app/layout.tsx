@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Poppins } from "next/font/google";
+import { Geist_Mono, Poppins, Inter } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { SettingsProvider } from "@/contexts/settings-context";
 import { Toaster } from "sonner";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
@@ -36,7 +36,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <meta name="apple-mobile-web-app-title" content="Finetic" />
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} antialiased`}
+        className={`${inter.variable} ${geistMono.variable} ${poppins.variable} antialiased`}
       >
         <ThemeProvider
           attribute="class"
