@@ -95,9 +95,9 @@ export function MediaCard({
               }`}
               style={{
                 backgroundImage: `url(${imageUrl})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat'
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
               }}
             />
           ) : (

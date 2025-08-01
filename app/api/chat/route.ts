@@ -46,7 +46,9 @@ export async function POST(req: Request) {
                   communityRating: item.CommunityRating,
                   criticRating: item.CriticRating,
                   officialRating: item.OfficialRating,
-                  runtime: item.RunTimeTicks,
+                  runtime: item.RunTimeTicks
+                    ? Math.round(item.RunTimeTicks / 600000000)
+                    : null,
                   overview: item.Overview,
                 })),
                 count: results.length,
@@ -213,7 +215,9 @@ export async function POST(req: Request) {
                   communityRating: item.CommunityRating,
                   criticRating: item.CriticRating,
                   officialRating: item.OfficialRating,
-                  runtime: item.RunTimeTicks,
+                  runtime: item.RunTimeTicks
+                    ? Math.round(item.RunTimeTicks / 600000000)
+                    : null,
                   overview: item.Overview?.substring(0, 200) + "...",
                   userProgress: item.UserData?.PlayedPercentage,
                 })),
@@ -349,7 +353,9 @@ export async function POST(req: Request) {
                   communityRating: item.CommunityRating,
                   criticRating: item.CriticRating,
                   officialRating: item.OfficialRating,
-                  runtime: item.RunTimeTicks,
+                  runtime: item.RunTimeTicks
+                    ? Math.round(item.RunTimeTicks / 600000000)
+                    : null,
                   overview: item.Overview?.substring(0, 200) + "...",
                 })),
                 count: filmography.length,
@@ -556,7 +562,9 @@ export async function POST(req: Request) {
                   communityRating: item.CommunityRating,
                   criticRating: item.CriticRating,
                   officialRating: item.OfficialRating,
-                  runtime: item.RunTimeTicks,
+                  runtime: item.RunTimeTicks
+                    ? Math.round(item.RunTimeTicks / 600000000)
+                    : null,
                   overview: item.Overview?.substring(0, 200) + "...",
                 })),
                 count: allItems.length,
@@ -1047,7 +1055,9 @@ Return ONLY the timestamp in HH:MM:SS format (e.g., 02:25.6 or 1:23:45.2):`;
                   communityRating: item.CommunityRating,
                   criticRating: item.CriticRating,
                   officialRating: item.OfficialRating,
-                  runtime: item.RunTimeTicks,
+                  runtime: item.RunTimeTicks
+                    ? Math.round(item.RunTimeTicks / 600000000)
+                    : null,
                   overview: item.Overview,
                 })),
                 count: results.length,

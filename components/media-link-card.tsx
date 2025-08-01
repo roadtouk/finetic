@@ -105,7 +105,7 @@ export const MediaLinkCard: React.FC<MediaLinkCardProps> = ({
           {/* Poster/Thumbnail */}
           <div
             className={cn(
-              "relative rounded-sm overflow-hidden bg-muted/30 flex-shrink-0 w-10",
+              "relative rounded-sm overflow-hidden bg-muted/30 flex-shrink-0 w-10"
             )}
           >
             {imageLoading && (
@@ -200,7 +200,7 @@ export const MediaLinkCard: React.FC<MediaLinkCardProps> = ({
               {/* Runtime */}
               {runtime ? (
                 <Badge variant="outline" className="px-1.5 py-0.5 h-auto">
-                  {Math.floor(runtime / 60)}h {runtime % 60}m
+                  {Math.floor(runtime / 60) > 0 ? `${Math.floor(runtime / 60)}h ` : ''}{runtime % 60}m
                 </Badge>
               ) : null}
             </div>
