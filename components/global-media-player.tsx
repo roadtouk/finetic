@@ -46,6 +46,7 @@ import {
   getDeviceName,
   isHLSSupported,
 } from "@/lib/device-detection";
+import { fetchIntroOutro } from "@/app/actions/media";
 
 interface GlobalMediaPlayerProps {
   onToggleAIAsk?: () => void;
@@ -78,7 +79,10 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
   >([]);
   const [loading, setLoading] = useState(false);
   const [fetchingSubtitles, setFetchingSubtitles] = useState(false);
-  const [currentSubtitle, setCurrentSubtitle] = useState<{ text: string; positionTop: boolean } | null>(null);
+  const [currentSubtitle, setCurrentSubtitle] = useState<{
+    text: string;
+    positionTop: boolean;
+  } | null>(null);
   const [subtitleData, setSubtitleData] = useState<
     Array<{
       timestamp: number;
@@ -96,6 +100,12 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
     }>
   >([]);
 
+  // Intro/Outro segments state
+  const [mediaSegments, setMediaSegments] = useState<{
+    intro?: { startTime: number; endTime: number };
+    outro?: { startTime: number; endTime: number };
+  }>({});
+
   // Progress tracking state
   const [playSessionId, setPlaySessionId] = useState<string | null>(null);
   const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
@@ -112,23 +122,26 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
   const ticksToSeconds = (ticks: number) => ticks / 10000000;
 
   // Helper function to convert Jellyfin chapters to expected format
-  const convertJellyfinChapters = useCallback((jellyfinChapters: any[]) => {
-    if (!jellyfinChapters || jellyfinChapters.length === 0) return [];
-    
-    return jellyfinChapters.map((chapter, index) => {
-      const startTime = ticksToSeconds(chapter.StartPositionTicks);
-      const nextChapter = jellyfinChapters[index + 1];
-      const endTime = nextChapter 
-        ? ticksToSeconds(nextChapter.StartPositionTicks)
-        : duration; // Use video duration for the last chapter
-      
-      return {
-        startTime,
-        endTime,
-        text: chapter.Name || `Chapter ${index + 1}`
-      };
-    });
-  }, [duration]);
+  const convertJellyfinChapters = useCallback(
+    (jellyfinChapters: any[]) => {
+      if (!jellyfinChapters || jellyfinChapters.length === 0) return [];
+
+      return jellyfinChapters.map((chapter, index) => {
+        const startTime = ticksToSeconds(chapter.StartPositionTicks);
+        const nextChapter = jellyfinChapters[index + 1];
+        const endTime = nextChapter
+          ? ticksToSeconds(nextChapter.StartPositionTicks)
+          : duration; // Use video duration for the last chapter
+
+        return {
+          startTime,
+          endTime,
+          text: chapter.Name || `Chapter ${index + 1}`,
+        };
+      });
+    },
+    [duration]
+  );
 
   const { serverUrl } = useAuth();
 
@@ -236,10 +249,12 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
   const handleDurationChange = useCallback(() => {
     if (videoRef.current) {
       setDuration(videoRef.current.duration);
-      
+
       // Update chapters end times when duration is available
       if (mediaDetails?.Chapters && mediaDetails.Chapters.length > 0) {
-        const convertedChapters = convertJellyfinChapters(mediaDetails.Chapters);
+        const convertedChapters = convertJellyfinChapters(
+          mediaDetails.Chapters
+        );
         setChapters(convertedChapters);
       }
     }
@@ -289,6 +304,7 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
     setDuration(0);
     setFetchingSubtitles(false);
     setCurrentMediaWithSource(null);
+    setMediaSegments({});
   }, [stopProgressTracking, cleanupBlobUrls]);
 
   const handleVideoEnded = useCallback(async () => {
@@ -301,13 +317,13 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
     // Check if subtitle should be positioned at top (an8)
     const shouldPositionTop = /\{\\an8\}/.test(text);
     // Remove ASS/SSA positioning tags like {\an8}
-    let processedText = text.replace(/\{\\an\d+\}/g, '');
+    let processedText = text.replace(/\{\\an\d+\}/g, "");
     // Convert \n to <br> tags for line breaks
     processedText = processedText.replace(/\n/g, "<br>");
-    
+
     return {
       text: processedText,
-      positionTop: shouldPositionTop
+      positionTop: shouldPositionTop,
     };
   }, []);
 
@@ -418,6 +434,36 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
         } else {
           setChapters([]);
         }
+
+        // Fetch intro/outro segments asynchronously
+        try {
+          const segments = await fetchIntroOutro(
+            currentMedia.selectedVersion?.Id || sourceToUse.Id!
+          );
+          console.log("Fetched intro/outro segments:", segments);
+          if (segments && segments.Items) {
+            const processedSegments: {
+              intro?: { startTime: number; endTime: number };
+              outro?: { startTime: number; endTime: number };
+            } = {};
+
+            segments.Items.forEach((segment) => {
+              const startTime = ticksToSeconds(segment.StartTicks);
+              const endTime = ticksToSeconds(segment.EndTicks);
+              if (segment.Type === "Intro") {
+                processedSegments.intro = { startTime, endTime };
+              } else if (segment.Type === "Outro") {
+                processedSegments.outro = { startTime, endTime };
+              }
+            });
+
+            setMediaSegments(processedSegments);
+            console.log("Media segments loaded:", processedSegments);
+          }
+        } catch (error) {
+          console.error("Failed to fetch intro/outro segments:", error);
+          setMediaSegments({});
+        }
       }
     } catch (error) {
       console.error("Failed to load media:", error);
@@ -441,6 +487,26 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
       setCurrentTime(skipTimestamp);
     }
   }, [skipTimestamp]);
+
+  // Skip intro handler
+  const handleSkipIntro = useCallback(() => {
+    if (mediaSegments.intro && videoRef.current) {
+      const skipToTime = mediaSegments.intro.endTime;
+      console.log(`Skipping intro to: ${skipToTime} seconds`);
+      videoRef.current.currentTime = skipToTime;
+      setCurrentTime(skipToTime);
+    }
+  }, [mediaSegments.intro]);
+
+  // Check if skip intro button should be shown
+  const shouldShowSkipIntro = useCallback(() => {
+    if (!mediaSegments.intro) return false;
+
+    const { startTime, endTime } = mediaSegments.intro;
+    // Show skip button if we're currently within the intro segment
+    // Add a 2 second buffer at the beginning to avoid showing it too early
+    return currentTime >= startTime + 2 && currentTime < endTime;
+  }, [mediaSegments.intro, currentTime]);
 
   // Clean up on unmount
   useEffect(() => {
@@ -543,10 +609,22 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
         {currentSubtitle && (
           <div
             className={`fixed left-1/2 transform -translate-x-1/2 z-[100] text-white text-center bg-black/20 px-4 py-2 rounded text-3xl font-medium shadow-xl backdrop-blur-md ${
-              currentSubtitle.positionTop ? 'top-[15%]' : 'bottom-[10%]'
+              currentSubtitle.positionTop ? "top-[15%]" : "bottom-[10%]"
             }`}
             dangerouslySetInnerHTML={{ __html: currentSubtitle.text }}
           />
+        )}
+
+        {/* Skip Intro Button */}
+        {shouldShowSkipIntro() && (
+          <div className="fixed bottom-24 right-6 z-[1000000]">
+            <Button
+              onClick={handleSkipIntro}
+              className="text-white text-center bg-black/20 rounded text-lg px-8 py-6 font-medium shadow-xl backdrop-blur-md hover:bg-black/40 transition"
+            >
+              Skip Intro
+            </Button>
+          </div>
         )}
         <MediaPlayerControls className="flex-col items-start gap-2.5 px-6 pb-4 z-[9999]">
           <Button

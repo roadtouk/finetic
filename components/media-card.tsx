@@ -27,7 +27,6 @@ export function MediaCard({
   fullWidth?: boolean;
 }) {
   const { playMedia, setIsPlayerVisible } = useMediaPlayer();
-  console.log("MediaCard item:", item);
 
   let linkHref = "";
   if (item.Type === "Movie") {

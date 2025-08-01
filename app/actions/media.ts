@@ -17,6 +17,21 @@ import { createJellyfinInstance } from "@/lib/utils";
 // Type aliases for easier use
 type JellyfinItem = BaseItemDto;
 
+// Media segment types
+export interface MediaSegment {
+  Id: string;
+  ItemId: string;
+  Type: "Intro" | "Outro";
+  StartTicks: number;
+  EndTicks: number;
+}
+
+interface MediaSegmentsResponse {
+  Items: MediaSegment[];
+  TotalRecordCount: number;
+  StartIndex: number;
+}
+
 // Helper function to get auth data from cookies
 async function getAuthData() {
   const cookieStore = await cookies();
@@ -442,5 +457,47 @@ export async function fetchSimilarItems(itemId: string, limit: number = 12) {
     }
 
     return [];
+  }
+}
+
+export async function fetchIntroOutro(itemId: string): Promise<MediaSegmentsResponse | null> {
+  try {
+    const { serverUrl, user } = await getAuthData();
+    const jellyfinInstance = createJellyfinInstance();
+    const api = jellyfinInstance.createApi(serverUrl);
+    api.accessToken = user.AccessToken;
+
+    const response = await fetch(
+      `${serverUrl}/MediaSegments/${itemId}?includeSegmentTypes=Outro&includeSegmentTypes=Intro`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `MediaBrowser Token="${user.AccessToken}"`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Intro/Outro segments:", data);
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch intro/outro segments:", error);
+
+    // If it's an authentication error, throw an error with a special flag
+    if (isAuthError(error)) {
+      console.log("Authentication error detected, clearing auth data");
+      const authError = new Error(
+        "Authentication expired. Please sign in again."
+      );
+      (authError as any).isAuthError = true;
+      throw authError;
+    }
+
+    return null;
   }
 }

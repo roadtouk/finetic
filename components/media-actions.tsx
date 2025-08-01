@@ -150,7 +150,6 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
 
   // Helper function to check if media has Dolby Digital audio
   const hasDolbyDigital = (source: MediaSourceInfo) => {
-    console.log("hasDolbyDigital - checking source:", source.Name);
     if (!source.MediaStreams) {
       console.log("hasDolbyDigital - no MediaStreams found");
       return false;
@@ -158,13 +157,6 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
 
     const audioStreams = source.MediaStreams.filter(
       (stream) => stream.Type === "Audio"
-    );
-    console.log(
-      "hasDolbyDigital - audio streams:",
-      audioStreams.map((s) => ({
-        Codec: s.Codec,
-        DisplayTitle: s.DisplayTitle,
-      }))
     );
 
     const result = source.MediaStreams.some(
@@ -175,13 +167,11 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
           stream.DisplayTitle?.toLowerCase().includes("dolby"))
     );
 
-    console.log("hasDolbyDigital - result:", result);
     return result;
   };
 
   // Helper function to check if media has Dolby TrueHD audio
   const hasDolbyTrueHD = (source: MediaSourceInfo) => {
-    console.log("hasDolbyTrueHD - checking source:", source.Name);
     if (!source.MediaStreams) {
       console.log("hasDolbyTrueHD - no MediaStreams found");
       return false;
@@ -189,13 +179,6 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
 
     const audioStreams = source.MediaStreams.filter(
       (stream) => stream.Type === "Audio"
-    );
-    console.log(
-      "hasDolbyTrueHD - audio streams:",
-      audioStreams.map((s) => ({
-        Codec: s.Codec,
-        DisplayTitle: s.DisplayTitle,
-      }))
     );
 
     const result = source.MediaStreams.some(
@@ -205,13 +188,11 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
           stream.DisplayTitle?.toLowerCase().includes("truehd"))
     );
 
-    console.log("hasDolbyTrueHD - result:", result);
     return result;
   };
 
   // Helper function to check if media has Dolby Vision video
   const hasDolbyVision = (source: MediaSourceInfo) => {
-    console.log("hasDolbyVision - checking source:", source.Name);
     if (!source.MediaStreams) {
       console.log("hasDolbyVision - no MediaStreams found");
       return false;
@@ -219,14 +200,6 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
 
     const videoStreams = source.MediaStreams.filter(
       (stream) => stream.Type === "Video"
-    );
-    console.log(
-      "hasDolbyVision - video streams:",
-      videoStreams.map((s) => ({
-        VideoRange: s.VideoRange,
-        DisplayTitle: s.DisplayTitle,
-        Profile: s.Profile,
-      }))
     );
 
     const result = source.MediaStreams.some(
@@ -237,12 +210,10 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
           stream.Profile?.toLowerCase().includes("dolby"))
     );
 
-    console.log("hasDolbyVision - result:", result);
     return result;
   };
 
   const hasDtsHd = (source: MediaSourceInfo) => {
-    console.log("hasDtsHd - checking source:", source.Name);
     if (!source.MediaStreams) {
       console.log("hasDtsHd - no MediaStreams found");
       return false;
@@ -252,21 +223,12 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
       (stream) => stream.Type === "Audio"
     );
 
-    console.log(
-      "hasDtsHd - audio streams:",
-      audioStreams.map((s) => ({
-        Codec: s.Codec,
-        DisplayTitle: s.DisplayTitle,
-      }))
-    );
-
     const result = source.MediaStreams.some(
       (stream) =>
         stream.Type === "Audio" &&
         (stream.Codec?.toLowerCase().includes("dts-hd") ||
           stream.DisplayTitle?.toLowerCase().includes("dts-hd"))
     );
-    console.log("hasDtsHd - result:", result);
     return result;
   };
 
@@ -362,7 +324,10 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
           />
         )}
       </div>
-      {(hasDolbyDigital(selectedVersion) || hasDolbyTrueHD(selectedVersion) || hasDolbyVision(selectedVersion) || hasDtsHd(selectedVersion)) && (
+      {(hasDolbyDigital(selectedVersion) ||
+        hasDolbyTrueHD(selectedVersion) ||
+        hasDolbyVision(selectedVersion) ||
+        hasDtsHd(selectedVersion)) && (
         <div className="flex gap-4 ml-1 h-8 items-center mt-4 -mb-2">
           {hasDolbyDigital(selectedVersion) && <DolbyDigital />}
           {hasDolbyTrueHD(selectedVersion) && <DolbyTrueHd />}
