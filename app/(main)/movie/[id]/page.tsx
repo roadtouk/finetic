@@ -162,7 +162,7 @@ export default async function Movie({
 
                 {movie.Taglines && (
                   <TextScramble className="text-lg text-muted-foreground mb-4 max-w-4xl text-center md:text-left font-poppins drop-shadow-md"
-                    duration={2}
+                    duration={1.2}
                   >
                     {movie.Taglines[0]}
                   </TextScramble>
