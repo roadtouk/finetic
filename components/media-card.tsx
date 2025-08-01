@@ -142,7 +142,15 @@ export function MediaCard({
                 className={`w-full h-full object-cover transition-opacity duration-300 shadow-lg shadow-sm group-hover:shadow-md ${
                   progressPercentage > 0 ? "rounded-t-md" : "rounded-md"
                 } opacity-100`}
-                onLoad={() => setImageLoaded(true)}
+                onLoad={(e) => {
+                  setImageLoaded(true);
+                }}
+                ref={(img) => {
+                  // Check if image is already loaded (cached)
+                  if (img && img.complete && img.naturalHeight !== 0) {
+                    setImageLoaded(true);
+                  }
+                }}
               />
             </>
           ) : (
