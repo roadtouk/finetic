@@ -627,13 +627,13 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
                 type: "spring",
                 damping: 10,
                 stiffness: 100,
-                duration: 0.3
+                duration: 0.8
               }}
-              className="fixed bottom-24 right-6 z-[1000000]"
+              className="fixed bottom-24 right-6 z-[1000000] backdrop-blur-md rounded-lg"
             >
               <Button
                 onClick={handleSkipIntro}
-                className="text-white text-center bg-black/30 rounded-lg text-lg px-8 py-6 font-medium shadow-xl backdrop-blur-md hover:bg-black/40 transition"
+                className="text-white text-center bg-black/30 rounded-lg text-lg px-8 py-6 font-medium shadow-xl hover:bg-black/40 transition"
               >
                 Skip Intro
               </Button>
