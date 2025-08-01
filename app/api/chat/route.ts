@@ -43,6 +43,10 @@ export async function POST(req: Request) {
                   name: item.Name,
                   type: item.Type, // Movie, Series, Episode
                   year: item.ProductionYear,
+                  communityRating: item.CommunityRating,
+                  criticRating: item.CriticRating,
+                  officialRating: item.OfficialRating,
+                  runtime: item.RunTimeTicks,
                   overview: item.Overview,
                 })),
                 count: results.length,
@@ -203,6 +207,10 @@ export async function POST(req: Request) {
                   name: item.Name,
                   type: item.Type,
                   year: item.ProductionYear,
+                  communityRating: item.CommunityRating,
+                  criticRating: item.CriticRating,
+                  officialRating: item.OfficialRating,
+                  runtime: item.RunTimeTicks,
                   overview: item.Overview?.substring(0, 200) + "...",
                   userProgress: item.UserData?.PlayedPercentage,
                 })),
@@ -310,7 +318,8 @@ export async function POST(req: Request) {
         }),
 
         getPersonFilmography: tool({
-          description: "Get filmography (movies and TV shows) for a specific person",
+          description:
+            "Get filmography (movies and TV shows) for a specific person",
           parameters: z.object({
             personId: z.string().describe("The unique ID of the person"),
             limit: z
@@ -326,7 +335,7 @@ export async function POST(req: Request) {
             try {
               const filmography = await fetchPersonFilmography(personId);
               const limitedFilmography = filmography.slice(0, limit);
-              
+
               return {
                 success: true,
                 filmography: limitedFilmography.map((item) => ({
@@ -334,9 +343,11 @@ export async function POST(req: Request) {
                   name: item.Name,
                   type: item.Type,
                   year: item.ProductionYear,
+                  communityRating: item.CommunityRating,
+                  criticRating: item.CriticRating,
+                  officialRating: item.OfficialRating,
+                  runtime: item.RunTimeTicks,
                   overview: item.Overview?.substring(0, 200) + "...",
-                  rating: item.CommunityRating,
-                  href: item.Type === "Movie" ? `/movie/${item.Id}` : `/series/${item.Id}`,
                 })),
                 count: filmography.length,
               };
@@ -539,8 +550,11 @@ export async function POST(req: Request) {
                   name: item.Name,
                   type: item.Type,
                   year: item.ProductionYear,
+                  communityRating: item.CommunityRating,
+                  criticRating: item.CriticRating,
+                  officialRating: item.OfficialRating,
+                  runtime: item.RunTimeTicks,
                   overview: item.Overview?.substring(0, 200) + "...",
-                  rating: item.CommunityRating,
                 })),
                 count: allItems.length,
               };
@@ -1014,7 +1028,10 @@ Return ONLY the timestamp in HH:MM:SS format (e.g., 02:25.6 or 1:23:45.2):`;
             mediaId: z.string().describe("The unique ID of the media item"),
           }),
           execute: async ({ mediaId }) => {
-            console.log("🔗 [findSimilarItems] Tool called with mediaId:", mediaId);
+            console.log(
+              "🔗 [findSimilarItems] Tool called with mediaId:",
+              mediaId
+            );
             try {
               const results = await fetchSimilarItems(mediaId);
               return {
@@ -1024,6 +1041,10 @@ Return ONLY the timestamp in HH:MM:SS format (e.g., 02:25.6 or 1:23:45.2):`;
                   name: item.Name,
                   type: item.Type,
                   year: item.ProductionYear,
+                  communityRating: item.CommunityRating,
+                  criticRating: item.CriticRating,
+                  officialRating: item.OfficialRating,
+                  runtime: item.RunTimeTicks,
                   overview: item.Overview,
                 })),
                 count: results.length,

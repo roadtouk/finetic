@@ -75,7 +75,7 @@ const AIAsk = ({}: AIAskProps = {}) => {
           setIsAskOpen(true);
         }, 100);
       } catch (error) {
-        console.warn('Failed to exit fullscreen:', error);
+        console.warn("Failed to exit fullscreen:", error);
         // Still try to open AI Ask even if fullscreen exit fails
         setIsAskOpen(true);
       }
@@ -93,24 +93,38 @@ const AIAsk = ({}: AIAskProps = {}) => {
       setIsFullscreen(!!document.fullscreenElement);
     };
 
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    document.addEventListener("mozfullscreenchange", handleFullscreenChange);
+    document.addEventListener("MSFullscreenChange", handleFullscreenChange);
 
     // Set initial state
     setIsFullscreen(!!document.fullscreenElement);
 
     return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        handleFullscreenChange
+      );
+      document.removeEventListener(
+        "mozfullscreenchange",
+        handleFullscreenChange
+      );
+      document.removeEventListener(
+        "MSFullscreenChange",
+        handleFullscreenChange
+      );
     };
   }, []);
 
-  const { playMedia, skipToTimestamp, currentMedia, currentMediaWithSource, currentTimestamp } =
-    useMediaPlayer();
+  const {
+    playMedia,
+    skipToTimestamp,
+    currentMedia,
+    currentMediaWithSource,
+    currentTimestamp,
+  } = useMediaPlayer();
 
   const {
     messages,
@@ -134,7 +148,7 @@ const AIAsk = ({}: AIAskProps = {}) => {
     onFinish: (message) => {
       // Clear the current tool badge when finished
       setCurrentTool(null);
-      
+
       // Check if the message contains navigation or play instructions
       if (message.toolInvocations) {
         for (const toolInvocation of message.toolInvocations) {
@@ -236,16 +250,17 @@ const AIAsk = ({}: AIAskProps = {}) => {
           const currentTheme = theme === "system" ? "light" : theme;
           const newTheme = currentTheme === "light" ? "dark" : "light";
           setTheme(newTheme);
-          toast.success(
-            `Theme switched to ${newTheme} mode`
-          );
+          toast.success(`Theme switched to ${newTheme} mode`);
         } else {
           // Set specific theme
           setTheme(result.theme);
-          const themeLabel = result.theme === "system" ? "system (follows device preference)" : `${result.theme} mode`;
+          const themeLabel =
+            result.theme === "system"
+              ? "system (follows device preference)"
+              : `${result.theme} mode`;
           toast.success(`Theme switched to ${themeLabel}`);
         }
-        
+
         // Don't auto-close for theme changes as they're quick and users might want to keep chatting
       } else if (!result.success && result.error) {
         toast.error(result.error);
@@ -301,8 +316,8 @@ const AIAsk = ({}: AIAskProps = {}) => {
   const renderMessageContent = (message: any, index: number) => {
     // Check if this message has tool invocations with filmography data
     const filmographyInvocation = message.toolInvocations?.find(
-      (invocation: any) => 
-        invocation.toolName === "getPersonFilmography" && 
+      (invocation: any) =>
+        invocation.toolName === "getPersonFilmography" &&
         "result" in invocation &&
         invocation.result.success &&
         invocation.result.filmography
@@ -310,8 +325,8 @@ const AIAsk = ({}: AIAskProps = {}) => {
 
     // Check if this message has tool invocations with similar items data
     const similarItemsInvocation = message.toolInvocations?.find(
-      (invocation: any) => 
-        invocation.toolName === "findSimilarItems" && 
+      (invocation: any) =>
+        invocation.toolName === "findSimilarItems" &&
         "result" in invocation &&
         invocation.result.success &&
         invocation.result.similarItems
@@ -326,12 +341,7 @@ const AIAsk = ({}: AIAskProps = {}) => {
             {filmography.map((item: any, itemIndex: number) => (
               <MediaLinkCard
                 key={`filmography-${item.id}-${itemIndex}`}
-                title={item.name}
-                year={item.year?.toString()}
-                rating={item.rating}
-                href={item.href}
-                type={item.type === "Movie" ? "movie" : "series"}
-                mediaId={item.id}
+                item={item}
                 className="mb-2"
                 index={itemIndex}
               />
@@ -350,13 +360,9 @@ const AIAsk = ({}: AIAskProps = {}) => {
             {similarItems.map((item: any, itemIndex: number) => (
               <MediaLinkCard
                 key={`similar-${item.id}-${itemIndex}`}
-                title={item.name}
-                year={item.year?.toString()}
-                rating={item.rating}
-                href={item.type === "Movie" ? `/movie/${item.id}` : `/series/${item.id}`}
-                type={item.type === "Movie" ? "movie" : "series"}
-                mediaId={item.id}
+                item={item}
                 className="mb-2"
+                index={itemIndex}
               />
             ))}
           </div>
@@ -534,15 +540,15 @@ const AIAsk = ({}: AIAskProps = {}) => {
           className="px-4 py-2 h-auto rounded-full flex items-center gap-2 backdrop-blur-[6px] border dark:bg-background/70 bg-background/90 dark:hover:bg-background/60!"
           onClick={handleOpenAsk}
         >
-            <Ship className="h-4 w-4" />
-            <span className="text-sm mr-0.5">Ask Navigator</span>
-            <Kbd.Root variant="outline" size="sm">
-              <Kbd.Key className="font-sans">⌘</Kbd.Key>
-              <Kbd.Separator />
+          <Ship className="h-4 w-4" />
+          <span className="text-sm mr-0.5">Ask Navigator</span>
+          <Kbd.Root variant="outline" size="sm">
+            <Kbd.Key className="font-sans">⌘</Kbd.Key>
+            <Kbd.Separator />
             <Kbd.Key>K</Kbd.Key>
-            </Kbd.Root>
-          </Button>
-        </motion.div>
+          </Kbd.Root>
+        </Button>
+      </motion.div>
     </div>
   );
 };
