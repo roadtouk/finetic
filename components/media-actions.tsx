@@ -35,6 +35,7 @@ import {
   formatRuntime,
 } from "@/lib/utils";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
+import { DolbyDigital, DolbyTrueHd, DolbyVision, DtsHd } from "./icons/codecs";
 
 interface MediaActionsProps {
   movie?: JellyfinItem;
@@ -100,7 +101,7 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
   if (!media.MediaSources || media.MediaSources.length === 0) {
     if (episode && media.Id) {
       return (
-        <div className="mb-6 flex items-center">
+        <div className="mb-4 flex items-center">
           <Button
             variant="outline"
             className="gap-0"
@@ -147,95 +148,227 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
     return detailsFromName;
   };
 
+  // Helper function to check if media has Dolby Digital audio
+  const hasDolbyDigital = (source: MediaSourceInfo) => {
+    console.log("hasDolbyDigital - checking source:", source.Name);
+    if (!source.MediaStreams) {
+      console.log("hasDolbyDigital - no MediaStreams found");
+      return false;
+    }
+
+    const audioStreams = source.MediaStreams.filter(
+      (stream) => stream.Type === "Audio"
+    );
+    console.log(
+      "hasDolbyDigital - audio streams:",
+      audioStreams.map((s) => ({
+        Codec: s.Codec,
+        DisplayTitle: s.DisplayTitle,
+      }))
+    );
+
+    const result = source.MediaStreams.some(
+      (stream) =>
+        stream.Type === "Audio" &&
+        (stream.Codec?.toLowerCase().includes("ac3") ||
+          stream.Codec?.toLowerCase().includes("dolby") ||
+          stream.DisplayTitle?.toLowerCase().includes("dolby"))
+    );
+
+    console.log("hasDolbyDigital - result:", result);
+    return result;
+  };
+
+  // Helper function to check if media has Dolby TrueHD audio
+  const hasDolbyTrueHD = (source: MediaSourceInfo) => {
+    console.log("hasDolbyTrueHD - checking source:", source.Name);
+    if (!source.MediaStreams) {
+      console.log("hasDolbyTrueHD - no MediaStreams found");
+      return false;
+    }
+
+    const audioStreams = source.MediaStreams.filter(
+      (stream) => stream.Type === "Audio"
+    );
+    console.log(
+      "hasDolbyTrueHD - audio streams:",
+      audioStreams.map((s) => ({
+        Codec: s.Codec,
+        DisplayTitle: s.DisplayTitle,
+      }))
+    );
+
+    const result = source.MediaStreams.some(
+      (stream) =>
+        stream.Type === "Audio" &&
+        (stream.Codec?.toLowerCase().includes("truehd") ||
+          stream.DisplayTitle?.toLowerCase().includes("truehd"))
+    );
+
+    console.log("hasDolbyTrueHD - result:", result);
+    return result;
+  };
+
+  // Helper function to check if media has Dolby Vision video
+  const hasDolbyVision = (source: MediaSourceInfo) => {
+    console.log("hasDolbyVision - checking source:", source.Name);
+    if (!source.MediaStreams) {
+      console.log("hasDolbyVision - no MediaStreams found");
+      return false;
+    }
+
+    const videoStreams = source.MediaStreams.filter(
+      (stream) => stream.Type === "Video"
+    );
+    console.log(
+      "hasDolbyVision - video streams:",
+      videoStreams.map((s) => ({
+        VideoRange: s.VideoRange,
+        DisplayTitle: s.DisplayTitle,
+        Profile: s.Profile,
+      }))
+    );
+
+    const result = source.MediaStreams.some(
+      (stream) =>
+        stream.Type === "Video" &&
+        (stream.VideoRange?.toLowerCase().includes("dovi") ||
+          stream.DisplayTitle?.toLowerCase().includes("dolby vision") ||
+          stream.Profile?.toLowerCase().includes("dolby"))
+    );
+
+    console.log("hasDolbyVision - result:", result);
+    return result;
+  };
+
+  const hasDtsHd = (source: MediaSourceInfo) => {
+    console.log("hasDtsHd - checking source:", source.Name);
+    if (!source.MediaStreams) {
+      console.log("hasDtsHd - no MediaStreams found");
+      return false;
+    }
+
+    const audioStreams = source.MediaStreams.filter(
+      (stream) => stream.Type === "Audio"
+    );
+
+    console.log(
+      "hasDtsHd - audio streams:",
+      audioStreams.map((s) => ({
+        Codec: s.Codec,
+        DisplayTitle: s.DisplayTitle,
+      }))
+    );
+
+    const result = source.MediaStreams.some(
+      (stream) =>
+        stream.Type === "Audio" &&
+        (stream.Codec?.toLowerCase().includes("dts-hd") ||
+          stream.DisplayTitle?.toLowerCase().includes("dts-hd"))
+    );
+    console.log("hasDtsHd - result:", result);
+    return result;
+  };
+
   return (
-    <div className="mb-6 flex items-center gap-2">
-      <Button
-        variant="default"
-        onClick={async () => {
-          // Set the current media in context, GlobalMediaPlayer will handle the rest
-          if (media) {
-            console.log("Playing media:", media.Name);
-            await playMedia({
-              id: media.Id!,
-              name: media.Name!,
-              type: media.Type as "Movie" | "Series" | "Episode",
-              resumePositionTicks: media.UserData?.PlaybackPositionTicks,
-              selectedVersion: selectedVersion,
-            });
-            setIsPlayerVisible(true);
-          }
-        }}
-        className="gap-2"
-      >
-        <Play className="h-4 w-4" />
-        {hasProgress ? "Resume" : "Play"}
-        {hasProgress ? (
-          <span className="text-sm opacity-75 pr-1">{timeLeft} left</span>
-        ) : null}
-      </Button>
-
-      {media.MediaSources.length > 1 ? (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild className="truncate">
-            <Button
-              variant="outline"
-              className="overflow-hidden whitespace-nowrap text-ellipsis fill-foreground gap-1.5 px-4"
-            >
-              {getMediaSourceDisplayName(selectedVersion)}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            {media.MediaSources.map((source: MediaSourceInfo) => (
-              <DropdownMenuItem
-                key={source.Id}
-                onSelect={() => {
-                  setSelectedVersion(source);
-                  // onStreamUrlChange(null); // Clear stream URL when changing version
-                }}
-                className="fill-foreground gap-3 flex justify-between"
-              >
-                {cutOffText(source.Name!, 64)}
-                <Badge variant="outline" className="bg-sidebar">
-                  {source.Size
-                    ? `${(source.Size / 1024 ** 3).toFixed(2)} GB`
-                    : "Unknown size"}
-                </Badge>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ) : (
+    <div className="flex flex-col gap-2 mb-6">
+      <div className="flex items-center gap-2">
         <Button
-          variant="outline"
-          className="overflow-hidden whitespace-nowrap text-ellipsis fill-foreground gap-1.5"
+          variant="default"
+          onClick={async () => {
+            // Set the current media in context, GlobalMediaPlayer will handle the rest
+            if (media) {
+              console.log("Playing media:", media.Name);
+              await playMedia({
+                id: media.Id!,
+                name: media.Name!,
+                type: media.Type as "Movie" | "Series" | "Episode",
+                resumePositionTicks: media.UserData?.PlaybackPositionTicks,
+                selectedVersion: selectedVersion,
+              });
+              setIsPlayerVisible(true);
+            }
+          }}
+          className="gap-2"
         >
-          {getMediaSourceDisplayName(selectedVersion)}
+          <Play className="h-4 w-4" />
+          {hasProgress ? "Resume" : "Play"}
+          {hasProgress ? (
+            <span className="text-sm opacity-75 pr-1">{timeLeft} left</span>
+          ) : null}
         </Button>
-      )}
 
-      <Button variant="outline" size="icon" onClick={download}>
-        <Download className="h-4 w-4" />
-      </Button>
-
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="icon">
-            <Info className="h-4 w-4" />
+        {media.MediaSources.length > 1 ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild className="truncate">
+              <Button
+                variant="outline"
+                className="overflow-hidden whitespace-nowrap text-ellipsis fill-foreground gap-1.5 px-4"
+              >
+                {getMediaSourceDisplayName(selectedVersion)}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {media.MediaSources.map((source: MediaSourceInfo) => (
+                <DropdownMenuItem
+                  key={source.Id}
+                  onSelect={() => {
+                    setSelectedVersion(source);
+                    // onStreamUrlChange(null); // Clear stream URL when changing version
+                  }}
+                  className="fill-foreground gap-3 flex justify-between"
+                >
+                  {cutOffText(source.Name!, 64)}
+                  <Badge variant="outline" className="bg-sidebar">
+                    {source.Size
+                      ? `${(source.Size / 1024 ** 3).toFixed(2)} GB`
+                      : "Unknown size"}
+                  </Badge>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Button
+            variant="outline"
+            className="overflow-hidden whitespace-nowrap text-ellipsis fill-foreground gap-1.5"
+          >
+            {getMediaSourceDisplayName(selectedVersion)}
           </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-2xl dark:bg-background/30 backdrop-blur-md z-[9999999999]">
-          <DialogHeader>
-            <DialogTitle>Media Info</DialogTitle>
-          </DialogHeader>
-          <MediaInfoDialog mediaSource={selectedVersion} />
-        </DialogContent>
-      </Dialog>
+        )}
 
-      {userPolicy?.IsAdministrator && (
-        <ImageEditorDialog
-          itemId={media.Id!}
-          itemName={media.Name || "Unknown"}
-        />
+        <Button variant="outline" size="icon" onClick={download}>
+          <Download className="h-4 w-4" />
+        </Button>
+
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="icon">
+              <Info className="h-4 w-4" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl dark:bg-background/30 backdrop-blur-md z-[9999999999]">
+            <DialogHeader>
+              <DialogTitle>Media Info</DialogTitle>
+            </DialogHeader>
+            <MediaInfoDialog mediaSource={selectedVersion} />
+          </DialogContent>
+        </Dialog>
+
+        {userPolicy?.IsAdministrator && (
+          <ImageEditorDialog
+            itemId={media.Id!}
+            itemName={media.Name || "Unknown"}
+          />
+        )}
+      </div>
+      {(hasDolbyDigital(selectedVersion) || hasDolbyTrueHD(selectedVersion) || hasDolbyVision(selectedVersion) || hasDtsHd(selectedVersion)) && (
+        <div className="flex gap-4 ml-1 h-8 items-center mt-4 -mb-2">
+          {hasDolbyDigital(selectedVersion) && <DolbyDigital />}
+          {hasDolbyTrueHD(selectedVersion) && <DolbyTrueHd />}
+          {hasDolbyVision(selectedVersion) && <DolbyVision />}
+          {hasDtsHd(selectedVersion) && <DtsHd />}
+        </div>
       )}
     </div>
   );
