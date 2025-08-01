@@ -41,6 +41,7 @@ import { AuroraText } from "@/components/magicui/aurora-text";
 import { useTheme } from "next-themes";
 import { MediaLinkCard } from "./media-link-card";
 import { isAIAskOpenAtom } from "@/lib/atoms";
+import { TextShimmer } from "./motion-primitives/text-shimmer";
 
 interface AIAskProps {
   // Props are optional now since we're using the atom
@@ -332,42 +333,116 @@ const AIAsk = ({}: AIAskProps = {}) => {
         invocation.result.similarItems
     );
 
+    // Check if this message has tool invocations with search results
+    const searchResultsInvocation = message.toolInvocations?.find(
+      (invocation: any) =>
+        invocation.toolName === "searchMedia" &&
+        "result" in invocation &&
+        invocation.result.success &&
+        invocation.result.results &&
+        invocation.result.results.length > 0
+    );
+
+    // Check if this message has tool invocations with movies data
+    const moviesInvocation = message.toolInvocations?.find(
+      (invocation: any) =>
+        invocation.toolName === "getMovies" &&
+        "result" in invocation &&
+        invocation.result.success &&
+        invocation.result.movies
+    );
+
+    // Check if this message has tool invocations with TV shows data
+    const tvShowsInvocation = message.toolInvocations?.find(
+      (invocation: any) =>
+        invocation.toolName === "getTVShows" &&
+        "result" in invocation &&
+        invocation.result.success &&
+        invocation.result.shows
+    );
+
+    // Check if this message has tool invocations with continue watching data
+    const continueWatchingInvocation = message.toolInvocations?.find(
+      (invocation: any) =>
+        invocation.toolName === "continueWatching" &&
+        "result" in invocation &&
+        invocation.result.success &&
+        invocation.result.resumeItems
+    );
+
+    // Check if this message has tool invocations with watchlist data
+    const watchlistInvocation = message.toolInvocations?.find(
+      (invocation: any) =>
+        invocation.toolName === "getWatchlist" &&
+        "result" in invocation &&
+        invocation.result.success &&
+        invocation.result.watchlist
+    );
+
+    // Helper function to render media cards
+    const renderMediaCards = (
+      items: any[],
+      keyPrefix: string,
+      title?: string
+    ) => (
+      <div className="space-y-3 w-full">
+        <Markdown>{message.content}</Markdown>
+        {title && (
+          <h4 className="font-medium text-sm text-muted-foreground">{title}</h4>
+        )}
+        <div className="space-y-2">
+          {items.map((item: any, itemIndex: number) => (
+            <MediaLinkCard
+              key={`${keyPrefix}-${item.id}-${itemIndex}`}
+              item={item}
+              className="mb-2"
+              index={itemIndex}
+            />
+          ))}
+        </div>
+      </div>
+    );
+
+    // Handle filmography results
     if (filmographyInvocation) {
       const filmography = filmographyInvocation.result.filmography;
-      return (
-        <div className="space-y-3 w-full">
-          <Markdown>{message.content}</Markdown>
-          <div className="space-y-2">
-            {filmography.map((item: any, itemIndex: number) => (
-              <MediaLinkCard
-                key={`filmography-${item.id}-${itemIndex}`}
-                item={item}
-                className="mb-2"
-                index={itemIndex}
-              />
-            ))}
-          </div>
-        </div>
-      );
+      return renderMediaCards(filmography, "filmography");
     }
 
+    // Handle similar items results
     if (similarItemsInvocation) {
       const similarItems = similarItemsInvocation.result.similarItems;
-      return (
-        <div className="space-y-3 w-full">
-          <Markdown>{message.content}</Markdown>
-          <div className="space-y-2">
-            {similarItems.map((item: any, itemIndex: number) => (
-              <MediaLinkCard
-                key={`similar-${item.id}-${itemIndex}`}
-                item={item}
-                className="mb-2"
-                index={itemIndex}
-              />
-            ))}
-          </div>
-        </div>
-      );
+      return renderMediaCards(similarItems, "similar");
+    }
+
+    // Handle search results
+    if (searchResultsInvocation) {
+      const searchResults = searchResultsInvocation.result.results;
+      return renderMediaCards(searchResults, "search");
+    }
+
+    // Handle movies results
+    if (moviesInvocation) {
+      const movies = moviesInvocation.result.movies;
+      return renderMediaCards(movies, "movies");
+    }
+
+    // Handle TV shows results
+    if (tvShowsInvocation) {
+      const shows = tvShowsInvocation.result.shows;
+      return renderMediaCards(shows, "shows");
+    }
+
+    // Handle continue watching results
+    if (continueWatchingInvocation) {
+      const resumeItems = continueWatchingInvocation.result.resumeItems;
+      return renderMediaCards(resumeItems, "resume");
+    }
+
+    // Handle watchlist results
+    if (watchlistInvocation) {
+      const watchlist = watchlistInvocation.result.watchlist;
+      return renderMediaCards(watchlist, "watchlist");
     }
 
     // Default markdown rendering for other messages
@@ -439,7 +514,7 @@ const AIAsk = ({}: AIAskProps = {}) => {
                               currentTool === "thinking" && "animate-spin"
                             )}
                           />
-                          <span>{label}</span>
+                          <TextShimmer>{label}</TextShimmer>
                         </Badge>
                       );
                     })()}

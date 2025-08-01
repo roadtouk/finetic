@@ -20,7 +20,9 @@ interface MediaLinkCardProps {
   item: {
     id: string;
     name: string;
-    type: "Movie" | "Series";
+    seriesId?: string;
+    seriesName?: string;
+    type: "Movie" | "Series" | "Episode";
     year?: number;
     communityRating?: number;
     criticRating?: number;
@@ -41,6 +43,8 @@ export const MediaLinkCard: React.FC<MediaLinkCardProps> = ({
   const {
     id: mediaId,
     name: title,
+    seriesId,
+    seriesName,
     year,
     communityRating,
     criticRating,
@@ -50,8 +54,20 @@ export const MediaLinkCard: React.FC<MediaLinkCardProps> = ({
 
   console.log("MediaLinkCard item:", item);
 
-  const type = item.type === "Movie" ? "movie" : "series";
-  const href = type === "movie" ? `/movie/${mediaId}` : `/series/${mediaId}`;
+  const getTypeAndHref = () => {
+    switch (item.type) {
+      case "Movie":
+        return { type: "movie", href: `/movie/${mediaId}` };
+      case "Series":
+        return { type: "series", href: `/series/${mediaId}` };
+      case "Episode":
+        return { type: "episode", href: `/episode/${mediaId}` };
+      default:
+        return { type: "unknown", href: `#` };
+    }
+  };
+
+  const { type, href } = getTypeAndHref();
 
   const router = useRouter();
   const [imageUrl, setImageUrl] = React.useState<string | null>(null);
@@ -86,19 +102,25 @@ export const MediaLinkCard: React.FC<MediaLinkCardProps> = ({
         onClick={handleClick}
       >
         <div className="flex gap-3 items-center w-full">
-          {/* Poster */}
-          <div className="relative h-16 w-10 rounded-sm overflow-hidden bg-muted/30 flex-shrink-0">
+          {/* Poster/Thumbnail */}
+          <div
+            className={cn(
+              "relative rounded-sm overflow-hidden bg-muted/30 flex-shrink-0 w-10",
+            )}
+          >
             {imageLoading && (
               <Skeleton className="absolute inset-0 w-full h-full" />
             )}
             <img
-              src={`${serverUrl}/Items/${mediaId}/Images/Primary?maxHeight=324&maxWidth=576&quality=50`}
-              alt={title}
+              src={`${serverUrl}/Items/${
+                type === "episode" && seriesId ? seriesId : mediaId
+              }/Images/Primary`}
+              alt={type === "episode" && seriesName ? seriesName : title}
               className={cn(
                 "object-cover transition-transform duration-200 w-full h-full",
                 imageLoading ? "opacity-0" : "opacity-100"
               )}
-              sizes="64px"
+              sizes="40px"
               onLoad={() => setImageLoading(false)}
               onError={() => setImageLoading(false)}
             />
@@ -109,7 +131,16 @@ export const MediaLinkCard: React.FC<MediaLinkCardProps> = ({
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <h3 className="font-medium text-sm leading-tight line-clamp-2">
-                  {title}
+                  {type === "episode" && seriesName ? (
+                    <>
+                      {title}{" "}
+                      <span className="text-muted-foreground font-normal">
+                        · {seriesName}
+                      </span>
+                    </>
+                  ) : (
+                    title
+                  )}
                 </h3>
               </div>
 
@@ -122,6 +153,11 @@ export const MediaLinkCard: React.FC<MediaLinkCardProps> = ({
                   <>
                     <Film className="h-3 w-3" />
                     Movie
+                  </>
+                ) : type === "episode" ? (
+                  <>
+                    <Tv className="h-3 w-3" />
+                    Episode
                   </>
                 ) : (
                   <>

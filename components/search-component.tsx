@@ -45,6 +45,8 @@ import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 import * as Kbd from "@/components/ui/kbd";
+import { TextShimmer } from "./motion-primitives/text-shimmer";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SearchBarProps {
   className?: string;
@@ -64,14 +66,15 @@ export function SearchBar({ className = "" }: SearchBarProps) {
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { serverUrl } = useAuth();
 
   // Memoized loading component to prevent re-rendering while typing
   const loadingComponent = useMemo(
     () => (
       <div className="flex justify-center items-center p-8">
-        <TextShimmerWave className="text-sm font-mono">
-          Searching...
-        </TextShimmerWave>
+        <TextShimmer className="text-sm font-mono">
+          {`Searching ${serverUrl && new URL(serverUrl).hostname}...`}
+        </TextShimmer>
       </div>
     ),
     []

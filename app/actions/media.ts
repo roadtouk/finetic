@@ -249,6 +249,7 @@ export async function fetchResumeItems() {
         ItemFields.PrimaryImageAspectRatio,
         ItemFields.Overview,
       ],
+      enableImages: true,
     });
     return data.Items || [];
   } catch (error) {
@@ -424,7 +425,7 @@ export async function fetchSimilarItems(itemId: string, limit: number = 12) {
       limit,
     });
 
-    console.log(data.Items)
+    console.log(data.Items);
 
     return data.Items || [];
   } catch (error) {

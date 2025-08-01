@@ -200,11 +200,14 @@ export async function POST(req: Request) {
             console.log("🕒 [continueWatching] Tool called with limit:", limit);
             try {
               const items = await fetchResumeItems();
+              console.log("[continueWatching] Fetched items:", items);
               return {
                 success: true,
                 resumeItems: items.slice(0, limit).map((item) => ({
                   id: item.Id,
                   name: item.Name,
+                  seriesId: item.SeriesId || null,
+                  seriesName: item.SeriesName || null,
                   type: item.Type,
                   year: item.ProductionYear,
                   communityRating: item.CommunityRating,
