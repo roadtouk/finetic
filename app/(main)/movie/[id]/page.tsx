@@ -18,6 +18,7 @@ import { Star } from "lucide-react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import { TextScramble } from "@/components/motion-primitives/text-scramble";
 
 export default async function Movie({
   params,
@@ -160,14 +161,16 @@ export default async function Movie({
                 <MediaActions movie={movie} />
 
                 {movie.Taglines && (
-                  <p className="text-lg text-muted-foreground mb-4 max-w-4xl text-center md:text-left font-poppins drop-shadow-md">
+                  <TextScramble className="text-lg text-muted-foreground mb-4 max-w-4xl text-center md:text-left font-poppins drop-shadow-md"
+                    duration={2}
+                  >
                     {movie.Taglines[0]}
-                  </p>
+                  </TextScramble>
                 )}
 
-                <p className="text-md leading-relaxed mb-6 max-w-4xl">
+                <span className="text-md leading-relaxed mb-6 max-w-4xl">
                   {movie.Overview}
-                </p>
+                </span>
 
                 {/* Additional movie information */}
                 <div className="space-y-3 mb-6 max-w-4xl">
