@@ -504,9 +504,8 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
     if (!mediaSegments.intro) return false;
 
     const { startTime, endTime } = mediaSegments.intro;
-    // Show skip button if we're currently within the intro segment
-    // Add a 2 second buffer at the beginning to avoid showing it too early
-    return currentTime >= startTime + 2 && currentTime < endTime;
+    // Show skip button 2 seconds before the intro starts and during the intro
+    return currentTime >= startTime && currentTime < endTime;
   }, [mediaSegments.intro, currentTime]);
 
   // Clean up on unmount
@@ -627,7 +626,7 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
                 type: "spring",
                 damping: 10,
                 stiffness: 100,
-                duration: 0.8
+                duration: 0.8,
               }}
               className="fixed bottom-24 right-6 z-[1000000] backdrop-blur-md rounded-lg"
             >
