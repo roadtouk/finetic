@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import { useAtom } from "jotai";
 import { isAIAskOpenAtom } from "@/lib/atoms";
+import { motion } from "framer-motion";
 
 interface MediaLinkCardProps {
   title: string;
@@ -22,6 +23,7 @@ interface MediaLinkCardProps {
   type: "movie" | "series";
   mediaId: string;
   className?: string;
+  index?: number;
 }
 
 export const MediaLinkCard: React.FC<MediaLinkCardProps> = ({
@@ -32,6 +34,7 @@ export const MediaLinkCard: React.FC<MediaLinkCardProps> = ({
   type,
   mediaId,
   className,
+  index = 0,
 }) => {
   const router = useRouter();
   const [imageUrl, setImageUrl] = React.useState<string | null>(null);
@@ -47,15 +50,24 @@ export const MediaLinkCard: React.FC<MediaLinkCardProps> = ({
   };
 
   return (
-    <Link
-      className={cn(
-        "group cursor-pointer transition duration-200 bg-card backdrop-blur-sm p-3 rounded-xl hover:bg-card/50 w-full block active:scale-[0.99]",
-        className
-      )}
-      draggable={false}
-      href={href}
-      onClick={handleClick}
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ 
+        duration: 0.3,
+        delay: index * 0.1,
+        ease: "easeOut"
+      }}
     >
+      <Link
+        className={cn(
+          "group cursor-pointer transition duration-200 bg-card backdrop-blur-sm p-3 rounded-xl hover:bg-card/50 w-full block active:scale-[0.99]",
+          className
+        )}
+        draggable={false}
+        href={href}
+        onClick={handleClick}
+      >
       <div className="flex gap-3 items-center w-full">
         {/* Poster */}
         <div className="relative h-16 w-10 rounded-sm overflow-hidden bg-muted/30 flex-shrink-0">
@@ -124,6 +136,7 @@ export const MediaLinkCard: React.FC<MediaLinkCardProps> = ({
           </div>
         </div>
       </div>
-    </Link>
+</Link>
+    </motion.div>
   );
 };

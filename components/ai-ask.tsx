@@ -333,6 +333,7 @@ const AIAsk = ({}: AIAskProps = {}) => {
                 type={item.type === "Movie" ? "movie" : "series"}
                 mediaId={item.id}
                 className="mb-2"
+                index={itemIndex}
               />
             ))}
           </div>
