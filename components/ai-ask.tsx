@@ -38,6 +38,7 @@ import * as Kbd from "@/components/ui/kbd";
 import { Badge } from "./ui/badge";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { useTheme } from "next-themes";
+import { MediaLinkCard } from "./media-link-card";
 
 interface AIAskProps {
   isOpen?: boolean;
@@ -303,6 +304,44 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
     return toolMap[toolName] || { icon: Search, label: "Working..." };
   };
 
+  // Render message content with structured media cards
+  const renderMessageContent = (message: any, index: number) => {
+    // Check if this message has tool invocations with filmography data
+    const filmographyInvocation = message.toolInvocations?.find(
+      (invocation: any) => 
+        invocation.toolName === "getPersonFilmography" && 
+        "result" in invocation &&
+        invocation.result.success &&
+        invocation.result.filmography
+    );
+
+    if (filmographyInvocation) {
+      const filmography = filmographyInvocation.result.filmography;
+      return (
+        <div className="space-y-3 w-full">
+          <Markdown>{message.content}</Markdown>
+          <div className="space-y-2">
+            {filmography.map((item: any, itemIndex: number) => (
+              <MediaLinkCard
+                key={`filmography-${item.id}-${itemIndex}`}
+                title={item.name}
+                year={item.year?.toString()}
+                rating={item.rating}
+                href={item.href}
+                type={item.type === "Movie" ? "movie" : "series"}
+                mediaId={item.id}
+                className="mb-2"
+              />
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Default markdown rendering for other messages
+    return <Markdown>{message.content}</Markdown>;
+  };
+
   const handleSubmitQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -407,7 +446,7 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
                       className={cn(
-                        "p-3 rounded-lg mr-4",
+                        "p-3 rounded-lg",
                         message.role === "user"
                           ? "bg-primary/10 text-primary"
                           : "bg-muted/50"
@@ -415,7 +454,7 @@ const AIAsk = ({ isOpen: externalIsOpen, onOpenChange }: AIAskProps = {}) => {
                     >
                       {message.role === "assistant" ? (
                         <div className="prose prose-sm text-sm text-foreground dark:prose-invert max-w-none">
-                          <Markdown>{message.content}</Markdown>
+                          {renderMessageContent(message, index)}
                         </div>
                       ) : (
                         <div className="text-sm font-medium">

@@ -309,8 +309,7 @@ export async function POST(req: Request) {
         }),
 
         getPersonFilmography: tool({
-          description:
-            "Get filmography (movies and TV shows) for a specific person",
+          description: "Get filmography (movies and TV shows) for a specific person",
           parameters: z.object({
             personId: z.string().describe("The unique ID of the person"),
             limit: z
@@ -325,15 +324,18 @@ export async function POST(req: Request) {
             });
             try {
               const filmography = await fetchPersonFilmography(personId);
+              const limitedFilmography = filmography.slice(0, limit);
+              
               return {
                 success: true,
-                filmography: filmography.slice(0, limit).map((item) => ({
+                filmography: limitedFilmography.map((item) => ({
                   id: item.Id,
                   name: item.Name,
                   type: item.Type,
                   year: item.ProductionYear,
                   overview: item.Overview?.substring(0, 200) + "...",
                   rating: item.CommunityRating,
+                  href: item.Type === "Movie" ? `/movie/${item.Id}` : `/series/${item.Id}`,
                 })),
                 count: filmography.length,
               };
@@ -1121,7 +1123,7 @@ Return ONLY the timestamp in HH:MM:SS format (e.g., 02:25.6 or 1:23:45.2):`;
       When users ask about a person's filmography (e.g., "What is Florence Pugh in?", "What movies has X been in?", "Show me Y's filmography"):
       1. Use getPeople to search for the person and get their ID
       2. If found and ID is valid, use getPersonFilmography with that person's ID
-      3. Present the results in a helpful format
+      3. The tool will return structured data that will be automatically rendered as interactive media cards
       4. If no valid ID is found, inform the user that the person couldn't be found in the library
 
       When you use the navigateToMedia tool, make sure to mention that you're navigating to the content by name only, without including the URL.
