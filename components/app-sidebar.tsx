@@ -163,7 +163,7 @@ export function AppSidebar({
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild tooltip={"Home"}>
                   <Link href="/">
                     <Home className="h-4 w-4" />
                     <span>Home</span>
@@ -171,7 +171,7 @@ export function AppSidebar({
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild tooltip={"Dashboard"}>
                   <Link href="/dashboard">
                     <BarChart3 className="h-4 w-4" />
                     <span>Dashboard</span>
@@ -181,7 +181,7 @@ export function AppSidebar({
               <DropdownMenu>
                 <SidebarMenuItem>
                   <DropdownMenuTrigger asChild>
-                    <SidebarMenuButton className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+                    <SidebarMenuButton tooltip={"Libraries"} className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                       <Library className="h-4 w-4" />
                       <span>Libraries</span>
                       <ChevronRight className="ml-auto h-4 w-4" />
