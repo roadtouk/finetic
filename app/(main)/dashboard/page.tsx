@@ -6,11 +6,16 @@ import { LibraryMediaList } from "@/components/library-media-list";
 import { SearchBar } from "@/components/search-component";
 import LightRays from "@/components/LightRays/LightRays";
 import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models/base-item-dto";
-import { ScheduledTaskCard } from "@/components/scheduled-task-card";
+import { BentoGrid, BentoItem } from "@/components/ui/bento-grid";
 import { Badge } from "@/components/ui/badge";
 import { TextShimmerWave } from "@/components/ui/text-shimmer-wave";
 import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
-import { Hexagon, LoaderPinwheel } from "lucide-react";
+import { LoaderPinwheel } from "lucide-react";
+import {
+  getTaskIcon,
+  getTaskIconProps,
+} from "@/lib/scheduled-task-icon-mapping";
+import { VibrantAuroraBackground } from "@/components/vibrant-aurora-background";
 
 export default async function DashboardPage({
   params,
@@ -29,9 +34,47 @@ export default async function DashboardPage({
     (task) => task.State === "Running"
   );
 
+  // Convert scheduled tasks to BentoGrid items
+  const getTaskIconElement = (
+    taskName: string,
+    category: string,
+    state: string
+  ) => {
+    const IconComponent = getTaskIcon(taskName, category, state);
+    const iconProps = getTaskIconProps(state);
+    return <IconComponent {...iconProps} />;
+  };
+
+  const getTaskStatus = (state: string) => {
+    switch (state) {
+      case "Running":
+        return "Running";
+      case "Completed":
+        return "Completed";
+      case "Failed":
+        return "Failed";
+      case "Idle":
+        return "Idle";
+      default:
+        return "Active";
+    }
+  };
+
+  const bentoItems: BentoItem[] = runningTasks.map((task, index) => ({
+    title: task.Name,
+    description: task.Description,
+    icon: getTaskIconElement(task.Name, task.Category, task.State),
+    status: getTaskStatus(task.State),
+    tags: [task.Category],
+    progress: task.CurrentProgressPercentage || 0,
+    colSpan: index === 0 ? 2 : 1, // Make first item span 2 columns
+    hasPersistentHover: task.State === "Running", // Highlight running tasks
+  }));
+
   return (
     <div className="relative px-4 py-6 max-w-full overflow-hidden">
       {/* Main content with higher z-index */}
+      <VibrantAuroraBackground amplitude={0.8} blend={0.4} />
       <div className="relative z-10">
         <div className="relative z-[9999] mb-8">
           <div className="mb-6">
@@ -43,7 +86,7 @@ export default async function DashboardPage({
             Dashboard
           </h2>
         </div>
-        <div className="inline-flex items-center gap-3 mb-4">
+        <div className="inline-flex items-center gap-3 mb-6">
           <h4 className="text-xl font-semibold text-foreground font-poppins">
             Scheduled Tasks
           </h4>
@@ -52,17 +95,13 @@ export default async function DashboardPage({
             {`${runningTasks.length} Running`}
           </Badge>
         </div>
-        <div className="space-y-4 md:grid-cols-3 grid">
-          {runningTasks.length > 0 ? (
-            runningTasks.map((task) => (
-              <ScheduledTaskCard key={task.Id} task={task} />
-            ))
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              No running scheduled tasks
-            </div>
-          )}
-        </div>
+        {runningTasks.length > 0 ? (
+          <BentoGrid items={bentoItems} />
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            No running scheduled tasks
+          </div>
+        )}
       </div>
     </div>
   );
