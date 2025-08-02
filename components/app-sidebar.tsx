@@ -163,7 +163,7 @@ export function AppSidebar({
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={"Home"}>
+                <SidebarMenuButton asChild>
                   <Link href="/">
                     <Home className="h-4 w-4" />
                     <span>Home</span>
@@ -171,7 +171,7 @@ export function AppSidebar({
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={"Dashboard"}>
+                <SidebarMenuButton asChild>
                   <Link href="/dashboard">
                     <BarChart3 className="h-4 w-4" />
                     <span>Dashboard</span>
@@ -181,7 +181,7 @@ export function AppSidebar({
               <DropdownMenu>
                 <SidebarMenuItem>
                   <DropdownMenuTrigger asChild>
-                    <SidebarMenuButton tooltip={"Libraries"} className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+                    <SidebarMenuButton className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                       <Library className="h-4 w-4" />
                       <span>Libraries</span>
                       <ChevronRight className="ml-auto h-4 w-4" />
@@ -195,7 +195,10 @@ export function AppSidebar({
                     >
                       {libraries.map((library) => (
                         <DropdownMenuItem asChild key={library.Id}>
-                          <Link href={`/library/${library.Id}`} className="flex items-center gap-2">
+                          <Link
+                            href={`/library/${library.Id}`}
+                            className="flex items-center gap-2"
+                          >
                             {getLibraryIcon(library.CollectionType)}
                             <span>{library.Name}</span>
                           </Link>
@@ -225,7 +228,9 @@ export function AppSidebar({
                     <User className="size-6 text-white" />
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">{user?.Name || "User"}</span>
+                    <span className="truncate font-semibold">
+                      {user?.Name || "User"}
+                    </span>
                     <span className="truncate text-xs">User Account</span>
                   </div>
                   <ChevronUp className="ml-auto size-4" />
