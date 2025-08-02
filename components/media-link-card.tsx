@@ -114,7 +114,7 @@ export const MediaLinkCard: React.FC<MediaLinkCardProps> = ({
             <img
               src={`${serverUrl}/Items/${
                 type === "episode" && seriesId ? seriesId : mediaId
-              }/Images/Primary`}
+              }/Images/Primary?maxWidth=80&maxHeight=120&quality=60`}
               alt={type === "episode" && seriesName ? seriesName : title}
               className={cn(
                 "object-cover transition-transform duration-200 w-full h-full",

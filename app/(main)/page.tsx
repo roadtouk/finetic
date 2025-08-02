@@ -1,6 +1,5 @@
-import { fetchMovies, fetchTVShows } from "@/app/actions";
-import { fetchResumeItems } from "@/app/actions/media";
-import { getAuthData } from "@/app/actions/utils";
+import { fetchResumeItems, fetchLibraryItems } from "@/app/actions/media";
+import { getAuthData, getUserLibraries } from "@/app/actions/utils";
 import { AuthErrorHandler } from "@/app/components/auth-error-handler";
 import { VibrantAuroraBackground } from "@/components/vibrant-aurora-background";
 import { MediaSection } from "@/components/media-section";
@@ -11,19 +10,29 @@ export default async function Home() {
   let serverUrl = "";
   let user = null;
   let resumeItems: BaseItemDto[] = [];
-  let movies: BaseItemDto[] = [];
-  let tvShows: BaseItemDto[] = [];
+  let libraries: { library: any; items: BaseItemDto[] }[] = [];
   let authError = null;
 
   try {
     const authData = await getAuthData();
     serverUrl = authData.serverUrl;
     user = authData.user;
-    [resumeItems, movies, tvShows] = await Promise.all([
+    
+    // Fetch resume items and all user libraries
+    const [resumeItemsResult, userLibraries] = await Promise.all([
       fetchResumeItems(),
-      fetchMovies(12),
-      fetchTVShows(12),
+      getUserLibraries(),
     ]);
+    
+    resumeItems = resumeItemsResult;
+    
+    // Fetch items for each library
+    const libraryPromises = userLibraries.map(async (library) => {
+      const { items } = await fetchLibraryItems(library.Id, 12);
+      return { library, items };
+    });
+    
+    libraries = await Promise.all(libraryPromises);
   } catch (error) {
     if ((error as any).isAuthError) {
       authError = error;
@@ -35,10 +44,7 @@ export default async function Home() {
   return (
     <AuthErrorHandler error={authError}>
       <div className="relative px-4 py-6 max-w-full overflow-hidden">
-        <VibrantAuroraBackground
-          amplitude={0.8}
-          blend={0.4}
-        />
+        <VibrantAuroraBackground amplitude={0.8} blend={0.4} />
 
         <div className="relative z-[9999] mb-8">
           <div className="mb-6">
@@ -64,17 +70,14 @@ export default async function Home() {
           />
         )}
 
-        <MediaSection
-          sectionName="Movies"
-          mediaItems={movies}
-          serverUrl={serverUrl}
-        />
-
-        <MediaSection
-          sectionName="TV Shows"
-          mediaItems={tvShows}
-          serverUrl={serverUrl}
-        />
+        {libraries.map(({ library, items }) => (
+          <MediaSection
+            key={library.Id}
+            sectionName={library.Name}
+            mediaItems={items}
+            serverUrl={serverUrl}
+          />
+        ))}
       </div>
     </AuthErrorHandler>
   );
