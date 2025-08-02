@@ -17,6 +17,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -41,6 +42,9 @@ import {
   Moon,
   Monitor,
   Settings,
+  BarChart3,
+  MoreHorizontal,
+  ChevronRight,
 } from "lucide-react";
 import {
   Select,
@@ -67,6 +71,7 @@ export function AppSidebar({
 }) {
   const { setTheme } = useTheme();
   const { videoBitrate, setVideoBitrate } = useSettings();
+  const { state } = useSidebar();
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [serverUrl, setServerUrl] = useState<string | null>(null);
@@ -165,34 +170,41 @@ export function AppSidebar({
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              {isLoading ? (
-                // Loading skeleton
-                [1, 2].map((index) => (
-                  <SidebarMenuItem key={`skeleton-${index}`}>
-                    <SidebarMenuButton disabled>
-                      <div className="h-4 w-16 bg-gray-300 rounded animate-pulse" />
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))
-              ) : libraries.length > 0 ? (
-                libraries.map((library) => (
-                  <SidebarMenuItem key={`item-${crypto.randomUUID()}`}>
-                    <SidebarMenuButton asChild>
-                      <Link href={`/library/${library.Id}`}>
-                        {getLibraryIcon(library.CollectionType)}
-                        <span>{library.Name}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))
-              ) : (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link href="/dashboard">
+                    <BarChart3 className="h-4 w-4" />
+                    <span>Dashboard</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <DropdownMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton disabled>
-                    <Library className="h-4 w-4" />
-                    <span>No libraries found</span>
-                  </SidebarMenuButton>
+                  <DropdownMenuTrigger asChild>
+                    <SidebarMenuButton className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+                      <Library className="h-4 w-4" />
+                      <span>Libraries</span>
+                      <ChevronRight className="ml-auto h-4 w-4" />
+                    </SidebarMenuButton>
+                  </DropdownMenuTrigger>
+                  {!isLoading && libraries.length > 0 ? (
+                    <DropdownMenuContent
+                      side="right"
+                      align="start"
+                      className="min-w-56 rounded-lg"
+                    >
+                      {libraries.map((library) => (
+                        <DropdownMenuItem asChild key={library.Id}>
+                          <Link href={`/library/${library.Id}`} className="flex items-center gap-2">
+                            {getLibraryIcon(library.CollectionType)}
+                            <span>{library.Name}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  ) : null}
                 </SidebarMenuItem>
-              )}
+              </DropdownMenu>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

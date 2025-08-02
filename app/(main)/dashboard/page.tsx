@@ -10,6 +10,7 @@ import { ScheduledTaskCard } from "@/components/scheduled-task-card";
 import { Badge } from "@/components/ui/badge";
 import { TextShimmerWave } from "@/components/ui/text-shimmer-wave";
 import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
+import { Hexagon, LoaderPinwheel } from "lucide-react";
 
 export default async function DashboardPage({
   params,
@@ -42,14 +43,15 @@ export default async function DashboardPage({
             Dashboard
           </h2>
         </div>
-        <h4 className="text-xl font-semibold text-foreground mb-4 font-poppins inline-flex items-center gap-3">
-          Scheduled Tasks
+        <div className="inline-flex items-center gap-3 mb-4">
+          <h4 className="text-xl font-semibold text-foreground font-poppins">
+            Scheduled Tasks
+          </h4>
           <Badge variant={"secondary"}>
-            <TextShimmer className="text-xs" duration={2} spread={2}>
-              {`${runningTasks.length} Running`}
-            </TextShimmer>
+            <LoaderPinwheel className="animate-spin" />
+            {`${runningTasks.length} Running`}
           </Badge>
-        </h4>
+        </div>
         <div className="space-y-4 md:grid-cols-3 grid">
           {runningTasks.length > 0 ? (
             runningTasks.map((task) => (
