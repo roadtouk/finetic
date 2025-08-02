@@ -4,6 +4,7 @@ import { AuthErrorHandler } from "@/app/components/auth-error-handler";
 import Aurora from "@/components/Aurora/Aurora";
 import { LibraryMediaList } from "@/components/library-media-list";
 import { SearchBar } from "@/components/search-component";
+import { ScanLibraryButton } from "@/components/scan-library-button";
 import LightRays from "@/components/LightRays/LightRays";
 import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models/base-item-dto";
 
@@ -41,9 +42,12 @@ export default async function LibraryPage({
           </div>
         </div>
         <div className="mb-8">
-          <h2 className="text-3xl font-semibold text-foreground mb-2 font-poppins">
-            {libraryName}
-          </h2>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-3xl font-semibold text-foreground font-poppins">
+              {libraryName}
+            </h2>
+            <ScanLibraryButton libraryId={id} />
+          </div>
           <span className="font-mono text-muted-foreground">
             {libraryItems.items.length} items
           </span>

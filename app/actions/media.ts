@@ -10,6 +10,7 @@ import { ItemFields } from "@jellyfin/sdk/lib/generated-client/models/item-field
 import { ItemSortBy } from "@jellyfin/sdk/lib/generated-client/models/item-sort-by";
 import { SortOrder } from "@jellyfin/sdk/lib/generated-client/models/sort-order";
 import { UserLibraryApi } from "@jellyfin/sdk/lib/generated-client/api/user-library-api";
+import { LibraryApi } from "@jellyfin/sdk/lib/generated-client/api/library-api";
 import { getItemsApi } from "@jellyfin/sdk/lib/utils/api/items-api";
 import { getLibraryApi } from "@jellyfin/sdk/lib/utils/api/library-api";
 import { createJellyfinInstance } from "@/lib/utils";
@@ -499,5 +500,44 @@ export async function fetchIntroOutro(itemId: string): Promise<MediaSegmentsResp
     }
 
     return null;
+  }
+}
+
+export async function scanLibrary(libraryId?: string): Promise<void> {
+  try {
+    const { serverUrl, user } = await getAuthData();
+
+    let url = `${serverUrl}/Library/Refresh`;
+    
+    // If libraryId is provided, scan only that specific library
+    if (libraryId) {
+      url = `${serverUrl}/Items/${libraryId}/Refresh`;
+    }
+
+    // Use direct API call to trigger library scan
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `MediaBrowser Token="${user.AccessToken}"`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  } catch (error) {
+    console.error("Failed to scan library:", error);
+    
+    if (isAuthError(error)) {
+      console.log("Authentication error detected, clearing auth data");
+      const authError = new Error(
+        "Authentication expired. Please sign in again."
+      );
+      (authError as any).isAuthError = true;
+      throw authError;
+    }
+    
+    throw new Error("Failed to scan library");
   }
 }
