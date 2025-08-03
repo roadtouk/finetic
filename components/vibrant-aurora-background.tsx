@@ -28,30 +28,30 @@ export function VibrantAuroraBackground({
     const extractColors = async () => {
       try {
         const palette = await Vibrant.from(posterUrl).getPalette();
-        
+
         // Extract vibrant colors from the palette
         const vibrantColors: string[] = [];
-        
+
         // Add vibrant color if available
         if (palette.Vibrant) {
           vibrantColors.push(palette.Vibrant.hex);
         }
-        
+
         // Add dark vibrant for depth
         if (palette.DarkVibrant) {
           vibrantColors.push(palette.DarkVibrant.hex);
         }
-        
+
         // Add muted color for balance
         if (palette.Muted) {
           vibrantColors.push(palette.Muted.hex);
         }
-        
+
         // Add light vibrant for highlights
         if (palette.LightVibrant) {
           vibrantColors.push(palette.LightVibrant.hex);
         }
-        
+
         // Ensure we have at least 3 colors for the aurora
         if (vibrantColors.length >= 2) {
           // Create a nice gradient with the extracted colors
@@ -60,7 +60,7 @@ export function VibrantAuroraBackground({
             vibrantColors[1], // Secondary (dark vibrant or muted)
             vibrantColors[0], // Back to primary for smooth loop
           ];
-          
+
           // If we have more colors, use them for a richer palette
           if (vibrantColors.length >= 3) {
             finalColors[1] = vibrantColors[2]; // Use muted or third color
@@ -68,7 +68,7 @@ export function VibrantAuroraBackground({
               finalColors.push(vibrantColors[3]); // Add fourth color
             }
           }
-          
+
           updateColors(finalColors);
         }
       } catch (error) {
@@ -81,7 +81,7 @@ export function VibrantAuroraBackground({
   }, [posterUrl]);
 
   return (
-  <AuroraBackground
+    <AuroraBackground
       colorStops={colorStops}
       amplitude={amplitude}
       blend={blend}

@@ -4,6 +4,7 @@ import { Film, PlayCircle, Tv, Calendar, Star, User } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
+import { decode } from "blurhash";
 
 interface Item {
   Id: string;
@@ -11,6 +12,9 @@ interface Item {
   Type: string;
   ImageTags?: {
     Primary?: string;
+  };
+  ImageBlurHashes?: {
+    Primary?: Record<string, string>;
   };
   ProductionYear?: number;
   RunTimeTicks?: number;
@@ -33,8 +37,35 @@ export function SearchSuggestionItem({
   formatRuntime,
 }: SearchSuggestionItemProps) {
   const { serverUrl } = useAuth();
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [blurDataUrl, setBlurDataUrl] = useState<string | null>(null);
 
   const imageUrl = `${serverUrl}/Items/${item.Id}/Images/Primary`;
+
+  // Get blur hash
+  const imageTag = item.ImageTags?.Primary;
+  const blurHash = imageTag && item.ImageBlurHashes?.Primary?.[imageTag] || "";
+
+  // Decode blur hash
+  useEffect(() => {
+    if (blurHash && !blurDataUrl) {
+      try {
+        const pixels = decode(blurHash, 32, 32);
+        const canvas = document.createElement("canvas");
+        canvas.width = 32;
+        canvas.height = 32;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          const imageData = ctx.createImageData(32, 32);
+          imageData.data.set(pixels);
+          ctx.putImageData(imageData, 0, 0);
+          setBlurDataUrl(canvas.toDataURL());
+        }
+      } catch (error) {
+        console.error("Error decoding blur hash:", error);
+      }
+    }
+  }, [blurHash, blurDataUrl]);
 
   return (
     <div
@@ -56,17 +87,39 @@ export function SearchSuggestionItem({
         </Avatar>
       ) : (
         <div
-          className={`aspect-[2/3] h-16 bg-muted rounded overflow-hidden flex-shrink-0`}
+          className={`aspect-[2/3] h-16 bg-muted rounded overflow-hidden flex-shrink-0 relative`}
         >
           {imageUrl ? (
-            <img
-              src={imageUrl}
-              alt={item.Name}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
+            <>
+              {/* Blur hash placeholder */}
+              {blurDataUrl && !imageLoaded && (
+                <div
+                  className="absolute inset-0 w-full h-full rounded transition-opacity duration-300"
+                  style={{
+                    backgroundImage: `url(${blurDataUrl})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    filter: "blur(0px)",
+                  }}
+                />
+              )}
+              {/* Actual image */}
+              <img
+                src={imageUrl}
+                alt={item.Name}
+                className="w-full h-full object-cover transition-opacity duration-300"
+                onLoad={() => setImageLoaded(true)}
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+                ref={(img) => {
+                  // Check if image is already loaded (cached)
+                  if (img && img.complete && img.naturalHeight !== 0) {
+                    setImageLoaded(true);
+                  }
+                }}
+              />
+            </>
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               {item.Type === "Movie" ? (

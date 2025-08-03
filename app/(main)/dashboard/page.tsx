@@ -16,6 +16,7 @@ import {
   getTaskIconProps,
 } from "@/lib/scheduled-task-icon-mapping";
 import { VibrantAuroraBackground } from "@/components/vibrant-aurora-background";
+import { AuroraBackground } from "@/components/aurora-background";
 
 export default async function DashboardPage({
   params,
@@ -74,7 +75,9 @@ export default async function DashboardPage({
   return (
     <div className="relative px-4 py-6 max-w-full overflow-hidden">
       {/* Main content with higher z-index */}
-      <VibrantAuroraBackground amplitude={0.8} blend={0.4} />
+      <AuroraBackground
+        colorStops={["#34d399", "#38bdf8", "#2dd4bf"]}
+      />
       <div className="relative z-10">
         <div className="relative z-[9999] mb-8">
           <div className="mb-6">
