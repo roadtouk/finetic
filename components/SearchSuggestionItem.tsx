@@ -75,16 +75,37 @@ export function SearchSuggestionItem({
     >
       {/* Image/Avatar */}
       {item.Type === "Person" ? (
-        <Avatar className="size-[43px] flex-shrink-0 border">
-          <AvatarImage
-            src={imageUrl}
-            alt={item.Name}
-            className="object-cover"
-          />
-          <AvatarFallback>
-            <User className="h-5 w-5 text-muted-foreground" />
-          </AvatarFallback>
-        </Avatar>
+        <div className="relative size-[43px] flex-shrink-0 rounded-full overflow-hidden">
+          {/* Blur hash placeholder for avatar */}
+          {blurDataUrl && !imageLoaded && (
+            <div
+              className="absolute inset-0 w-full h-full transition-opacity duration-300 border z-50"
+              style={{
+                backgroundImage: `url(${blurDataUrl})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                filter: "blur(0px)",
+              }}
+            />
+          )}
+          <Avatar className="size-[43px] flex-shrink-0 border">
+            <AvatarImage
+              src={imageUrl}
+              alt={item.Name}
+              className="object-cover transition-opacity duration-300"
+              onLoad={() => setImageLoaded(true)}
+              ref={(img) => {
+                // Check if image is already loaded (cached)
+                if (img && img.complete && img.naturalHeight !== 0) {
+                  setImageLoaded(true);
+                }
+              }}
+            />
+            <AvatarFallback>
+              <User className="h-5 w-5 text-muted-foreground" />
+            </AvatarFallback>
+          </Avatar>
+        </div>
       ) : (
         <div
           className={`aspect-[2/3] h-16 bg-muted rounded overflow-hidden flex-shrink-0 relative`}
