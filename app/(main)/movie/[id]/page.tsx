@@ -51,7 +51,7 @@ export default async function Movie({
         {/* Aurora background based on poster colors */}
         <VibrantAuroraBackground
           posterUrl={primaryImage}
-          className="fixed inset-0 z-0 pointer-events-none opacity-50"
+          className="fixed inset-0 z-10 pointer-events-none opacity-50"
         />
 
         {/* Backdrop section */}

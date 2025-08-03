@@ -55,7 +55,7 @@ export default async function Episode({
         {/* Aurora background based on backdrop image */}
         <VibrantAuroraBackground
           posterUrl={backdropImage}
-          className="fixed inset-0 z-0 pointer-events-none opacity-30"
+          className="fixed inset-0 z-10 pointer-events-none opacity-50"
         />
 
         {/* Backdrop section */}

@@ -125,7 +125,7 @@ export function AppSidebar({
     <Sidebar
       variant="floating"
       collapsible="icon"
-      className={`${isElectronMac && !isElectronFullscreen ? "pt-10" : ""}`}
+      className={`${isElectronMac && !isElectronFullscreen ? "pt-10" : ""} z-20`}
     >
       <SidebarHeader>
         <SidebarMenu>

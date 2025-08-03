@@ -5,6 +5,7 @@ import { VibrantAuroraBackground } from "@/components/vibrant-aurora-background"
 import { MediaSection } from "@/components/media-section";
 import { SearchBar } from "@/components/search-component";
 import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models/base-item-dto";
+import { AuroraBackground } from "@/components/aurora-background";
 
 export default async function Home() {
   let serverUrl = "";
@@ -17,21 +18,21 @@ export default async function Home() {
     const authData = await getAuthData();
     serverUrl = authData.serverUrl;
     user = authData.user;
-    
+
     // Fetch resume items and all user libraries
     const [resumeItemsResult, userLibraries] = await Promise.all([
       fetchResumeItems(),
       getUserLibraries(),
     ]);
-    
+
     resumeItems = resumeItemsResult;
-    
+
     // Fetch items for each library
     const libraryPromises = userLibraries.map(async (library) => {
       const { items } = await fetchLibraryItems(library.Id, 12);
       return { library, items };
     });
-    
+
     libraries = await Promise.all(libraryPromises);
   } catch (error) {
     if ((error as any).isAuthError) {
@@ -44,7 +45,11 @@ export default async function Home() {
   return (
     <AuthErrorHandler error={authError}>
       <div className="relative px-4 py-6 max-w-full overflow-hidden">
-        <VibrantAuroraBackground amplitude={0.8} blend={0.4} />
+        <AuroraBackground
+          colorStops={["#60a5fa", "#38bdf8", "#22d3ee"]}
+          amplitude={0.5}
+          className="fixed inset-0 z-0 pointer-events-none opacity-40"
+        />
 
         <div className="relative z-[9999] mb-8">
           <div className="mb-6">
