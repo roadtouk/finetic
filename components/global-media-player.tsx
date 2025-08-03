@@ -387,7 +387,7 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
         return;
       }
 
-      console.log(details.ParentBackdropItemId)
+      setMediaDetails(details);
 
       // Use selected version from MediaActions or fallback to first source
       if (details.MediaSources && details.MediaSources.length > 0) {
