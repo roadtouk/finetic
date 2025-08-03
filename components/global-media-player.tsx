@@ -388,6 +388,7 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
       }
 
       setMediaDetails(details);
+      console.log(details);
 
       // Use selected version from MediaActions or fallback to first source
       if (details.MediaSources && details.MediaSources.length > 0) {
@@ -605,8 +606,8 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
               <div className="relative w-full h-full">
                 <img
                   src={`${serverUrl}/Items/${
-                    mediaDetails?.Type === "Episode" && mediaDetails?.ParentBackdropItemId
-                      ? mediaDetails.ParentBackdropItemId
+                    mediaDetails?.Type === "Episode" && mediaDetails?.SeriesId
+                      ? mediaDetails.SeriesId
                       : currentMedia.id
                   }/Images/Backdrop?maxHeight=1080&maxWidth=1920&quality=95`}
                   alt={currentMedia?.name}
