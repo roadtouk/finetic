@@ -4,22 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Search,
-  Film,
-  Tv,
-  Calendar,
-  PlayCircle,
-  Star,
-  Menu,
-  User,
-  Home,
-  Library,
-  Sun,
-  Moon,
-  Monitor,
-  LogOut,
-} from "lucide-react";
+import { Search, Film, Tv, Calendar, PlayCircle, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   searchItems,
@@ -31,22 +16,11 @@ import {
 import { Badge } from "./ui/badge";
 import { SearchSuggestionItem } from "./SearchSuggestionItem";
 import { TextShimmerWave } from "./ui/text-shimmer-wave";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useTheme } from "next-themes";
-import Link from "next/link";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 import * as Kbd from "@/components/ui/kbd";
 import { TextShimmer } from "./motion-primitives/text-shimmer";
 import { useAuth } from "@/hooks/useAuth";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 interface SearchBarProps {
   className?: string;
@@ -57,10 +31,7 @@ export function SearchBar({ className = "" }: SearchBarProps) {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [libraries, setLibraries] = useState<any[]>([]);
   const router = useRouter();
-  const { setTheme } = useTheme();
   const { isPlayerVisible } = useMediaPlayer();
   // Server actions are imported directly
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -121,43 +92,6 @@ export function SearchBar({ className = "" }: SearchBarProps) {
       }
     };
   }, [searchQuery, searchItems]);
-
-  // Load user data and libraries for mobile nav
-  useEffect(() => {
-    const loadUserData = async () => {
-      try {
-        const userData = await getUser();
-        setUser(userData);
-
-        // Fetch libraries if we have both user and server URL
-        const serverUrlData = await getServerUrl();
-        if (userData && serverUrlData) {
-          const response = await fetch(
-            `${serverUrlData}/Library/VirtualFolders`,
-            {
-              headers: {
-                "X-Emby-Authorization": `MediaBrowser Client="Jellyfin Web Client", Device="Browser", DeviceId="web-client", Version="1.0.0", Token="${userData.AccessToken}"`,
-              },
-            }
-          );
-
-          if (response.ok) {
-            const data = await response.json();
-            // Only show movie and TV show libraries
-            const supportedLibraries = (data || []).filter((library: any) => {
-              const type = library.CollectionType?.toLowerCase();
-              return type === "movies" || type === "tvshows";
-            });
-            setLibraries(supportedLibraries);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to load user data:", error);
-      }
-    };
-
-    loadUserData();
-  }, []);
 
   // Global keyboard shortcut for search activation
   useEffect(() => {
@@ -250,22 +184,6 @@ export function SearchBar({ className = "" }: SearchBarProps) {
     return `${minutes}m`;
   };
 
-  const handleLogout = async () => {
-    await logout();
-    // logout() already handles the redirect
-  };
-
-  const getLibraryIcon = (collectionType: string) => {
-    switch (collectionType?.toLowerCase()) {
-      case "movies":
-        return <Film className="h-4 w-4" />;
-      case "tvshows":
-        return <Tv className="h-4 w-4" />;
-      default:
-        return <Film className="h-4 w-4" />;
-    }
-  };
-
   // Hide the search bar when media player is visible
   if (isPlayerVisible) {
     return null;
@@ -273,10 +191,15 @@ export function SearchBar({ className = "" }: SearchBarProps) {
 
   return (
     <div
-      className={`relative z-[9999] max-w-xl ${className}`}
+      className={`relative z-[9999] md:max-w-xl ${className}`}
       ref={suggestionsRef}
     >
       <form onSubmit={handleSearch} className="flex gap-2">
+        {/* Mobile Navigation Trigger - Only visible on mobile */}
+        <div className="md:hidden">
+          <SidebarTrigger className="dark:bg-background/70! bg-background/90 border-border border text-foreground hover:bg-accent rounded-2xl h-11 w-11 p-0 backdrop-blur-sm" />
+        </div>
+
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
           <Input
@@ -291,90 +214,13 @@ export function SearchBar({ className = "" }: SearchBarProps) {
                 setShowSuggestions(true);
               }
             }}
-            className="pl-10 pr-16 border-border text-foreground placeholder:text-muted-foreground h-11 rounded-xl backdrop-blur-md dark:bg-background/70! bg-background/90"
+            className="pl-10 pr-16 border-border text-foreground placeholder:text-muted-foreground h-11 rounded-2xl md:rounded-xl backdrop-blur-md dark:bg-background/70! bg-background/90"
           />
           <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10">
             <Kbd.Root variant="outline" size="lg">
               <Kbd.Key>/</Kbd.Key>
             </Kbd.Root>
           </div>
-        </div>
-
-        {/* Mobile Navigation Buttons - Only visible on mobile */}
-        <div className="flex gap-2 md:hidden">
-          {/* Hamburger Menu - Navigation */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="bg-background/80 border-border text-foreground hover:bg-accent rounded-full h-11 w-11 p-0 backdrop-blur-sm"
-              >
-                <Menu className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 rounded-lg">
-              <DropdownMenuItem asChild>
-                <Link href="/" className="gap-2">
-                  <Home className="h-4 w-4" />
-                  <span>Home</span>
-                </Link>
-              </DropdownMenuItem>
-              {libraries.length > 0 && (
-                <div key="libraries-section">
-                  <DropdownMenuSeparator />
-                  {libraries.map((library) => (
-                    <DropdownMenuItem key={library.Id} asChild>
-                      <Link href={`/library/${library.Id}`} className="gap-2">
-                        {getLibraryIcon(library.CollectionType)}
-                        <span>{library.Name}</span>
-                      </Link>
-                    </DropdownMenuItem>
-                  ))}
-                </div>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Profile Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="bg-background/80 border-border text-foreground hover:bg-accent rounded-full h-11 w-11 p-0 backdrop-blur-sm"
-              >
-                <User className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 rounded-lg">
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="gap-2">
-                  <Monitor className="h-4 w-4" />
-                  <span>Theme</span>
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  <DropdownMenuItem onClick={() => setTheme("light")}>
-                    <Sun className="h-4 w-4" />
-                    <span>Light</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setTheme("dark")}>
-                    <Moon className="h-4 w-4" />
-                    <span>Dark</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setTheme("system")}>
-                    <Monitor className="h-4 w-4" />
-                    <span>System</span>
-                  </DropdownMenuItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="gap-2">
-                <LogOut className="h-4 w-4 text-red-600 dark:text-red-500" />
-                <span>Log out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </form>
 
