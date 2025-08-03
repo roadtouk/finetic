@@ -87,6 +87,7 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
     }>
   >([]);
   const [loading, setLoading] = useState(false);
+  const [videoStarted, setVideoStarted] = useState(false);
   const [fetchingSubtitles, setFetchingSubtitles] = useState(false);
   const [currentSubtitle, setCurrentSubtitle] = useState<{
     text: string;
@@ -225,6 +226,7 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
 
   // Handle video events
   const handleVideoPlay = useCallback(() => {
+    setVideoStarted(true); // Video has actually started playing
     if (!hasStartedPlayback) {
       startProgressTracking();
     }
@@ -314,6 +316,7 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
     setFetchingSubtitles(false);
     setCurrentMediaWithSource(null);
     setMediaSegments({});
+    setVideoStarted(false); // Reset video started state
   }, [stopProgressTracking, cleanupBlobUrls]);
 
   const handleVideoEnded = useCallback(async () => {
@@ -365,12 +368,15 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
 
   useEffect(() => {
     if (currentMedia && isPlayerVisible) {
+      setVideoStarted(false); // Reset video started state when loading new media
       loadMedia();
     }
   }, [currentMedia, isPlayerVisible, videoBitrate]);
 
   const loadMedia = async () => {
     if (!currentMedia) return;
+
+    console.log("Current media:", currentMedia);
 
     setLoading(true);
     try {
@@ -381,7 +387,7 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
         return;
       }
 
-      setMediaDetails(details);
+      console.log(details.ParentBackdropItemId)
 
       // Use selected version from MediaActions or fallback to first source
       if (details.MediaSources && details.MediaSources.length > 0) {
@@ -581,13 +587,28 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
           }
         }}
       >
-        {loading || !streamUrl || !mediaDetails ? (
+        {loading || !streamUrl || !mediaDetails || !videoStarted ? (
           <div className="fixed inset-0 bg-black z-[1000000]">
+            {/* Go Back Button - visible during loading */}
+            <Button
+              variant="ghost"
+              className="fixed left-4 top-4 z-10 hover:backdrop-blur-md"
+              onClick={handleClose}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Go Back
+            </Button>
+
             {/* Backdrop Image */}
-            {mediaDetails?.BackdropImageTags && mediaDetails.BackdropImageTags.length > 0 ? (
+            {mediaDetails?.BackdropImageTags &&
+            mediaDetails.BackdropImageTags.length > 0 ? (
               <div className="relative w-full h-full">
                 <img
-                  src={`${serverUrl}/Items/${currentMedia.id}/Images/Backdrop?maxHeight=1080&maxWidth=1920&quality=90`}
+                  src={`${serverUrl}/Items/${
+                    mediaDetails?.Type === "Episode" && mediaDetails?.ParentBackdropItemId
+                      ? mediaDetails.ParentBackdropItemId
+                      : currentMedia.id
+                  }/Images/Backdrop?maxHeight=1080&maxWidth=1920&quality=95`}
                   alt={currentMedia?.name}
                   className="w-full h-full object-cover brightness-50"
                   onError={(e) => {
@@ -596,7 +617,7 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
                   }}
                 />
                 {/* Progressive Blur Overlay */}
-                <ProgressiveBlur 
+                <ProgressiveBlur
                   direction="bottom"
                   blurLayers={6}
                   blurIntensity={0.3}
@@ -609,47 +630,102 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
               // Fallback solid background
               <div className="w-full h-full bg-black" />
             )}
-            
+
             {/* Title and Loading Spinner at Bottom */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, ease: "easeOut" }}
-              className="absolute bottom-8 left-8 right-8 flex items-center justify-between"
+              className="absolute bottom-8 left-8 right-8"
             >
-              {/* Title Section */}
+              {/* Content formatted like the player */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2, duration: 0.5 }}
-                className="flex-1"
+                className="flex flex-col w-full gap-1.5 pb-2"
               >
-                <motion.h2 
-                  className="text-4xl font-semibold text-white mb-1 truncate"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  {currentMedia?.name}
-                </motion.h2>
-                <motion.p
-                  className="text-lg text-white/70"
+                {/* Show name for episodes */}
+                {mediaDetails?.SeriesName && (
+                  <motion.div
+                    className="text-sm text-white/70 truncate font-medium"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    {mediaDetails.SeriesName}
+                  </motion.div>
+                )}
+
+                {/* Episode/Movie title with episode number */}
+                <div className="flex items-center justify-between w-full">
+                  <motion.h2
+                    className="text-3xl font-semibold text-white truncate font-poppins"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                  >
+                    {mediaDetails?.Type === "Episode" &&
+                    mediaDetails?.IndexNumber
+                      ? `${mediaDetails.IndexNumber}. ${mediaDetails.Name || currentMedia.name}`
+                      : mediaDetails?.Name || currentMedia.name}
+                  </motion.h2>
+
+                  {/* End time display */}
+                  {mediaDetails?.RunTimeTicks && (
+                    <motion.div
+                      className="text-sm text-white/70 ml-4 whitespace-nowrap"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.5 }}
+                    >
+                      Ends at{" "}
+                      {formatEndTime(
+                        0,
+                        ticksToSeconds(mediaDetails.RunTimeTicks)
+                      )}
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* Season and episode info + runtime */}
+                <motion.div
+                  className="flex items-center gap-3 text-sm text-white/60"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.6 }}
                 >
-                  Loading...
-                </motion.p>
-              </motion.div>
-              
-              {/* Loading Spinner */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-                className="flex-shrink-0 ml-6"
-              >
-                <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+                  {mediaDetails?.Type === "Episode" && (
+                    <div className="space-x-1">
+                      {mediaDetails?.ParentIndexNumber && (
+                        <span>S{mediaDetails.ParentIndexNumber}</span>
+                      )}
+                      <span>•</span>
+                      {mediaDetails?.IndexNumber && (
+                        <span>E{mediaDetails.IndexNumber}</span>
+                      )}
+                    </div>
+                  )}
+
+                  {mediaDetails?.RunTimeTicks && (
+                    <span>{formatRuntime(mediaDetails.RunTimeTicks)}</span>
+                  )}
+
+                  {mediaDetails?.ProductionYear && (
+                    <span>{mediaDetails.ProductionYear}</span>
+                  )}
+                </motion.div>
+
+                {/* Loading indicator */}
+                <motion.div
+                  className="flex items-center gap-2 mt-2"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.7 }}
+                >
+                  <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  <span className="text-sm text-white/70">Loading...</span>
+                </motion.div>
               </motion.div>
             </motion.div>
           </div>
