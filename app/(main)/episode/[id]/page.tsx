@@ -119,7 +119,7 @@ export default async function Episode({
                     className="w-3.5 h-3.5 mr-2 text-muted-foreground"
                   />
                   <Link
-                    href={`/show/${episode.SeriesId}`}
+                    href={`/series/${episode.SeriesId}`}
                     className="hover:underline"
                   >
                     {episode.SeriesName}
