@@ -6,7 +6,7 @@ export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // Define public paths that don't require authentication
-  const isPublicPath = path === "/login" || path === "/setup" || path === "/";
+  const isPublicPath = path === "/login" || path === "/setup";
 
   // Get the token from the cookie
   const token = request.cookies.get("jellyfin-auth")?.value || "";

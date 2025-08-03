@@ -19,6 +19,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
 import { TextScramble } from "@/components/motion-primitives/text-scramble";
+import { BackdropImage } from "@/components/media-page/backdrop-image";
+import { PosterImage } from "@/components/media-page/poster-image";
 
 export default async function Movie({
   params,
@@ -56,10 +58,10 @@ export default async function Movie({
         <div className="relative">
           {/* Backdrop image with gradient overlay */}
           <div className="relative h-[50vh] md:h-[70vh] overflow-hidden md:rounded-xl md:mt-2.5">
-            <img
+            <BackdropImage
+              movie={movie}
+              backdropImage={backdropImage}
               className="w-full h-full object-cover"
-              src={backdropImage}
-              alt={`${movie.Name} backdrop`}
               width={1920}
               height={1080}
             />
@@ -87,10 +89,10 @@ export default async function Movie({
           <div className="flex flex-col md:flex-row mx-auto">
             {/* Movie poster */}
             <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 justify-center flex md:block z-50 mt-6">
-              <img
+              <PosterImage
+                movie={movie}
+                posterImage={primaryImage}
                 className="w-full h-auto rounded-lg shadow-2xl max-w-1/2 md:max-w-full"
-                src={primaryImage}
-                alt={movie.Name || "Movie Poster"}
                 width={500}
                 height={750}
               />
@@ -161,7 +163,8 @@ export default async function Movie({
                 <MediaActions movie={movie} />
 
                 {movie.Taglines && (
-                  <TextScramble className="text-lg text-muted-foreground mb-4 max-w-4xl text-center md:text-left font-poppins drop-shadow-md"
+                  <TextScramble
+                    className="text-lg text-muted-foreground mb-4 max-w-4xl text-center md:text-left font-poppins drop-shadow-md"
                     duration={1.2}
                   >
                     {movie.Taglines[0]}

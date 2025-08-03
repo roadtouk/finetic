@@ -47,6 +47,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ProgressiveBlur } from "@/components/motion-primitives/progressive-blur";
 import { useAuth } from "@/hooks/useAuth";
 import { useSettings, BITRATE_OPTIONS } from "@/contexts/settings-context";
 import {
@@ -581,11 +582,77 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
         }}
       >
         {loading || !streamUrl || !mediaDetails ? (
-          <MediaPlayerLoading delayMs={200}>
-            <div className="text-white text-xl">
-              Loading {currentMedia.name}...
-            </div>
-          </MediaPlayerLoading>
+          <div className="fixed inset-0 bg-black z-[1000000]">
+            {/* Backdrop Image */}
+            {mediaDetails?.BackdropImageTags && mediaDetails.BackdropImageTags.length > 0 ? (
+              <div className="relative w-full h-full">
+                <img
+                  src={`${serverUrl}/Items/${currentMedia.id}/Images/Backdrop?maxHeight=1080&maxWidth=1920&quality=90`}
+                  alt={currentMedia?.name}
+                  className="w-full h-full object-cover brightness-50"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = "none";
+                  }}
+                />
+                {/* Progressive Blur Overlay */}
+                <ProgressiveBlur 
+                  direction="bottom"
+                  blurLayers={6}
+                  blurIntensity={0.3}
+                  className="absolute inset-0"
+                />
+                {/* Dark overlay for better text readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              </div>
+            ) : (
+              // Fallback solid background
+              <div className="w-full h-full bg-black" />
+            )}
+            
+            {/* Title and Loading Spinner at Bottom */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+              className="absolute bottom-8 left-8 right-8 flex items-center justify-between"
+            >
+              {/* Title Section */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+                className="flex-1"
+              >
+                <motion.h2 
+                  className="text-4xl font-semibold text-white mb-1 truncate"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  {currentMedia?.name}
+                </motion.h2>
+                <motion.p
+                  className="text-lg text-white/70"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                >
+                  Loading...
+                </motion.p>
+              </motion.div>
+              
+              {/* Loading Spinner */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+                className="flex-shrink-0 ml-6"
+              >
+                <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+              </motion.div>
+            </motion.div>
+          </div>
         ) : (
           <MediaPlayerVideo asChild>
             <MuxVideo

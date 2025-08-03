@@ -19,6 +19,9 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CastScrollArea } from "@/components/cast-scrollarea";
 import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import { TextScramble } from "@/components/motion-primitives/text-scramble";
+import { BackdropImage } from "@/components/media-page/backdrop-image";
+import { PosterImage } from "@/components/media-page/poster-image";
 
 export default async function SeasonPage({
   params,
@@ -57,10 +60,10 @@ export default async function SeasonPage({
         <div className="relative">
           {/* Backdrop image with gradient overlay */}
           <div className="relative h-[50vh] md:h-[70vh] overflow-hidden md:rounded-xl md:mt-2.5">
-            <img
+            <BackdropImage
+              movie={season}
+              backdropImage={backdropImage}
               className="w-full h-full object-cover"
-              src={backdropImage}
-              alt={`${season.SeriesName} backdrop`}
               width={1920}
               height={1080}
             />
@@ -88,10 +91,10 @@ export default async function SeasonPage({
           <div className="flex flex-col md:flex-row mx-auto">
             {/* Season poster */}
             <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 justify-center flex md:block z-50 mt-6">
-              <img
+              <PosterImage
+                movie={season}
+                posterImage={primaryImage}
                 className="w-full h-auto rounded-lg shadow-2xl max-w-1/2 md:max-w-full"
-                src={primaryImage}
-                alt={season.Name || "Season Poster"}
                 width={500}
                 height={750}
               />

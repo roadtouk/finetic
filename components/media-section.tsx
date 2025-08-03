@@ -51,7 +51,7 @@ export function MediaSection({
   };
 
   return (
-    <section className="relative z-10 mb-12">
+    <section className="relative z-10 mb-8">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-2xl font-semibold text-foreground font-poppins">
           {sectionName}

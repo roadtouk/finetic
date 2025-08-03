@@ -19,6 +19,9 @@ import { Star, Play, TvIcon } from "lucide-react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { BaseItemDto } from "@jellyfin/sdk/lib/generated-client/models";
+import { TextScramble } from "@/components/motion-primitives/text-scramble";
+import { BackdropImage } from "@/components/media-page/backdrop-image";
+import { PosterImage } from "@/components/media-page/poster-image";
 
 export default async function Episode({
   params,
@@ -59,10 +62,10 @@ export default async function Episode({
         <div className="relative">
           {/* Backdrop image with gradient overlay */}
           <div className="relative h-[50vh] md:h-[70vh] overflow-hidden md:rounded-xl md:mt-2.5">
-            <img
+            <BackdropImage
+              movie={episode}
+              backdropImage={backdropImage}
               className="w-full h-full object-cover"
-              src={backdropImage}
-              alt={`${episode.Name} backdrop`}
               width={1920}
               height={1080}
             />
@@ -92,10 +95,12 @@ export default async function Episode({
             <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 justify-center flex md:block z-50 mt-6">
               <div className="relative aspect-video rounded-lg overflow-hidden shadow-2xl bg-muted max-w-1/2 md:max-w-full mt-16">
                 {primaryImage ? (
-                  <img
+                  <PosterImage
+                    movie={episode}
+                    posterImage={primaryImage}
                     className="w-full h-full object-cover"
-                    src={primaryImage}
-                    alt={episode.Name || "Episode"}
+                    width={480}
+                    height={270}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-muted-foreground">
@@ -207,9 +212,12 @@ export default async function Episode({
                 <MediaActions episode={episode} />
 
                 {episode.Taglines && (
-                  <p className="text-lg text-muted-foreground mb-4 max-w-4xl text-center md:text-left font-poppins drop-shadow-md">
+                  <TextScramble
+                    className="text-lg text-muted-foreground mb-4 max-w-4xl text-center md:text-left font-poppins drop-shadow-md"
+                    duration={1.2}
+                  >
                     {episode.Taglines[0]}
-                  </p>
+                  </TextScramble>
                 )}
 
                 {episode.Overview && (

@@ -96,25 +96,9 @@ export function AuroraBackground({
     return null;
   }
 
-  // During initialization, show dark background placeholder to prevent white flash
-  // This covers the time between mount and theme resolution
+  // During initialization, don't render anything to prevent hydration mismatch
+  // This ensures server and client render the same content initially
   if (!mounted || !themeResolved) {
-    // Show placeholder if theme is dark or if it's system and we haven't resolved yet
-    // (better to show dark placeholder and hide it if needed than show white flash)
-    const shouldShowPlaceholder =
-      theme === "dark" || theme === "system" || !theme;
-
-    if (shouldShowPlaceholder) {
-      return (
-        <div
-          className={className}
-          style={{
-            backgroundColor: "oklch(0.141 0.005 285.823)", // dark background color
-            opacity: 0.05, // very subtle so it doesn't interfere if theme turns out to be light
-          }}
-        />
-      );
-    }
     return null;
   }
 

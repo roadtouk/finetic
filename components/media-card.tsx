@@ -57,7 +57,10 @@ export function MediaCard({
     : `${serverUrl}/Items/${imageItemId}/Images/${imageType}?maxHeight=432&maxWidth=288&quality=100`;
 
   // Get blur hash
-  const imageTag = item.Type === "Episode" ? item.ParentThumbImageTag : item.ImageTags?.[imageType]!;
+  const imageTag =
+    item.Type === "Episode"
+      ? item.ParentThumbImageTag
+      : item.ImageTags?.[imageType]!;
   const blurHash = item.ImageBlurHashes?.[imageType]?.[imageTag!] || "";
 
   // Decode blur hash
@@ -65,10 +68,10 @@ export function MediaCard({
     if (blurHash && !blurDataUrl) {
       try {
         const pixels = decode(blurHash, 32, 32);
-        const canvas = document.createElement('canvas');
+        const canvas = document.createElement("canvas");
         canvas.width = 32;
         canvas.height = 32;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext("2d");
         if (ctx) {
           const imageData = ctx.createImageData(32, 32);
           imageData.data.set(pixels);
@@ -76,7 +79,7 @@ export function MediaCard({
           setBlurDataUrl(canvas.toDataURL());
         }
       } catch (error) {
-        console.error('Error decoding blur hash:', error);
+        console.error("Error decoding blur hash:", error);
       }
     }
   }, [blurHash, blurDataUrl]);
@@ -136,7 +139,7 @@ export function MediaCard({
               )}
               {/* Actual image */}
               <img
-                src={imageUrl}
+                src={"https://lightspeed.ac/?url=" + imageUrl}
                 alt={item.Name || ""}
                 className={`w-full h-full object-cover transition-opacity duration-300 shadow-lg shadow-sm group-hover:shadow-md ${
                   progressPercentage > 0 ? "rounded-t-md" : "rounded-md"
@@ -144,6 +147,7 @@ export function MediaCard({
                 onLoad={(e) => {
                   setImageLoaded(true);
                 }}
+                draggable={false}
                 ref={(img) => {
                   // Check if image is already loaded (cached)
                   if (img && img.complete && img.naturalHeight !== 0) {
