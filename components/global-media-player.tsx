@@ -56,6 +56,7 @@ import {
   isHLSSupported,
 } from "@/lib/device-detection";
 import { fetchIntroOutro } from "@/app/actions/media";
+import { decode } from "blurhash";
 
 interface GlobalMediaPlayerProps {
   onToggleAIAsk?: () => void;
@@ -89,6 +90,11 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
   const [loading, setLoading] = useState(false);
   const [videoStarted, setVideoStarted] = useState(false);
   const [fetchingSubtitles, setFetchingSubtitles] = useState(false);
+  
+  // Backdrop image state
+  const [backdropImageLoaded, setBackdropImageLoaded] = useState(false);
+  const [blurDataUrl, setBlurDataUrl] = useState<string | null>(null);
+  
   const [currentSubtitle, setCurrentSubtitle] = useState<{
     text: string;
     positionTop: boolean;
@@ -317,6 +323,8 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
     setCurrentMediaWithSource(null);
     setMediaSegments({});
     setVideoStarted(false); // Reset video started state
+    setBackdropImageLoaded(false); // Reset backdrop image state
+    setBlurDataUrl(null); // Reset blur data URL
   }, [stopProgressTracking, cleanupBlobUrls]);
 
   const handleVideoEnded = useCallback(async () => {
@@ -369,9 +377,41 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
   useEffect(() => {
     if (currentMedia && isPlayerVisible) {
       setVideoStarted(false); // Reset video started state when loading new media
+      setBackdropImageLoaded(false); // Reset backdrop image state
+      setBlurDataUrl(null); // Reset blur data URL
       loadMedia();
     }
   }, [currentMedia, isPlayerVisible, videoBitrate]);
+
+  // Decode blur hash for backdrop image
+  useEffect(() => {
+    if (mediaDetails && !blurDataUrl) {
+      // Get blur hash for backdrop
+      const backdropImageTag = mediaDetails.Type === "Episode" 
+        ? mediaDetails.ParentBackdropImageTags?.[0]
+        : mediaDetails.BackdropImageTags?.[0];
+      const blurHash =
+        mediaDetails.ImageBlurHashes?.["Backdrop"]?.[backdropImageTag!] || "";
+
+      if (blurHash) {
+        try {
+          const pixels = decode(blurHash, 32, 32);
+          const canvas = document.createElement("canvas");
+          canvas.width = 32;
+          canvas.height = 32;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            const imageData = ctx.createImageData(32, 32);
+            imageData.data.set(pixels);
+            ctx.putImageData(imageData, 0, 0);
+            setBlurDataUrl(canvas.toDataURL());
+          }
+        } catch (error) {
+          console.error("Error decoding blur hash:", error);
+        }
+      }
+    }
+  }, [mediaDetails, blurDataUrl]);
 
   const loadMedia = async () => {
     if (!currentMedia) return;
@@ -603,6 +643,26 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
             {/* Backdrop Image */}
             {mediaDetails ? (
               <div className="relative w-full h-full">
+                {/* Blur hash placeholder or loading placeholder */}
+                {!backdropImageLoaded && (
+                  <div
+                    className={`w-full h-full object-cover brightness-50 absolute inset-0 transition-opacity duration-300 ${
+                      blurDataUrl ? "" : "bg-gray-800"
+                    }`}
+                    style={
+                      blurDataUrl
+                        ? {
+                            backgroundImage: `url(${blurDataUrl})`,
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                            filter: "brightness(0.5)",
+                          }
+                        : undefined
+                    }
+                  />
+                )}
+                
+                {/* Actual backdrop image */}
                 <img
                   src={`${serverUrl}/Items/${
                     mediaDetails?.Type === "Episode" && mediaDetails?.SeriesId
@@ -610,10 +670,21 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
                       : currentMedia.id
                   }/Images/Backdrop?maxHeight=1080&maxWidth=1920&quality=95`}
                   alt={currentMedia?.name}
-                  className="w-full h-full object-cover brightness-50"
+                  className={`w-full h-full object-cover brightness-50 transition-opacity duration-300 ${
+                    backdropImageLoaded ? "opacity-100" : "opacity-0"
+                  }`}
+                  onLoad={() => {
+                    setBackdropImageLoaded(true);
+                  }}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.style.display = "none";
+                  }}
+                  ref={(img) => {
+                    // Check if image is already loaded (cached)
+                    if (img && img.complete && img.naturalHeight !== 0) {
+                      setBackdropImageLoaded(true);
+                    }
                   }}
                 />
                 {/* Progressive Blur Overlay */}
