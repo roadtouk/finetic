@@ -89,7 +89,6 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
   >([]);
   const [loading, setLoading] = useState(false);
   const [videoStarted, setVideoStarted] = useState(false);
-  const [videoActuallyPlaying, setVideoActuallyPlaying] = useState(false);
   const [fetchingSubtitles, setFetchingSubtitles] = useState(false);
   
   // Backdrop image state
@@ -233,14 +232,13 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
 
   // Handle video events
   const handleVideoPlay = useCallback(() => {
-    setVideoStarted(true); // Video has actually started playing
+    setVideoStarted(true); // Mark that video has started playing
     if (!hasStartedPlayback) {
       startProgressTracking();
     }
   }, [hasStartedPlayback, startProgressTracking]);
 
   const handleVideoPause = useCallback(async () => {
-    setVideoActuallyPlaying(false); // Video is paused
     if (playSessionId && currentMedia && selectedVersion && videoRef.current) {
       const currentTime = videoRef.current.currentTime;
       const positionTicks = secondsToTicks(currentTime);
@@ -261,11 +259,6 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
       const time = videoRef.current.currentTime;
       setCurrentTime(time);
       setCurrentTimestamp(time); // Update context with current time
-      
-      // Check if video is actually progressing and playing
-      if (!videoRef.current.paused && time > 0) {
-        setVideoActuallyPlaying(true);
-      }
     }
   }, [setCurrentTimestamp]);
 
@@ -330,7 +323,6 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
     setCurrentMediaWithSource(null);
     setMediaSegments({});
     setVideoStarted(false); // Reset video started state
-    setVideoActuallyPlaying(false); // Reset video actually playing state
     setBackdropImageLoaded(false); // Reset backdrop image state
     setBlurDataUrl(null); // Reset blur data URL
   }, [stopProgressTracking, cleanupBlobUrls]);
@@ -385,7 +377,6 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
   useEffect(() => {
     if (currentMedia && isPlayerVisible) {
       setVideoStarted(false); // Reset video started state when loading new media
-      setVideoActuallyPlaying(false); // Reset video actually playing state
       setBackdropImageLoaded(false); // Reset backdrop image state
       setBlurDataUrl(null); // Reset blur data URL
       loadMedia();
@@ -666,7 +657,7 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
         )}
 
         {/* Loading overlay - shown while loading or before video starts */}
-        {(loading || !streamUrl || !mediaDetails || !videoStarted || !videoActuallyPlaying) && (
+        {(loading || !streamUrl || !mediaDetails || !videoStarted) && (
           <div className="fixed inset-0 bg-black z-[1000000]">
             {/* Go Back Button - visible during loading */}
             <Button
