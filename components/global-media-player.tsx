@@ -601,8 +601,7 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
             </Button>
 
             {/* Backdrop Image */}
-            {mediaDetails?.BackdropImageTags &&
-            mediaDetails.BackdropImageTags.length > 0 ? (
+            {mediaDetails ? (
               <div className="relative w-full h-full">
                 <img
                   src={`${serverUrl}/Items/${
