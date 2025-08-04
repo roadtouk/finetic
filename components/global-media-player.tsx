@@ -628,7 +628,36 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
           }
         }}
       >
-        {loading || !streamUrl || !mediaDetails || !videoStarted ? (
+        {/* Always render the video component so it can load in the background */}
+        {streamUrl && mediaDetails && (
+          <MediaPlayerVideo asChild>
+            <MuxVideo
+              // @ts-ignore
+              ref={videoRef}
+              src={streamUrl}
+              // src={
+              //   "https://stream.mux.com/A3VXy02VoUinw01pwyomEO3bHnG4P32xzV7u1j1FSzjNg.m3u8"
+              // }
+              crossOrigin=""
+              playsInline
+              preload="auto"
+              autoPlay={!currentMedia?.resumePositionTicks}
+              className="h-screen bg-black w-screen"
+              onPlay={handleVideoPlay}
+              onPause={handleVideoPause}
+              onEnded={handleVideoEnded}
+              onLoadedMetadata={handleVideoLoadedMetadata}
+              onTimeUpdate={handleTimeUpdate}
+              onDurationChange={handleDurationChange}
+              onError={(event) => {
+                console.warn("Video error caught:", event);
+              }}
+            />
+          </MediaPlayerVideo>
+        )}
+
+        {/* Loading overlay - shown while loading or before video starts */}
+        {(loading || !streamUrl || !mediaDetails || !videoStarted) && (
           <div className="fixed inset-0 bg-black z-[1000000]">
             {/* Go Back Button - visible during loading */}
             <Button
@@ -800,31 +829,6 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
               </motion.div>
             </motion.div>
           </div>
-        ) : (
-          <MediaPlayerVideo asChild>
-            <MuxVideo
-              // @ts-ignore
-              ref={videoRef}
-              src={streamUrl}
-              // src={
-              //   "https://stream.mux.com/A3VXy02VoUinw01pwyomEO3bHnG4P32xzV7u1j1FSzjNg.m3u8"
-              // }
-              crossOrigin=""
-              playsInline
-              preload="auto"
-              autoPlay={!currentMedia?.resumePositionTicks}
-              className="h-screen bg-black w-screen"
-              onPlay={handleVideoPlay}
-              onPause={handleVideoPause}
-              onEnded={handleVideoEnded}
-              onLoadedMetadata={handleVideoLoadedMetadata}
-              onTimeUpdate={handleTimeUpdate}
-              onDurationChange={handleDurationChange}
-              onError={(event) => {
-                console.warn("Video error caught:", event);
-              }}
-            />
-          </MediaPlayerVideo>
         )}
         {/* Current Subtitle */}
         {currentSubtitle && (
