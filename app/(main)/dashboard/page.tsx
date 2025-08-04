@@ -1,5 +1,5 @@
 import { fetchLibraryItems, getLibraryById } from "@/app/actions";
-import { fetchScheduledTasks, getAuthData } from "@/app/actions/utils";
+import { fetchScheduledTasks, getAuthData, fetchJellyfinLogs } from "@/app/actions/utils";
 import { AuthErrorHandler } from "@/app/components/auth-error-handler";
 import Aurora from "@/components/Aurora/Aurora";
 import { LibraryMediaList } from "@/components/library-media-list";
@@ -10,13 +10,15 @@ import { BentoGrid, BentoItem } from "@/components/ui/bento-grid";
 import { Badge } from "@/components/ui/badge";
 import { TextShimmerWave } from "@/components/ui/text-shimmer-wave";
 import { TextShimmer } from "@/components/motion-primitives/text-shimmer";
-import { LoaderPinwheel } from "lucide-react";
+import { LoaderPinwheel, FileText } from "lucide-react";
 import {
   getTaskIcon,
   getTaskIconProps,
 } from "@/lib/scheduled-task-icon-mapping";
 import { VibrantAuroraBackground } from "@/components/vibrant-aurora-background";
 import { AuroraBackground } from "@/components/aurora-background";
+import { DataTable } from "@/components/logs/data-table";
+import { logColumns } from "@/components/logs/columns";
 
 export default async function DashboardPage({
   params,
@@ -29,6 +31,7 @@ export default async function DashboardPage({
   const { serverUrl, user } = authData;
 
   const scheduledTasks = await fetchScheduledTasks();
+  const logs = await fetchJellyfinLogs();
 
   // Filter to show only running tasks
   const runningTasks = scheduledTasks.filter(
@@ -105,6 +108,20 @@ export default async function DashboardPage({
             No running scheduled tasks
           </div>
         )}
+        
+        {/* Log Viewer Section */}
+        <div className="mt-12">
+          <div className="inline-flex items-center gap-3 mb-6">
+            <h4 className="text-xl font-semibold text-foreground font-poppins">
+              System Logs
+            </h4>
+            <Badge variant={"outline"}>
+              <FileText className="w-4 h-4 mr-1" />
+              {`${logs.length} Files`}
+            </Badge>
+          </div>
+          <DataTable columns={logColumns} data={logs} />
+        </div>
       </div>
     </div>
   );

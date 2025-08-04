@@ -7,6 +7,8 @@ import { getUserViewsApi } from "@jellyfin/sdk/lib/utils/api/user-views-api";
 import { LibraryApi } from "@jellyfin/sdk/lib/generated-client/api/library-api";
 import { getSubtitleApi } from "@jellyfin/sdk/lib/utils/api/subtitle-api";
 import { createJellyfinInstance } from "@/lib/utils";
+import { getSystemApi } from "@jellyfin/sdk/lib/utils/api/system-api";
+import { LogFile } from "@jellyfin/sdk/lib/generated-client/models";
 
 // Helper function to get auth data from cookies
 export async function getAuthData() {
@@ -438,5 +440,49 @@ export async function fetchScheduledTasks(): Promise<any[]> {
   } catch (error) {
     console.error("Error fetching scheduled tasks:", error);
     return [];
+  }
+}
+
+// Types for Jellyfin logs
+export interface JellyfinLog {
+  DateCreated: string;
+  DateModified: string;
+  Size: number;
+  Name: string;
+}
+
+export async function fetchJellyfinLogs(): Promise<LogFile[]> {
+  const { serverUrl, user } = await getAuthData();
+  const jellyfinInstance = createJellyfinInstance();
+  const api = jellyfinInstance.createApi(serverUrl);
+  api.accessToken = user.AccessToken;
+
+  try {
+    const systemApi = getSystemApi(api);
+    const { data } = await systemApi.getServerLogs();
+
+    return data || [];
+  } catch (error) {
+    console.error("Failed to fetch Jellyfin logs:", error);
+    return [];
+  }
+}
+
+export async function fetchLogContent(logName: string): Promise<string> {
+  const { serverUrl, user } = await getAuthData();
+  const jellyfinInstance = createJellyfinInstance();
+  const api = jellyfinInstance.createApi(serverUrl);
+  api.accessToken = user.AccessToken;
+
+  try {
+    const systemApi = getSystemApi(api);
+    const response = await systemApi.getLogFile({
+      name: logName,
+    });
+
+    return response.data as unknown as string;
+  } catch (error) {
+    console.error("Failed to fetch log content:", error);
+    throw new Error("Could not fetch log content");
   }
 }
