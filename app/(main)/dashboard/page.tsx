@@ -1,5 +1,9 @@
 import { fetchLibraryItems, getLibraryById } from "@/app/actions";
-import { fetchScheduledTasks, getAuthData, fetchJellyfinLogs } from "@/app/actions/utils";
+import {
+  fetchScheduledTasks,
+  getAuthData,
+  fetchJellyfinLogs,
+} from "@/app/actions/utils";
 import { AuthErrorHandler } from "@/app/components/auth-error-handler";
 import Aurora from "@/components/Aurora/Aurora";
 import { LibraryMediaList } from "@/components/library-media-list";
@@ -78,9 +82,7 @@ export default async function DashboardPage({
   return (
     <div className="relative px-4 py-6 max-w-full overflow-hidden">
       {/* Main content with higher z-index */}
-      <AuroraBackground
-        colorStops={["#34d399", "#38bdf8", "#2dd4bf"]}
-      />
+      <AuroraBackground colorStops={["#34d399", "#38bdf8", "#2dd4bf"]} />
       <div className="relative z-10">
         <div className="relative z-[9999] mb-8">
           <div className="mb-6">
@@ -108,15 +110,15 @@ export default async function DashboardPage({
             No running scheduled tasks
           </div>
         )}
-        
+
         {/* Log Viewer Section */}
         <div className="mt-12">
           <div className="inline-flex items-center gap-3 mb-6">
             <h4 className="text-xl font-semibold text-foreground font-poppins">
               System Logs
             </h4>
-            <Badge variant={"outline"}>
-              <FileText className="w-4 h-4 mr-1" />
+            <Badge variant={"secondary"}>
+              <FileText className="w-4 h-4" />
               {`${logs.length} Files`}
             </Badge>
           </div>

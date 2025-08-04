@@ -16,10 +16,30 @@ import { Badge } from "@/components/ui/badge";
 import { LogViewerDialog } from "./log-viewer-dialog";
 import { LogFile } from "@jellyfin/sdk/lib/generated-client/models";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
-// We need to create a wrapper component to manage the dialog state
-function LogActionsCell({ log }: { log: LogFile }) {
+// Wrapper component to manage dialog state for both name and actions
+function LogRowWrapper({ log, children }: { log: LogFile; children: (onViewLog: () => void) => React.ReactNode }) {
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleViewLog = () => {
+    setDialogOpen(true);
+  };
+
+  return (
+    <>
+      {children(handleViewLog)}
+      <LogViewerDialog log={log} open={dialogOpen} onOpenChange={setDialogOpen}>
+        <div />
+      </LogViewerDialog>
+    </>
+  );
+}
+
+// Actions cell component
+function LogActionsCell({ log, onViewLog }: { log: LogFile; onViewLog: () => void }) {
+  const { serverUrl, user } = useAuth()
+  const accessToken = user?.AccessToken;
 
   return (
     <>
@@ -31,27 +51,21 @@ function LogActionsCell({ log }: { log: LogFile }) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          {/* <DropdownMenuLabel>Actions</DropdownMenuLabel> */}
           <DropdownMenuItem
             onClick={() => navigator.clipboard.writeText(log.Name!)}
           >
             Copy log name
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setDialogOpen(true)}>
+          <DropdownMenuItem onClick={onViewLog}>
             <Eye className="h-4 w-4" />
             View log
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={async () => {
               try {
-                const { serverUrl, user } = await import(
-                  "@/app/actions/utils"
-                ).then((m) => m.getAuthData());
-                const authData = await (
-                  await import("@/app/actions/utils")
-                ).getAuthData();
-                const url = `${authData.serverUrl}/System/Logs/Log?name=${log.Name}&api_key=${authData.user.accessToken}`;
+                const url = `${serverUrl}/System/Logs/Log?name=${log.Name}&api_key=${accessToken}`;
                 const a = document.createElement("a");
                 a.href = url;
                 a.download = log.Name!;
@@ -66,14 +80,6 @@ function LogActionsCell({ log }: { log: LogFile }) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      
-      <LogViewerDialog 
-        log={log} 
-        open={dialogOpen} 
-        onOpenChange={setDialogOpen}
-      >
-        <div />
-      </LogViewerDialog>
     </>
   );
 }
@@ -107,10 +113,11 @@ export const logColumns: ColumnDef<LogFile>[] = [
       return (
         <Button
           variant="ghost"
+          size="sm"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Log Name
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown className="h-4 w-4" />
         </Button>
       );
     },
@@ -118,21 +125,31 @@ export const logColumns: ColumnDef<LogFile>[] = [
       const name = row.getValue("Name") as string;
       const isFFmpegLog = name.startsWith("FFmpeg");
       const isMainLog = name.startsWith("log_");
+      const log = row.original;
 
       return (
-        <div className="flex items-center gap-2">
-          <span className="font-medium">{name}</span>
-          {isFFmpegLog && (
-            <Badge variant="secondary" className="text-xs">
-              FFmpeg
-            </Badge>
+        <LogRowWrapper log={log}>
+          {(onViewLog) => (
+            <div className="flex items-center gap-2 ml-2">
+              <button 
+                onClick={onViewLog}
+                className="font-medium hover:underline cursor-pointer text-left"
+              >
+                {name}
+              </button>
+              {isFFmpegLog && (
+                <Badge variant="secondary" className="text-xs">
+                  FFmpeg
+                </Badge>
+              )}
+              {isMainLog && (
+                <Badge variant="default" className="text-xs">
+                  System
+                </Badge>
+              )}
+            </div>
           )}
-          {isMainLog && (
-            <Badge variant="default" className="text-xs">
-              System
-            </Badge>
-          )}
-        </div>
+        </LogRowWrapper>
       );
     },
   },
@@ -140,32 +157,38 @@ export const logColumns: ColumnDef<LogFile>[] = [
     accessorKey: "Size",
     header: ({ column }) => {
       return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Size
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
+        <div className="flex justify-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Size
+            <ArrowUpDown className="h-4 w-4" />
+          </Button>
+        </div>
       );
     },
     cell: ({ row }) => {
       const size = row.getValue("Size") as number;
       const formatted = formatFileSize(size);
-      return <div className="text-right font-medium">{formatted}</div>;
+      return <div className="text-center font-medium">{formatted}</div>;
     },
   },
   {
     accessorKey: "DateCreated",
     header: ({ column }) => {
       return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Created
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
+        <div className="flex justify-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Created
+            <ArrowUpDown className="h-4 w-4" />
+          </Button>
+        </div>
       );
     },
     cell: ({ row }) => {
@@ -177,13 +200,16 @@ export const logColumns: ColumnDef<LogFile>[] = [
     accessorKey: "DateModified",
     header: ({ column }) => {
       return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Modified
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
+        <div className="flex justify-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Modified
+            <ArrowUpDown className="h-4 w-4" />
+          </Button>
+        </div>
       );
     },
     cell: ({ row }) => {
@@ -196,7 +222,11 @@ export const logColumns: ColumnDef<LogFile>[] = [
     enableHiding: false,
     cell: ({ row }) => {
       const log = row.original;
-      return <LogActionsCell log={log} />;
+      return (
+        <LogRowWrapper log={log}>
+          {(onViewLog) => <LogActionsCell log={log} onViewLog={onViewLog} />}
+        </LogRowWrapper>
+      );
     },
   },
 ];

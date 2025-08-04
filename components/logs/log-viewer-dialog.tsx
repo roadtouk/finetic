@@ -2,7 +2,15 @@
 
 import * as React from "react";
 import { useState, useEffect } from "react";
-import { Eye, Download, X, Copy, Search, ChevronDown } from "lucide-react";
+import {
+  Eye,
+  Download,
+  X,
+  Copy,
+  Search,
+  ChevronDown,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,9 +23,11 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { fetchLogContent, JellyfinLog } from "@/app/actions/utils";
 import { toast } from "sonner";
 import { LogFile } from "@jellyfin/sdk/lib/generated-client/models";
+import { TextShimmer } from "../motion-primitives/text-shimmer";
 
 interface LogViewerDialogProps {
   log: LogFile;
@@ -34,9 +44,14 @@ export function LogViewerDialog({
 }: LogViewerDialogProps) {
   const [logContent, setLogContent] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [internalOpen, setInternalOpen] = useState(false);
+  const [isAutoScrolling, setIsAutoScrolling] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(true);
+  const [isLiveMode, setIsLiveMode] = useState(true);
   const scrollAreaRef = React.useRef<HTMLDivElement>(null);
+  const refreshIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
@@ -46,9 +61,58 @@ export function LogViewerDialog({
   useEffect(() => {
     console.log("Dialog open state changed via useEffect:", open);
     if (open && !logContent) {
-      loadLogContent();
+      loadLogContent(true); // Initial load
     }
-  }, [open, logContent]);
+
+    // Start auto-refresh when dialog opens and live mode is enabled
+    if (open && isLiveMode) {
+      refreshIntervalRef.current = setInterval(() => {
+        loadLogContent(false); // Refresh load
+      }, 1000);
+    } else {
+      // Clear interval when dialog closes or live mode is disabled
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+        refreshIntervalRef.current = null;
+      }
+      // Reset states when dialog closes
+      if (!open) {
+        setIsAutoScrolling(false);
+        setShowScrollButton(true);
+        setIsInitialLoad(true);
+      }
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+        refreshIntervalRef.current = null;
+      }
+    };
+  }, [open, logContent, isLiveMode]);
+
+  // Auto-scroll to bottom when content changes and auto-scrolling is enabled
+  useEffect(() => {
+    if (isAutoScrolling && logContent && !isInitialLoad) {
+      scrollToBottom();
+    }
+  }, [logContent, isAutoScrolling, isInitialLoad]);
+
+  // Set up scroll listener
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]"
+      );
+      if (scrollContainer) {
+        scrollContainer.addEventListener("scroll", handleScroll);
+        return () => {
+          scrollContainer.removeEventListener("scroll", handleScroll);
+        };
+      }
+    }
+  }, [scrollAreaRef.current, isAutoScrolling]);
 
   const handleOpenChange = (newOpen: boolean) => {
     console.log("Dialog open state changed via handleOpenChange:", newOpen);
@@ -57,18 +121,26 @@ export function LogViewerDialog({
     }
   };
 
-  const loadLogContent = async () => {
-    setIsLoading(true);
+  const loadLogContent = async (isInitial = false) => {
+    if (isInitial) {
+      setIsLoading(true);
+      setIsInitialLoad(true);
+    }
     console.log("Loading log content for:", log.Name);
     try {
       const content = await fetchLogContent(log.Name!);
       console.log("Log content loaded:", content);
       setLogContent(content);
+      if (isInitial) {
+        setIsInitialLoad(false);
+      }
     } catch (error) {
       console.error("Failed to load log content:", error);
       toast.error("Failed to load log content");
     } finally {
-      setIsLoading(false);
+      if (isInitial) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -85,14 +157,39 @@ export function LogViewerDialog({
     a.download = log.Name!;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("Log downloaded");
   };
 
   const scrollToBottom = () => {
     if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      const scrollContainer = scrollAreaRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]"
+      );
       if (scrollContainer) {
         scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
+  };
+
+  const handleScrollToBottomClick = () => {
+    setIsAutoScrolling(true);
+    setShowScrollButton(false);
+    scrollToBottom();
+  };
+
+  const handleScroll = () => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]"
+      );
+      if (scrollContainer) {
+        const isAtBottom =
+          scrollContainer.scrollTop + scrollContainer.clientHeight >=
+          scrollContainer.scrollHeight - 10;
+
+        if (!isAtBottom && isAutoScrolling) {
+          setIsAutoScrolling(false);
+          setShowScrollButton(true);
+        }
       }
     }
   };
@@ -103,7 +200,7 @@ export function LogViewerDialog({
     const regex = new RegExp(`(${searchTerm})`, "gi");
     return text.replace(
       regex,
-      "<mark class='bg-yellow-200 dark:bg-yellow-800'>$1</mark>"
+      "<mark class='bg-primary dark:bg-primary/50 text-white'>$1</mark>"
     );
   };
 
@@ -119,22 +216,88 @@ export function LogViewerDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-[90vw]! w-[90vw]! h-[80vh] flex flex-col overflow-hidden">
+      <DialogContent className="max-w-[90vw]! w-[90vw]! h-[80vh] flex flex-col overflow-hidden dark:bg-background/30 backdrop-blur-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Eye className="h-5 w-5" />
-            {log.Name}
-            <Badge variant="outline" className="ml-auto">
-              {formatFileSize(log.Size!)}
-            </Badge>
+          <DialogTitle className="flex flex-col md:flex-row items-center gap-2">
+            <div className="flex items-center gap-2">
+              {log.Name}
+            </div>
+            <div className="flex items-center gap-2 my-2 md:my-0">
+              <Badge variant="outline" className="">
+                {formatFileSize(log.Size!)}
+              </Badge>
+              <Badge
+                className={isLiveMode ? "bg-emerald-500 dark:bg-emerald-500" : ""}
+              >
+                {isLiveMode ? "LIVE" : "PAUSED"}
+              </Badge>
+            </div>
           </DialogTitle>
-          <DialogDescription>
-            Created: {new Date(log.DateCreated!).toLocaleString()} • Modified:{" "}
-            {new Date(log.DateModified!).toLocaleString()}
+          <DialogDescription className="flex items-center justify-between">
+            <span>
+              Created: {new Date(log.DateCreated!).toLocaleString()} • Modified:{" "}
+              {new Date(log.DateModified!).toLocaleString()}
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm">Live Mode</span>
+              <Switch
+                checked={isLiveMode}
+                onCheckedChange={(checked) => {
+                  const newLiveMode = !!checked;
+                  setIsLiveMode(newLiveMode);
+
+                  // If turning on live mode and dialog is open, start refresh
+                  if (newLiveMode && open) {
+                    refreshIntervalRef.current = setInterval(() => {
+                      loadLogContent(false);
+                    }, 1000);
+                  }
+                  // If turning off live mode, stop refresh
+                  else if (!newLiveMode && refreshIntervalRef.current) {
+                    clearInterval(refreshIntervalRef.current);
+                    refreshIntervalRef.current = null;
+                  }
+                }}
+              />
+            </div>
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-center gap-2 py-2 border-b flex-shrink-0">
+        <div className="flex-1 min-h-0 mt-2 relative">
+          <ScrollArea ref={scrollAreaRef} className="h-full">
+            {isLoading ? (
+              <div className="flex items-center justify-center h-[calc(80vh-200px)]">
+                <div className="inline-flex items-center gap-2">
+                  <TextShimmer>Loading log content...</TextShimmer>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <pre
+                  className="text-xs font-mono whitespace-pre-wrap"
+                  dangerouslySetInnerHTML={{
+                    __html: highlightSearchTerm(filteredContent),
+                  }}
+                />
+              </div>
+            )}
+          </ScrollArea>
+
+          {/* Scroll to bottom button */}
+          {!isLoading && logContent && showScrollButton && (
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute bottom-4 right-4 z-10"
+              onClick={handleScrollToBottomClick}
+              title="Scroll to bottom"
+            >
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 flex-shrink-0 mt-2">
           <div className="flex-1 relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -162,40 +325,6 @@ export function LogViewerDialog({
             <Download className="h-4 w-4 mr-1" />
             Download
           </Button>
-        </div>
-
-        <div className="flex-1 min-h-0 mt-2 relative">
-          <ScrollArea ref={scrollAreaRef} className="h-full">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-muted-foreground">
-                  Loading log content...
-                </div>
-              </div>
-            ) : (
-              <div>
-                <pre
-                  className="text-xs font-mono whitespace-pre-wrap"
-                  dangerouslySetInnerHTML={{
-                    __html: highlightSearchTerm(filteredContent),
-                  }}
-                />
-              </div>
-            )}
-          </ScrollArea>
-          
-          {/* Scroll to bottom button */}
-          {!isLoading && logContent && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="absolute bottom-4 right-4 z-10 shadow-lg"
-              onClick={scrollToBottom}
-              title="Scroll to bottom"
-            >
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          )}
         </div>
       </DialogContent>
     </Dialog>
