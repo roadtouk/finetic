@@ -7,15 +7,14 @@ import {
   fetchMediaDetails,
   fetchResumeItems,
   fetchSimilarItems,
+  fetchGenres,
+  fetchGenre,
 } from "@/app/actions/media";
 
 export const searchMedia = tool({
-  description:
-    "Search for movies, TV shows, or episodes by name or keyword",
+  description: "Search for movies, TV shows, or episodes by name or keyword",
   parameters: z.object({
-    query: z
-      .string()
-      .describe("The search term or media title to look for"),
+    query: z.string().describe("The search term or media title to look for"),
   }),
   execute: async ({ query }) => {
     console.log("🔍 [searchMedia] Tool called with query:", query);
@@ -54,9 +53,7 @@ export const navigateToMedia = tool({
     mediaId: z.string().describe("The unique ID of the media item"),
     mediaType: z
       .enum(["Movie", "Series", "Episode"])
-      .describe(
-        "The type of media - Movie, Series (TV Show), or Episode"
-      ),
+      .describe("The type of media - Movie, Series (TV Show), or Episode"),
   }),
   execute: async ({ mediaId, mediaType }) => {
     console.log("🎯 [navigateToMedia] Tool called with:", {
@@ -89,9 +86,7 @@ export const playMedia = tool({
     mediaName: z.string().describe("The name of the media item"),
     mediaType: z
       .enum(["Movie", "Series", "Episode"])
-      .describe(
-        "The type of media - Movie, Series (TV Show), or Episode"
-      ),
+      .describe("The type of media - Movie, Series (TV Show), or Episode"),
   }),
   execute: async ({ mediaId, mediaName, mediaType }) => {
     console.log("▶️ [playMedia] Tool called with:", {
@@ -111,17 +106,21 @@ export const playMedia = tool({
 });
 
 export const getMovies = tool({
-  description: "Get a list of recent movies from the library",
+  description: "Get a list of recent movies from the library. For genre-specific requests, use getMoviesByGenre instead.",
   parameters: z.object({
     limit: z
       .number()
       .optional()
       .describe("Number of movies to retrieve (default: 20)"),
+    genreIds: z
+      .array(z.string())
+      .optional()
+      .describe("Array of genre IDs to filter movies by (use getMoviesByGenre for genre names)"),
   }),
-  execute: async ({ limit = 20 }) => {
-    console.log("🎬 [getMovies] Tool called with limit:", limit);
+  execute: async ({ limit = 20, genreIds }) => {
+    console.log("🎬 [getMovies] Tool called with:", { limit, genreIds });
     try {
-      const movies = await fetchMovies(limit);
+      const movies = await fetchMovies(limit, genreIds);
       return {
         success: true,
         movies: movies.map((movie) => ({
@@ -129,6 +128,7 @@ export const getMovies = tool({
           name: movie.Name,
           year: movie.ProductionYear,
           overview: movie.Overview?.substring(0, 200) + "...",
+          genres: movie.Genres,
         })),
         count: movies.length,
       };
@@ -143,17 +143,21 @@ export const getMovies = tool({
 });
 
 export const getTVShows = tool({
-  description: "Get a list of recent TV shows from the library",
+  description: "Get a list of recent TV shows from the library. For genre-specific requests, use getTVShowsByGenre instead.",
   parameters: z.object({
     limit: z
       .number()
       .optional()
       .describe("Number of TV shows to retrieve (default: 20)"),
+    genreIds: z
+      .array(z.string())
+      .optional()
+      .describe("Array of genre IDs to filter TV shows by (use getTVShowsByGenre for genre names)"),
   }),
-  execute: async ({ limit = 20 }) => {
-    console.log("📺 [getTVShows] Tool called with limit:", limit);
+  execute: async ({ limit = 20, genreIds }) => {
+    console.log("📺 [getTVShows] Tool called with:", { limit, genreIds });
     try {
-      const shows = await fetchTVShows(limit);
+      const shows = await fetchTVShows(limit, genreIds);
       return {
         success: true,
         shows: shows.map((show) => ({
@@ -161,6 +165,7 @@ export const getTVShows = tool({
           name: show.Name,
           year: show.ProductionYear,
           overview: show.Overview?.substring(0, 200) + "...",
+          genres: show.Genres,
         })),
         count: shows.length,
       };
@@ -178,10 +183,7 @@ export const continueWatching = tool({
   description:
     "Fetch list of media items that are currently being watched/continued",
   parameters: z.object({
-    limit: z
-      .number()
-      .optional()
-      .describe("Number of items, default is 20"),
+    limit: z.number().optional().describe("Number of items, default is 20"),
   }),
   execute: async ({ limit = 20 }) => {
     console.log("🕒 [continueWatching] Tool called with limit:", limit);
@@ -219,16 +221,12 @@ export const continueWatching = tool({
 });
 
 export const getMediaDetails = tool({
-  description:
-    "Get detailed information about a specific movie or TV show",
+  description: "Get detailed information about a specific movie or TV show",
   parameters: z.object({
     mediaId: z.string().describe("The unique ID of the media item"),
   }),
   execute: async ({ mediaId }) => {
-    console.log(
-      "📋 [getMediaDetails] Tool called with mediaId:",
-      mediaId
-    );
+    console.log("📋 [getMediaDetails] Tool called with mediaId:", mediaId);
     try {
       const details = await fetchMediaDetails(mediaId);
       if (!details) {
@@ -273,31 +271,20 @@ export const getGenres = tool({
       .describe("Filter by media type, default is All"),
   }),
   execute: async ({ mediaType = "All" }) => {
-    console.log(
-      "🎭 [getGenres] Tool called with mediaType:",
-      mediaType
-    );
+    console.log("🎭 [getGenres] Tool called with mediaType:", mediaType);
     try {
-      // Get movies and/or TV shows to extract genres
-      let items = [];
-      if (mediaType === "Movie" || mediaType === "All") {
-        const movies = await fetchMovies(50);
-        items.push(...movies);
-      }
-      if (mediaType === "Series" || mediaType === "All") {
-        const shows = await fetchTVShows(50);
-        items.push(...shows);
+      const genresResponse = await fetchGenres();
+      console.log("[getGenres] Fetched genres:", genresResponse);
+
+      if (!genresResponse?.Items) {
+        return {
+          success: false,
+          error: "No genres found",
+          genres: [],
+        };
       }
 
-      // Extract unique genres
-      const genreSet = new Set<string>();
-      items.forEach((item) => {
-        if (item.Genres) {
-          item.Genres.forEach((genre: string) => genreSet.add(genre));
-        }
-      });
-
-      const genres = Array.from(genreSet).sort();
+      let genres = genresResponse.Items;
 
       return {
         success: true,
@@ -318,10 +305,7 @@ export const getWatchlist = tool({
   description:
     "Get user's watchlist or favorites (simulated with highly-rated content)",
   parameters: z.object({
-    limit: z
-      .number()
-      .optional()
-      .describe("Number of items, default is 20"),
+    limit: z.number().optional().describe("Number of items, default is 20"),
   }),
   execute: async ({ limit = 20 }) => {
     console.log("⭐ [getWatchlist] Tool called with limit:", limit);
@@ -367,10 +351,7 @@ export const findSimilarItems = tool({
     mediaId: z.string().describe("The unique ID of the media item"),
   }),
   execute: async ({ mediaId }) => {
-    console.log(
-      "🔗 [findSimilarItems] Tool called with mediaId:",
-      mediaId
-    );
+    console.log("🔗 [findSimilarItems] Tool called with mediaId:", mediaId);
     try {
       const results = await fetchSimilarItems(mediaId);
       return {
@@ -395,6 +376,98 @@ export const findSimilarItems = tool({
         success: false,
         error: "Failed to find similar items",
         similarItems: [],
+      };
+    }
+  },
+});
+
+export const getMoviesByGenre = tool({
+  description: "Get a list of movies filtered by genre name",
+  parameters: z.object({
+    genreName: z.string().describe("The name of the genre to filter by"),
+    limit: z
+      .number()
+      .optional()
+      .describe("Number of movies to retrieve (default: 20)"),
+  }),
+  execute: async ({ genreName, limit = 20 }) => {
+    console.log("🎬🎭 [getMoviesByGenre] Tool called with:", { genreName, limit });
+    try {
+      // First, fetch the genre to get its ID
+      const genreData = await fetchGenre(genreName);
+      if (!genreData || !("Id" in genreData) || !genreData.Id) {
+        return {
+          success: false,
+          error: `Genre "${genreName}" not found`,
+          movies: [],
+        };
+      }
+
+      // Then fetch movies with the genre ID
+      const movies = await fetchMovies(limit, [genreData.Id]);
+      return {
+        success: true,
+        movies: movies.map((movie) => ({
+          id: movie.Id,
+          name: movie.Name,
+          year: movie.ProductionYear,
+          overview: movie.Overview?.substring(0, 200) + "...",
+          genres: movie.Genres,
+        })),
+        count: movies.length,
+        genre: genreData.Name,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: `Failed to fetch movies for genre "${genreName}"`,
+        movies: [],
+      };
+    }
+  },
+});
+
+export const getTVShowsByGenre = tool({
+  description: "Get a list of TV shows filtered by genre name",
+  parameters: z.object({
+    genreName: z.string().describe("The name of the genre to filter by"),
+    limit: z
+      .number()
+      .optional()
+      .describe("Number of TV shows to retrieve (default: 20)"),
+  }),
+  execute: async ({ genreName, limit = 20 }) => {
+    console.log("📺🎭 [getTVShowsByGenre] Tool called with:", { genreName, limit });
+    try {
+      // First, fetch the genre to get its ID
+      const genreData = await fetchGenre(genreName);
+      if (!genreData || !("Id" in genreData) || !genreData.Id) {
+        return {
+          success: false,
+          error: `Genre "${genreName}" not found`,
+          shows: [],
+        };
+      }
+
+      // Then fetch TV shows with the genre ID
+      const shows = await fetchTVShows(limit, [genreData.Id]);
+      return {
+        success: true,
+        shows: shows.map((show) => ({
+          id: show.Id,
+          name: show.Name,
+          year: show.ProductionYear,
+          overview: show.Overview?.substring(0, 200) + "...",
+          genres: show.Genres,
+        })),
+        count: shows.length,
+        genre: genreData.Name,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: `Failed to fetch TV shows for genre "${genreName}"`,
+        shows: [],
       };
     }
   },

@@ -13,6 +13,7 @@ import { UserLibraryApi } from "@jellyfin/sdk/lib/generated-client/api/user-libr
 import { LibraryApi } from "@jellyfin/sdk/lib/generated-client/api/library-api";
 import { getItemsApi } from "@jellyfin/sdk/lib/utils/api/items-api";
 import { getLibraryApi } from "@jellyfin/sdk/lib/utils/api/library-api";
+import { getGenresApi } from "@jellyfin/sdk/lib/utils/api/genres-api";
 import { createJellyfinInstance } from "@/lib/utils";
 
 // Type aliases for easier use
@@ -63,7 +64,10 @@ export async function clearAuthData() {
   cookieStore.delete("jellyfin-server-url");
 }
 
-export async function fetchMovies(limit: number = 20): Promise<JellyfinItem[]> {
+export async function fetchMovies(
+  limit: number = 20,
+  genreIds?: string[]
+): Promise<JellyfinItem[]> {
   try {
     const { serverUrl, user } = await getAuthData();
     const jellyfinInstance = createJellyfinInstance();
@@ -79,6 +83,7 @@ export async function fetchMovies(limit: number = 20): Promise<JellyfinItem[]> {
       sortBy: [ItemSortBy.DateCreated],
       sortOrder: [SortOrder.Descending],
       limit,
+      genreIds,
       fields: [
         ItemFields.CanDelete,
         ItemFields.PrimaryImageAspectRatio,
@@ -104,7 +109,8 @@ export async function fetchMovies(limit: number = 20): Promise<JellyfinItem[]> {
 }
 
 export async function fetchTVShows(
-  limit: number = 20
+  limit: number = 20,
+  genreIds?: string[]
 ): Promise<JellyfinItem[]> {
   try {
     const { serverUrl, user } = await getAuthData();
@@ -119,6 +125,7 @@ export async function fetchTVShows(
       sortBy: [ItemSortBy.DateCreated],
       sortOrder: [SortOrder.Descending],
       limit,
+      genreIds,
       fields: [
         ItemFields.CanDelete,
         ItemFields.PrimaryImageAspectRatio,
@@ -461,7 +468,9 @@ export async function fetchSimilarItems(itemId: string, limit: number = 12) {
   }
 }
 
-export async function fetchIntroOutro(itemId: string): Promise<MediaSegmentsResponse | null> {
+export async function fetchIntroOutro(
+  itemId: string
+): Promise<MediaSegmentsResponse | null> {
   try {
     const { serverUrl, user } = await getAuthData();
     const jellyfinInstance = createJellyfinInstance();
@@ -508,7 +517,7 @@ export async function scanLibrary(libraryId?: string): Promise<void> {
     const { serverUrl, user } = await getAuthData();
 
     let url = `${serverUrl}/Library/Refresh`;
-    
+
     // If libraryId is provided, scan only that specific library
     if (libraryId) {
       url = `${serverUrl}/Items/${libraryId}/Refresh`;
@@ -516,10 +525,10 @@ export async function scanLibrary(libraryId?: string): Promise<void> {
 
     // Use direct API call to trigger library scan
     const response = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Authorization': `MediaBrowser Token="${user.AccessToken}"`,
-        'Content-Type': 'application/json',
+        Authorization: `MediaBrowser Token="${user.AccessToken}"`,
+        "Content-Type": "application/json",
       },
     });
 
@@ -528,7 +537,7 @@ export async function scanLibrary(libraryId?: string): Promise<void> {
     }
   } catch (error) {
     console.error("Failed to scan library:", error);
-    
+
     if (isAuthError(error)) {
       console.log("Authentication error detected, clearing auth data");
       const authError = new Error(
@@ -537,7 +546,64 @@ export async function scanLibrary(libraryId?: string): Promise<void> {
       (authError as any).isAuthError = true;
       throw authError;
     }
-    
+
     throw new Error("Failed to scan library");
+  }
+}
+
+export async function fetchGenres() {
+  try {
+    const { serverUrl, user } = await getAuthData();
+    const jellyfinInstance = createJellyfinInstance();
+    const api = jellyfinInstance.createApi(serverUrl);
+    api.accessToken = user.AccessToken;
+
+    const { data } = await getGenresApi(api).getGenres({
+      userId: user.Id,
+    });
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch genres:", error);
+
+    // If it's an authentication error, throw an error with a special flag
+    if (isAuthError(error)) {
+      console.log("Authentication error detected, clearing auth data");
+      const authError = new Error(
+        "Authentication expired. Please sign in again."
+      );
+      (authError as any).isAuthError = true;
+      throw authError;
+    }
+
+    return { Items: [], TotalRecordCount: 0, StartIndex: 0 };
+  }
+}
+
+export async function fetchGenre(genreName: string) {
+  try {
+    const { serverUrl, user } = await getAuthData();
+    const jellyfinInstance = createJellyfinInstance();
+    const api = jellyfinInstance.createApi(serverUrl);
+    api.accessToken = user.AccessToken;
+
+    const { data } = await getGenresApi(api).getGenre({
+      userId: user.Id,
+      genreName: genreName,
+    });
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch genres:", error);
+
+    // If it's an authentication error, throw an error with a special flag
+    if (isAuthError(error)) {
+      console.log("Authentication error detected, clearing auth data");
+      const authError = new Error(
+        "Authentication expired. Please sign in again."
+      );
+      (authError as any).isAuthError = true;
+      throw authError;
+    }
+
+    return { Items: [], TotalRecordCount: 0, StartIndex: 0 };
   }
 }

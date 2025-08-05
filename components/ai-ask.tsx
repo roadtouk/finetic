@@ -294,7 +294,9 @@ const AIAsk = ({}: AIAskProps = {}) => {
       navigateToMedia: { icon: Navigation, label: "Navigating" },
       playMedia: { icon: Play, label: "Playing Media" },
       getMovies: { icon: Film, label: "Getting Movies" },
+      getMoviesByGenre: { icon: Film, label: "Getting Movies by Genre" },
       getTVShows: { icon: Tv, label: "Getting TV Shows" },
+      getTVShowsByGenre: { icon: Tv, label: "Getting TV Shows by Genre" },
       continueWatching: { icon: List, label: "Continue Watching" },
       getPeople: { icon: User, label: "Searching People" },
       getPersonDetails: { icon: User, label: "Getting Person Details" },
@@ -352,10 +354,28 @@ const AIAsk = ({}: AIAskProps = {}) => {
         invocation.result.movies
     );
 
+    // Check if this message has tool invocations with movies by genre data
+    const moviesByGenreInvocation = message.toolInvocations?.find(
+      (invocation: any) =>
+        invocation.toolName === "getMoviesByGenre" &&
+        "result" in invocation &&
+        invocation.result.success &&
+        invocation.result.movies
+    );
+
     // Check if this message has tool invocations with TV shows data
     const tvShowsInvocation = message.toolInvocations?.find(
       (invocation: any) =>
         invocation.toolName === "getTVShows" &&
+        "result" in invocation &&
+        invocation.result.success &&
+        invocation.result.shows
+    );
+
+    // Check if this message has tool invocations with TV shows by genre data
+    const tvShowsByGenreInvocation = message.toolInvocations?.find(
+      (invocation: any) =>
+        invocation.toolName === "getTVShowsByGenre" &&
         "result" in invocation &&
         invocation.result.success &&
         invocation.result.shows
@@ -427,10 +447,22 @@ const AIAsk = ({}: AIAskProps = {}) => {
       return renderMediaCards(movies, "movies");
     }
 
+    // Handle movies by genre results
+    if (moviesByGenreInvocation) {
+      const movies = moviesByGenreInvocation.result.movies;
+      return renderMediaCards(movies, "movies-by-genre");
+    }
+
     // Handle TV shows results
     if (tvShowsInvocation) {
       const shows = tvShowsInvocation.result.shows;
       return renderMediaCards(shows, "shows");
+    }
+
+    // Handle TV shows by genre results
+    if (tvShowsByGenreInvocation) {
+      const shows = tvShowsByGenreInvocation.result.shows;
+      return renderMediaCards(shows, "shows-by-genre");
     }
 
     // Handle continue watching results
