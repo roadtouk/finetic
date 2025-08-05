@@ -5,6 +5,7 @@ import {
   fetchPersonDetails,
   fetchPersonFilmography,
 } from "@/app/actions/media";
+import { getAuthData } from "@/app/actions/utils";
 
 export const getPeople = tool({
   description:
@@ -17,10 +18,19 @@ export const getPeople = tool({
   execute: async ({ query }) => {
     console.log("🔍 [getPeople] Tool called with query:", query);
     try {
+      // Get server URL for image URLs
+      const { serverUrl } = await getAuthData();
+      
       // Search for media first, then extract people from results
       const results = await searchPeople(query);
-      const people: Array<{ id: string; name: string; role?: string }> =
-        [];
+      const people: Array<{ 
+        id: string; 
+        name: string; 
+        role?: string; 
+        imageUrl?: string;
+        imageTag?: string;
+        blurHash?: string;
+      }> = [];
 
       console.log(results);
 
@@ -32,10 +42,18 @@ export const getPeople = tool({
             person.Name.toLowerCase().includes(query.toLowerCase()) &&
             person.Id // Only include people with valid IDs
           ) {
+            // Get image properties
+            const imageTag = person.ImageTags?.Primary;
+            const blurHash = imageTag && person.ImageBlurHashes?.Primary?.[imageTag] || "";
+            const imageUrl = person.Id ? `${serverUrl}/Items/${person.Id}/Images/Primary` : undefined;
+
             people.push({
               id: person.Id,
               name: person.Name,
               role: person.Type!,
+              imageUrl,
+              imageTag,
+              blurHash,
             });
           }
         }
@@ -70,6 +88,9 @@ export const getPersonDetails = tool({
       personId
     );
     try {
+      // Get server URL for image URLs
+      const { serverUrl } = await getAuthData();
+      
       const details = await fetchPersonDetails(personId);
       if (!details) {
         return {
@@ -77,6 +98,12 @@ export const getPersonDetails = tool({
           error: "Person not found",
         };
       }
+
+      // Get image properties
+      const imageTag = details.ImageTags?.Primary;
+      const blurHash = imageTag && details.ImageBlurHashes?.Primary?.[imageTag] || "";
+      const imageUrl = details.Id ? `${serverUrl}/Items/${details.Id}/Images/Primary` : undefined;
+
       return {
         success: true,
         person: {
@@ -86,6 +113,9 @@ export const getPersonDetails = tool({
           overview: details.Overview,
           birthDate: details.PremiereDate,
           birthLocation: details.ProductionLocations?.[0],
+          imageUrl,
+          imageTag,
+          blurHash,
         },
       };
     } catch (error) {

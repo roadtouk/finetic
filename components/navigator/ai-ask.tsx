@@ -41,6 +41,11 @@ import { AuroraText } from "@/components/magicui/aurora-text";
 import { useTheme } from "next-themes";
 import { MediaLinkCard } from "./media-link-card";
 import { ThemeToggleCard } from "./theme-toggle-card";
+import { PersonCard } from "./person-card";
+import { SeasonCard } from "./season-card";
+import { EpisodeCard } from "./episode-card";
+import { GenreCard } from "./genre-card";
+import { MediaDetailsCard } from "./media-details-card";
 import { isAIAskOpenAtom } from "@/lib/atoms";
 import { TextShimmer } from "../motion-primitives/text-shimmer";
 
@@ -408,6 +413,60 @@ const AIAsk = ({}: AIAskProps = {}) => {
         invocation.result.success
     );
 
+    // Check if this message has tool invocations with people search results
+    const peopleInvocation = message.toolInvocations?.find(
+      (invocation: any) =>
+        invocation.toolName === "getPeople" &&
+        "result" in invocation &&
+        invocation.result.success &&
+        invocation.result.people
+    );
+
+    // Check if this message has tool invocations with person details
+    const personDetailsInvocation = message.toolInvocations?.find(
+      (invocation: any) =>
+        invocation.toolName === "getPersonDetails" &&
+        "result" in invocation &&
+        invocation.result.success &&
+        invocation.result.person
+    );
+
+    // Check if this message has tool invocations with seasons
+    const seasonsInvocation = message.toolInvocations?.find(
+      (invocation: any) =>
+        invocation.toolName === "getSeasons" &&
+        "result" in invocation &&
+        invocation.result.success &&
+        invocation.result.seasons
+    );
+
+    // Check if this message has tool invocations with episodes
+    const episodesInvocation = message.toolInvocations?.find(
+      (invocation: any) =>
+        invocation.toolName === "getEpisodes" &&
+        "result" in invocation &&
+        invocation.result.success &&
+        invocation.result.episodes
+    );
+
+    // Check if this message has tool invocations with genres
+    const genresInvocation = message.toolInvocations?.find(
+      (invocation: any) =>
+        invocation.toolName === "getGenres" &&
+        "result" in invocation &&
+        invocation.result.success &&
+        invocation.result.genres
+    );
+
+    // Check if this message has tool invocations with media details
+    const mediaDetailsInvocation = message.toolInvocations?.find(
+      (invocation: any) =>
+        invocation.toolName === "getMediaDetails" &&
+        "result" in invocation &&
+        invocation.result.success &&
+        invocation.result.details
+    );
+
     // Helper function to render media cards
     const renderMediaCards = (
       items: any[],
@@ -484,6 +543,120 @@ const AIAsk = ({}: AIAskProps = {}) => {
     if (watchlistInvocation) {
       const watchlist = watchlistInvocation.result.watchlist;
       return renderMediaCards(watchlist, "watchlist");
+    }
+
+    // Handle people search results
+    if (peopleInvocation) {
+      const people = peopleInvocation.result.people;
+      return (
+        <div className="space-y-3 w-full">
+          <Markdown>{message.content}</Markdown>
+          <div className="space-y-2">
+            {people.map((person: any, personIndex: number) => (
+              <PersonCard
+                key={`person-${person.id}-${personIndex}`}
+                person={person}
+                className="mb-2"
+                index={personIndex}
+              />
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Handle person details results
+    if (personDetailsInvocation) {
+      const person = personDetailsInvocation.result.person;
+      return (
+        <div className="space-y-3 w-full">
+          <Markdown>{message.content}</Markdown>
+          <PersonCard
+            person={person}
+            className="mb-2"
+            index={0}
+          />
+        </div>
+      );
+    }
+
+    // Handle seasons results
+    if (seasonsInvocation) {
+      const seasons = seasonsInvocation.result.seasons;
+      return (
+        <div className="space-y-3 w-full">
+          <Markdown>{message.content}</Markdown>
+          <div className="space-y-2">
+            {seasons.map((season: any, seasonIndex: number) => (
+              <SeasonCard
+                key={`season-${season.id}-${seasonIndex}`}
+                season={season}
+                className="mb-2"
+                index={seasonIndex}
+              />
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Handle episodes results
+    if (episodesInvocation) {
+      const episodes = episodesInvocation.result.episodes;
+      return (
+        <div className="space-y-3 w-full">
+          <Markdown>{message.content}</Markdown>
+          <div className="space-y-2">
+            {episodes.map((episode: any, episodeIndex: number) => (
+              <EpisodeCard
+                key={`episode-${episode.id}-${episodeIndex}`}
+                episode={episode}
+                className="mb-2"
+                index={episodeIndex}
+              />
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Handle genres results
+    if (genresInvocation) {
+      const genres = genresInvocation.result.genres;
+      return (
+        <div className="space-y-3 w-full">
+          <Markdown>{message.content}</Markdown>
+          <div className="space-y-2">
+            {genres.map((genre: any, genreIndex: number) => (
+              <GenreCard
+                key={`genre-${genre.Id || genre.Name}-${genreIndex}`}
+                genre={genre}
+                className="mb-2"
+                index={genreIndex}
+                onClick={(genreName) => {
+                  // Handle genre click - could trigger a new search
+                  setInput(`Show me movies in the ${genreName} genre`);
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Handle media details results
+    if (mediaDetailsInvocation) {
+      const details = mediaDetailsInvocation.result.details;
+      return (
+        <div className="space-y-3 w-full">
+          <Markdown>{message.content}</Markdown>
+          <MediaDetailsCard
+            media={details}
+            className="mb-2"
+            index={0}
+          />
+        </div>
+      );
     }
 
     // Handle theme toggle results
