@@ -4,8 +4,8 @@ import { useChat } from "@ai-sdk/react";
 import { AnimatePresence, motion } from "framer-motion";
 import React, { useEffect, useState } from "react";
 import { useAtom } from "jotai";
-import { BorderBeam } from "./magicui/border-beam";
-import { Button } from "./ui/button";
+import { BorderBeam } from "../magicui/border-beam";
+import { Button } from "../ui/button";
 import {
   ArrowRight,
   Loader2,
@@ -31,17 +31,18 @@ import {
 import { cn } from "@/lib/utils";
 import Markdown from "react-markdown";
 import { toast } from "sonner";
-import { Input } from "./ui/input";
+import { Input } from "../ui/input";
 import { useRouter } from "next/navigation";
 import { ToolInvocation } from "ai";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 import * as Kbd from "@/components/ui/kbd";
-import { Badge } from "./ui/badge";
+import { Badge } from "../ui/badge";
 import { AuroraText } from "@/components/magicui/aurora-text";
 import { useTheme } from "next-themes";
 import { MediaLinkCard } from "./media-link-card";
+import { ThemeToggleCard } from "./theme-toggle-card";
 import { isAIAskOpenAtom } from "@/lib/atoms";
-import { TextShimmer } from "./motion-primitives/text-shimmer";
+import { TextShimmer } from "../motion-primitives/text-shimmer";
 
 interface AIAskProps {
   // Props are optional now since we're using the atom
@@ -399,6 +400,14 @@ const AIAsk = ({}: AIAskProps = {}) => {
         invocation.result.watchlist
     );
 
+    // Check if this message has tool invocations with theme toggle
+    const themeToggleInvocation = message.toolInvocations?.find(
+      (invocation: any) =>
+        invocation.toolName === "themeToggle" &&
+        "result" in invocation &&
+        invocation.result.success
+    );
+
     // Helper function to render media cards
     const renderMediaCards = (
       items: any[],
@@ -475,6 +484,16 @@ const AIAsk = ({}: AIAskProps = {}) => {
     if (watchlistInvocation) {
       const watchlist = watchlistInvocation.result.watchlist;
       return renderMediaCards(watchlist, "watchlist");
+    }
+
+    // Handle theme toggle results
+    if (themeToggleInvocation) {
+      return (
+        <div className="space-y-3 w-full">
+          <Markdown>{message.content}</Markdown>
+          <ThemeToggleCard />
+        </div>
+      );
     }
 
     // Default markdown rendering for other messages

@@ -14,7 +14,7 @@ import {
   getServerUrl,
 } from "@/app/actions";
 import { Badge } from "./ui/badge";
-import { SearchSuggestionItem } from "./SearchSuggestionItem";
+import { SearchSuggestionItem } from "./search-suggestion-item";
 import { TextShimmerWave } from "./ui/text-shimmer-wave";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 import * as Kbd from "@/components/ui/kbd";

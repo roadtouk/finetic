@@ -14,7 +14,7 @@ import Link from "next/link";
 import { useAtom } from "jotai";
 import { isAIAskOpenAtom } from "@/lib/atoms";
 import { motion } from "framer-motion";
-import { RottenTomatoesIcon } from "./icons/rotten-tomatoes";
+import { RottenTomatoesIcon } from "../icons/rotten-tomatoes";
 
 interface MediaLinkCardProps {
   item: {
@@ -200,7 +200,10 @@ export const MediaLinkCard: React.FC<MediaLinkCardProps> = ({
               {/* Runtime */}
               {runtime ? (
                 <Badge variant="outline" className="px-1.5 py-0.5 h-auto">
-                  {Math.floor(runtime / 60) > 0 ? `${Math.floor(runtime / 60)}h ` : ''}{runtime % 60}m
+                  {Math.floor(runtime / 60) > 0
+                    ? `${Math.floor(runtime / 60)}h `
+                    : ""}
+                  {runtime % 60}m
                 </Badge>
               ) : null}
             </div>

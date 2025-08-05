@@ -3,7 +3,7 @@
 import { useAtom } from "jotai";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import AIAsk from "@/components/ai-ask";
+import AIAsk from "@/components/navigator/ai-ask";
 import { GlobalMediaPlayer } from "@/components/global-media-player";
 import {
   isAIAskOpenAtom,
