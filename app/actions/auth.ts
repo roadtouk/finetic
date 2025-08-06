@@ -32,7 +32,9 @@ export async function getServerUrl(): Promise<string | null> {
   return serverUrl?.value || null;
 }
 
-export async function checkServerHealth(url: string): Promise<{ success: boolean; finalUrl?: string; error?: string }> {
+export async function checkServerHealth(
+  url: string
+): Promise<{ success: boolean; finalUrl?: string; error?: string }> {
   // Helper function to test a URL
   const testUrl = async (testUrl: string): Promise<boolean> => {
     try {
@@ -46,14 +48,15 @@ export async function checkServerHealth(url: string): Promise<{ success: boolean
   };
 
   // If URL already has a protocol, try it directly
-  if (url.startsWith('http://') || url.startsWith('https://')) {
+  if (url.startsWith("http://") || url.startsWith("https://")) {
     const success = await testUrl(url);
     if (success) {
       return { success: true, finalUrl: url };
     }
-    return { 
-      success: false, 
-      error: "Unable to connect to server. Please check the URL and ensure the server is running."
+    return {
+      success: false,
+      error:
+        "Unable to connect to server. Please check the URL and ensure the server is running.",
     };
   }
 
@@ -73,9 +76,10 @@ export async function checkServerHealth(url: string): Promise<{ success: boolean
     return { success: true, finalUrl: httpUrl };
   }
 
-  return { 
-    success: false, 
-    error: "Unable to connect to server. Please check the URL and ensure the server is running."
+  return {
+    success: false,
+    error:
+      "Unable to connect to server. Please check the URL and ensure the server is running.",
   };
 }
 
@@ -93,15 +97,15 @@ export async function authenticateUser(
   try {
     const jellyfinInstance = createJellyfinInstance();
     const api = jellyfinInstance.createApi(serverUrl);
-    
+
     // Log the request details for debugging
     console.log("Authentication request details:", {
       serverUrl,
       username: username,
       clientInfo: jellyfinInstance.clientInfo,
-      deviceInfo: jellyfinInstance.deviceInfo
+      deviceInfo: jellyfinInstance.deviceInfo,
     });
-    
+
     const { data: result } = await api.authenticateUserByName(
       username,
       password
@@ -110,7 +114,7 @@ export async function authenticateUser(
     console.log("Authentication successful, received result:", {
       hasAccessToken: !!result.AccessToken,
       hasUser: !!result.User,
-      userId: result.User?.Id
+      userId: result.User?.Id,
     });
 
     if (result.AccessToken) {
@@ -147,48 +151,53 @@ export async function authenticateUser(
       config: {
         url: error.config?.url,
         method: error.config?.method,
-        baseURL: error.config?.baseURL
-      }
+        baseURL: error.config?.baseURL,
+      },
     });
-    
+
     // If it's a network/connection error
-    if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-      console.error("Network connection error - check if Jellyfin server is running and accessible");
+    if (error.code === "ECONNREFUSED" || error.code === "ENOTFOUND") {
+      console.error(
+        "Network connection error - check if Jellyfin server is running and accessible"
+      );
       return false;
     }
-    
+
     // Try alternative authentication method with direct fetch
     console.log("Trying alternative authentication method...");
-    
+
     try {
       const response = await fetch(`${serverUrl}/Users/AuthenticateByName`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'X-Emby-Authorization': `MediaBrowser Client="Finetic", Device="Finetic Web Client", DeviceId="${getDeviceId()}", Version="1.0.0"`
+          "Content-Type": "application/json",
+          "X-Emby-Authorization": `MediaBrowser Client="Finetic", Device="Finetic Web Client", DeviceId="${getDeviceId()}", Version="1.0.0"`,
         },
         body: JSON.stringify({
           Username: username,
-          Pw: password
-        })
+          Pw: password,
+        }),
       });
-      
+
       console.log("Alternative auth response:", {
         status: response.status,
         statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries())
+        headers: Object.fromEntries(response.headers.entries()),
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         console.log("Alternative authentication successful:", {
           hasAccessToken: !!result.AccessToken,
           hasUser: !!result.User,
-          userId: result.User?.Id
+          userId: result.User?.Id,
         });
-        
+
         if (result.AccessToken) {
-          const userWithToken = { ...result.User, AccessToken: result.AccessToken };
+          const userWithToken = {
+            ...result.User,
+            AccessToken: result.AccessToken,
+          };
 
           // Save auth data to cookies
           const cookieStore = await cookies();
@@ -207,7 +216,9 @@ export async function authenticateUser(
             }
           );
 
-          console.log("Alternative authentication data saved to cookies successfully");
+          console.log(
+            "Alternative authentication data saved to cookies successfully"
+          );
           return true;
         }
       } else {
@@ -215,7 +226,7 @@ export async function authenticateUser(
         console.error("Alternative authentication failed:", {
           status: response.status,
           statusText: response.statusText,
-          body: errorText
+          body: errorText,
         });
       }
     } catch (fetchError: any) {
@@ -263,46 +274,45 @@ export async function debugServerConnection(): Promise<void> {
   }
 
   console.log(`Testing connection to: ${serverUrl}`);
-  
+
   try {
     const systemApi = new SystemApi(new Configuration({ basePath: serverUrl }));
     const { data: systemInfo } = await systemApi.getPublicSystemInfo();
-    
+
     console.log("Server connection successful!", {
       serverName: systemInfo.ServerName,
       version: systemInfo.Version,
-      id: systemInfo.Id
+      id: systemInfo.Id,
     });
-    
+
     // Test authentication endpoint specifically
     const response = await fetch(`${serverUrl}/Users/AuthenticateByName`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `MediaBrowser Client="Finetic", Device="Finetic Web Client", DeviceId="${getDeviceId()}", Version="1.0.0"`
+        "Content-Type": "application/json",
+        Authorization: `MediaBrowser Client="Finetic", Device="Finetic Web Client", DeviceId="${getDeviceId()}", Version="1.0.0"`,
       },
       body: JSON.stringify({
         Username: "test",
-        Pw: "test"
-      })
+        Pw: "test",
+      }),
     });
-    
+
     console.log("Auth endpoint test response:", {
       status: response.status,
       statusText: response.statusText,
-      headers: Object.fromEntries(response.headers.entries())
+      headers: Object.fromEntries(response.headers.entries()),
     });
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.log("Auth endpoint error response body:", errorText);
     }
-    
   } catch (error: any) {
     console.error("Server connection failed:", {
       message: error.message,
       status: error.status,
-      code: error.code
+      code: error.code,
     });
   }
 }

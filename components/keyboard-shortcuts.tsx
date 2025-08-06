@@ -1,15 +1,22 @@
 "use client";
 
 import { useAtom } from 'jotai';
-import { isAIAskOpenAtom, isFullscreenAtom } from '@/lib/atoms';
+import { isAIAskOpenAtom, isFullscreenAtom, isNavigatorEnabledAtom } from '@/lib/atoms';
 import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut';
 
 export function KeyboardShortcuts() {
   const [isAIAskOpen, setIsAIAskOpen] = useAtom(isAIAskOpenAtom);
   const [isFullscreen] = useAtom(isFullscreenAtom);
+  const [isNavigatorEnabled] = useAtom(isNavigatorEnabledAtom);
 
   // Function to handle opening AI Ask with fullscreen exit if needed
   const handleToggleAIAsk = async () => {
+    // Don't handle shortcuts if navigator is disabled
+    if (!isNavigatorEnabled) {
+      return;
+    }
+
+    // ...existing code...
     if (isFullscreen && !isAIAskOpen) {
       // Exit fullscreen first when opening AI Ask
       try {
@@ -61,7 +68,8 @@ export function KeyboardShortcuts() {
       allowInInputFields: true, // Allow Escape to work even when focused on input fields
     },
     () => {
-      if (isAIAskOpen) {
+      // Only handle escape if navigator is enabled and AI Ask is open
+      if (isNavigatorEnabled && isAIAskOpen) {
         setIsAIAskOpen(false);
       }
     }

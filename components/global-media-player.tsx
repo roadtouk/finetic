@@ -945,16 +945,18 @@ export function GlobalMediaPlayer({ onToggleAIAsk }: GlobalMediaPlayerProps) {
             </div>
             <div className="flex items-center gap-2">
               {/* Navigator button */}
-              <MediaPlayerTooltip tooltip="Navigator" shortcut="Cmd + K">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-white hover:bg-white/20"
-                  onClick={onToggleAIAsk}
-                >
-                  <Ship className="h-4 w-4" />
-                </Button>
-              </MediaPlayerTooltip>
+              {onToggleAIAsk && (
+                <MediaPlayerTooltip tooltip="Navigator" shortcut="Cmd + K">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-white hover:bg-white/20"
+                    onClick={onToggleAIAsk}
+                  >
+                    <Ship className="h-4 w-4" />
+                  </Button>
+                </MediaPlayerTooltip>
+              )}
               {/* People button with cast and crew popover */}
               {mediaDetails?.People && mediaDetails.People.length > 0 && (
                 <Popover>

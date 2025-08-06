@@ -4,6 +4,9 @@ import { MediaSourceInfo } from "@/types/jellyfin";
 // AI Ask state
 export const isAIAskOpenAtom = atom(false);
 
+// Navigator enabled state (will be synced with settings)
+export const isNavigatorEnabledAtom = atom(false);
+
 // Fullscreen state
 export const isFullscreenAtom = atom(false);
 

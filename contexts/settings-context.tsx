@@ -20,18 +20,26 @@ export const BITRATE_OPTIONS: BitrateOption[] = [
 interface SettingsContextType {
   videoBitrate: string;
   setVideoBitrate: (bitrate: string) => void;
+  navigatorEnabled: boolean;
+  setNavigatorEnabled: (enabled: boolean) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [videoBitrate, setVideoBitrateState] = useState<string>("auto");
+  const [navigatorEnabled, setNavigatorEnabledState] = useState<boolean>(false); // Default to false (disabled)
 
   // Load settings from localStorage on mount
   useEffect(() => {
     const savedBitrate = localStorage.getItem("finetic-video-bitrate");
     if (savedBitrate && BITRATE_OPTIONS.some(option => option.value === savedBitrate)) {
       setVideoBitrateState(savedBitrate);
+    }
+
+    const savedNavigatorEnabled = localStorage.getItem("finetic-navigator-enabled");
+    if (savedNavigatorEnabled !== null) {
+      setNavigatorEnabledState(savedNavigatorEnabled === "true");
     }
   }, []);
 
@@ -41,11 +49,19 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("finetic-video-bitrate", bitrate);
   };
 
+  // Save to localStorage when navigator setting changes
+  const setNavigatorEnabled = (enabled: boolean) => {
+    setNavigatorEnabledState(enabled);
+    localStorage.setItem("finetic-navigator-enabled", enabled.toString());
+  };
+
   return (
     <SettingsContext.Provider
       value={{
         videoBitrate,
         setVideoBitrate,
+        navigatorEnabled,
+        setNavigatorEnabled,
       }}
     >
       {children}

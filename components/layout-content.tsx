@@ -10,7 +10,10 @@ import {
   isElectronMacAtom,
   isElectronFullscreenAtom,
   isFullscreenAtom,
+  isNavigatorEnabledAtom,
 } from "@/lib/atoms";
+import { useSettings } from "@/contexts/settings-context";
+import { useEffect } from "react";
 
 interface LayoutContentProps {
   children: React.ReactNode;
@@ -21,6 +24,14 @@ export function LayoutContent({ children }: LayoutContentProps) {
   const [isElectronMac] = useAtom(isElectronMacAtom);
   const [isElectronFullscreen] = useAtom(isElectronFullscreenAtom);
   const [isFullscreen] = useAtom(isFullscreenAtom);
+  const [, setIsNavigatorEnabled] = useAtom(isNavigatorEnabledAtom);
+  
+  const { navigatorEnabled } = useSettings();
+
+  // Sync the navigator enabled state with the atom
+  useEffect(() => {
+    setIsNavigatorEnabled(navigatorEnabled);
+  }, [navigatorEnabled, setIsNavigatorEnabled]);
 
   // Function to handle opening AI Ask with fullscreen exit if needed
   const handleToggleAIAsk = async () => {
@@ -63,8 +74,8 @@ export function LayoutContent({ children }: LayoutContentProps) {
           <div className="flex-1 overflow-y-auto no-scrollbar">{children}</div>
         </SidebarInset>
       </SidebarProvider>
-      <AIAsk />
-      <GlobalMediaPlayer onToggleAIAsk={handleToggleAIAsk} />
+      {navigatorEnabled && <AIAsk />}
+      <GlobalMediaPlayer onToggleAIAsk={navigatorEnabled ? handleToggleAIAsk : undefined} />
     </div>
   );
 }
