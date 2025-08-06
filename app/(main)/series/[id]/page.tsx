@@ -268,7 +268,7 @@ export default async function Show({
             </div>
           </div>
 
-          <h2 className="text-3xl font-semibold text-foreground mt-12 mb-6 text-center md:text-left mx-auto">
+          <h2 className="text-3xl font-semibold font-poppins text-foreground mt-12 mb-6 text-center md:text-left mx-auto">
             Seasons
           </h2>
 
