@@ -25,7 +25,7 @@ https://github.com/user-attachments/assets/07fb5741-1edf-4655-9001-6df3e2b1c72b
 ## Key Features
 
 - **Navigator**: Interactive AI chat powered by Gemini for navigation
-- **Media Player**: Feature-rich player with direct and transcoded playback, subtitle support, chapters
+- **Media Player**: Feature-rich player with direct and transcoded playback, subtitle support, chapters, skip intro functionality
 - **Library Management**: Browse and organize your movies, TV shows, and episodes
 - **Theme Support**: Light and dark mode themes
 
@@ -124,11 +124,13 @@ npm run start
 The AI assistant has access to a comprehensive set of tools for media library interaction:
 
 **🔍 Content Discovery & Search**
+
 - `searchMedia` - Search for movies, TV shows, or episodes by name or keyword
 - `getPeople` - Search for people (directors, actors) related to media content
 - `getGenres` - Get list of all genres available in the library
 
 **📺 Library Browse & Management**
+
 - `getMovies` - Get a list of recent movies from the library
 - `getTVShows` - Get a list of recent TV shows from the library
 - `continueWatching` - Fetch list of media items currently being watched/continued
@@ -138,20 +140,24 @@ The AI assistant has access to a comprehensive set of tools for media library in
 - `getEpisodes` - Get episodes for a TV show season
 
 **🎬 Playback & Navigation**
+
 - `navigateToMedia` - Navigate to a specific movie, TV show, or episode page
 - `playMedia` - Play a specific movie, TV show, or episode directly in the media player
 
 **🎯 Subtitle Analysis**
+
 - `skipToSubtitleContent` - Intelligently analyze subtitles and find the best timestamp based on user descriptions (doesn't require exact text matches)
 - `explainScene` - Analyze subtitles around current timestamp to explain what's happening in the scene
 - `analyzeMedia` - Analyze the entire movie/episode using subtitles to answer questions about plot, characters, themes, etc.
 
 **🌓 App Controls**
+
 - `themeToggle` - Toggle or set the application theme between light, dark, or system mode
 
 #### Smart Subtitle Features
 
 When media is actively playing, the AI can:
+
 - **Scene Navigation**: "Skip to the part where they talk about love" or "Take me to the action sequence"
 - **Context Explanation**: "What's happening in this scene?" or "Who is talking right now?"
 - **Content Analysis**: "What is this movie about?" or "Summarize this episode"
@@ -160,6 +166,7 @@ When media is actively playing, the AI can:
 #### Search Intelligence
 
 The AI automatically expands common abbreviations and handles vague descriptions:
+
 - "b99" → "Brooklyn Nine-Nine"
 - "the movie with the blue people" → "Avatar"
 - "the show about meth" → "Breaking Bad"
@@ -168,28 +175,33 @@ The AI automatically expands common abbreviations and handles vague descriptions
 #### Example Queries
 
 **Content Discovery:**
+
 - "Show me my continue watching list"
 - "What genres are available?"
 - "Find movies with Tom Hanks"
 - "Show me recent sci-fi movies"
 
 **Navigation & Playback:**
+
 - "Go to Breaking Bad"
 - "Play Inception"
 - "Show me seasons of The Office"
 
 **Scene Navigation (during playback):**
+
 - "Skip to when they arrive at the destination"
 - "Take me to the emotional conversation scene"
 - "Jump to the plot twist"
 
 **Scene Analysis (during playback):**
+
 - "What's happening right now?"
 - "Explain this scene"
 - "What did I miss?"
 - "Who are the main characters in this movie?"
 
 **App Control:**
+
 - "Toggle the theme"
 
 ### Media Player
@@ -199,6 +211,7 @@ The AI automatically expands common abbreviations and handles vague descriptions
   - **Direct Play**: Stream media files directly when supported by your browser
   - **Transcoding**: Automatic transcoding for unsupported formats or network optimization
   - The player automatically selects the best playback method based on your device and network conditions
+- **Skip Intro Button**: Automatically detects and provides a skip button for TV show intros to jump directly to the main content
 - Use keyboard shortcuts for control:
   - `Space` - Play/Pause
   - `←/→` - Seek backward/forward
@@ -213,6 +226,10 @@ Please feel free to:
 - Suggest new features
 - Submit pull requests
 - Improve documentation
+
+If you find this project helpful, consider supporting its development:
+
+<a href='https://ko-fi.com/V7V71J8WRS' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi6.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
 ## License
 
