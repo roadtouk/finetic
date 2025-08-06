@@ -31,7 +31,7 @@ export default function SettingsPage() {
 
         <div className="grid gap-6">
           {/* Navigator Settings */}
-          <Card>
+          <Card className="bg-card/75">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 font-poppins text-lg">
                 <Ship className="h-5 w-5" />
@@ -54,6 +54,7 @@ export default function SettingsPage() {
                 <Switch
                   checked={navigatorEnabled}
                   onCheckedChange={setNavigatorEnabled}
+                  className="scale-125"
                 />
               </div>
             </CardContent>
