@@ -89,8 +89,6 @@ export async function authenticateUser(
     return false;
   }
 
-  console.log(`Attempting to authenticate user '${username}' against server: ${serverUrl}`);
-
   // First try with the SDK
   try {
     const jellyfinInstance = createJellyfinInstance();

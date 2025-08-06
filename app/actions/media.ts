@@ -74,7 +74,6 @@ export async function fetchMovies(
     const api = jellyfinInstance.createApi(serverUrl);
     api.accessToken = user.AccessToken;
 
-    console.log(serverUrl, api.accessToken, user.Id);
 
     const { data } = await getItemsApi(api).getItems({
       userId: user.Id,
@@ -96,7 +95,7 @@ export async function fetchMovies(
 
     // If it's an authentication error, throw an error with a special flag
     if (isAuthError(error)) {
-      console.log("Authentication error detected, clearing auth data");
+
       const authError = new Error(
         "Authentication expired. Please sign in again."
       );
@@ -138,7 +137,7 @@ export async function fetchTVShows(
 
     // If it's an authentication error, throw an error with a special flag
     if (isAuthError(error)) {
-      console.log("Authentication error detected, clearing auth data");
+
       const authError = new Error(
         "Authentication expired. Please sign in again."
       );
@@ -170,7 +169,7 @@ export async function fetchMediaDetails(
 
     // If it's an authentication error, throw an error with a special flag
     if (isAuthError(error)) {
-      console.log("Authentication error detected, clearing auth data");
+
       const authError = new Error(
         "Authentication expired. Please sign in again."
       );
@@ -202,7 +201,7 @@ export async function fetchPersonDetails(
 
     // If it's an authentication error, throw an error with a special flag
     if (isAuthError(error)) {
-      console.log("Authentication error detected, clearing auth data");
+
       const authError = new Error(
         "Authentication expired. Please sign in again."
       );
@@ -243,7 +242,7 @@ export async function fetchPersonFilmography(
 
     // If it's an authentication error, throw an error with a special flag
     if (isAuthError(error)) {
-      console.log("Authentication error detected, clearing auth data");
+
       const authError = new Error(
         "Authentication expired. Please sign in again."
       );
@@ -423,7 +422,7 @@ export async function fetchLibraryItems(
 
     // If it's an authentication error, throw an error with a special flag
     if (isAuthError(error)) {
-      console.log("Authentication error detected, clearing auth data");
+
       const authError = new Error(
         "Authentication expired. Please sign in again."
       );
@@ -448,7 +447,6 @@ export async function fetchSimilarItems(itemId: string, limit: number = 12) {
       limit,
     });
 
-    console.log(data.Items);
 
     return data.Items || [];
   } catch (error) {
@@ -456,7 +454,7 @@ export async function fetchSimilarItems(itemId: string, limit: number = 12) {
 
     // If it's an authentication error, throw an error with a special flag
     if (isAuthError(error)) {
-      console.log("Authentication error detected, clearing auth data");
+
       const authError = new Error(
         "Authentication expired. Please sign in again."
       );
@@ -493,14 +491,13 @@ export async function fetchIntroOutro(
     }
 
     const data = await response.json();
-    console.log("Intro/Outro segments:", data);
     return data;
   } catch (error) {
     console.error("Failed to fetch intro/outro segments:", error);
 
     // If it's an authentication error, throw an error with a special flag
     if (isAuthError(error)) {
-      console.log("Authentication error detected, clearing auth data");
+
       const authError = new Error(
         "Authentication expired. Please sign in again."
       );
@@ -539,7 +536,7 @@ export async function scanLibrary(libraryId?: string): Promise<void> {
     console.error("Failed to scan library:", error);
 
     if (isAuthError(error)) {
-      console.log("Authentication error detected, clearing auth data");
+
       const authError = new Error(
         "Authentication expired. Please sign in again."
       );
@@ -567,7 +564,7 @@ export async function fetchGenres() {
 
     // If it's an authentication error, throw an error with a special flag
     if (isAuthError(error)) {
-      console.log("Authentication error detected, clearing auth data");
+
       const authError = new Error(
         "Authentication expired. Please sign in again."
       );
@@ -596,7 +593,7 @@ export async function fetchGenre(genreName: string) {
 
     // If it's an authentication error, throw an error with a special flag
     if (isAuthError(error)) {
-      console.log("Authentication error detected, clearing auth data");
+
       const authError = new Error(
         "Authentication expired. Please sign in again."
       );

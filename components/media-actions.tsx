@@ -62,8 +62,6 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
 
   // Initialize selectedVersion when media changes
   useEffect(() => {
-    console.log("MediaActions - media:", media);
-    console.log("MediaActions - MediaSources:", media?.MediaSources);
     if (media?.MediaSources && media.MediaSources.length > 0) {
       setSelectedVersion(media.MediaSources[0]);
     }
@@ -106,7 +104,6 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
             variant="outline"
             className="gap-0"
             onClick={() => {
-              console.log("Play episode:", media.Name);
               // Could redirect to a streaming service or handle differently
             }}
           >
@@ -127,7 +124,6 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
   }
 
   const download = async () => {
-    console.log("Selected Version:", selectedVersion);
     window.open(await getDownloadUrl(selectedVersion.Id!), "_blank");
   };
 
@@ -151,7 +147,6 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
   // Helper function to check if media has Dolby Digital audio
   const hasDolbyDigital = (source: MediaSourceInfo) => {
     if (!source.MediaStreams) {
-      console.log("hasDolbyDigital - no MediaStreams found");
       return false;
     }
 
@@ -173,7 +168,6 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
   // Helper function to check if media has Dolby TrueHD audio
   const hasDolbyTrueHD = (source: MediaSourceInfo) => {
     if (!source.MediaStreams) {
-      console.log("hasDolbyTrueHD - no MediaStreams found");
       return false;
     }
 
@@ -194,7 +188,6 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
   // Helper function to check if media has Dolby Vision video
   const hasDolbyVision = (source: MediaSourceInfo) => {
     if (!source.MediaStreams) {
-      console.log("hasDolbyVision - no MediaStreams found");
       return false;
     }
 
@@ -215,7 +208,6 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
 
   const hasDtsHd = (source: MediaSourceInfo) => {
     if (!source.MediaStreams) {
-      console.log("hasDtsHd - no MediaStreams found");
       return false;
     }
 
@@ -240,7 +232,6 @@ export function MediaActions({ movie, show, episode }: MediaActionsProps) {
           onClick={async () => {
             // Set the current media in context, GlobalMediaPlayer will handle the rest
             if (media) {
-              console.log("Playing media:", media.Name);
               await playMedia({
                 id: media.Id!,
                 name: media.Name!,
