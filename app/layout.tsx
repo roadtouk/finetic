@@ -5,6 +5,8 @@ import "./globals.css";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { SettingsProvider } from "@/contexts/settings-context";
 import { Toaster } from "sonner";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -44,11 +46,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SettingsProvider>
-            {children}
-          </SettingsProvider>
+          <SettingsProvider>{children}</SettingsProvider>
           <Toaster />
         </ThemeProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
