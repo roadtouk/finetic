@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
   // Get the pathname of the request (e.g. /, /protected)
   const path = request.nextUrl.pathname;
 
-  // Define public paths that don't require authentication
+  // Define public paths that don't require authentication, these are accessible without login
   const isPublicPath = path === "/login" || path === "/setup";
 
   // Get the token from the cookie
@@ -37,7 +37,7 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// See "Matching Paths" below to learn more
+// See "Matching Paths" below to learn more, this matcher is used to apply the middleware only to specific paths
 export const config = {
   matcher: [
     /*

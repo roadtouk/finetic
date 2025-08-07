@@ -1,11 +1,8 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { Jellyfin } from "@jellyfin/sdk";
 import { UserLibraryApi } from "@jellyfin/sdk/lib/generated-client/api/user-library-api";
 import { getUserViewsApi } from "@jellyfin/sdk/lib/utils/api/user-views-api";
-import { LibraryApi } from "@jellyfin/sdk/lib/generated-client/api/library-api";
-import { getSubtitleApi } from "@jellyfin/sdk/lib/utils/api/subtitle-api";
 import { createJellyfinInstance } from "@/lib/utils";
 import { getSystemApi } from "@jellyfin/sdk/lib/utils/api/system-api";
 import { LogFile } from "@jellyfin/sdk/lib/generated-client/models";
