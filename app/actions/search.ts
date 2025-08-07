@@ -1,6 +1,6 @@
-'use server';
+"use server";
 
-import { cookies } from 'next/headers';
+import { cookies } from "next/headers";
 import { Jellyfin } from "@jellyfin/sdk";
 import { ItemsApi } from "@jellyfin/sdk/lib/generated-client/api/items-api";
 import { PersonsApi } from "@jellyfin/sdk/lib/generated-client/api/persons-api";
@@ -12,14 +12,13 @@ import { createJellyfinInstance } from "@/lib/utils";
 // Type aliases for easier use
 type JellyfinItem = BaseItemDto;
 
-
 // Helper function to get auth data from cookies
 async function getAuthData() {
   const cookieStore = await cookies();
-  const authData = cookieStore.get('jellyfin-auth');
+  const authData = cookieStore.get("jellyfin-auth");
 
   if (!authData?.value) {
-    throw new Error('Not authenticated');
+    throw new Error("Not authenticated");
   }
 
   const parsed = JSON.parse(authData.value);
@@ -28,7 +27,7 @@ async function getAuthData() {
 
 export async function searchItems(query: string): Promise<JellyfinItem[]> {
   const { serverUrl, user } = await getAuthData();
-  
+
   if (!query.trim()) return [];
 
   const jellyfinInstance = createJellyfinInstance();
@@ -61,10 +60,7 @@ export async function searchItems(query: string): Promise<JellyfinItem[]> {
       searchTerm: query,
       userId: user.Id,
       limit: 10, // Limit person results
-      fields: [
-        ItemFields.PrimaryImageAspectRatio,
-        ItemFields.Overview,
-      ],
+      fields: [ItemFields.PrimaryImageAspectRatio, ItemFields.Overview],
       enableImages: true,
     });
 
@@ -96,7 +92,7 @@ export async function searchItems(query: string): Promise<JellyfinItem[]> {
 // Separate function to search only people for testing
 export async function searchPeople(query: string): Promise<JellyfinItem[]> {
   const { serverUrl, user } = await getAuthData();
-  
+
   if (!query.trim()) return [];
 
   const jellyfinInstance = createJellyfinInstance();
@@ -109,10 +105,7 @@ export async function searchPeople(query: string): Promise<JellyfinItem[]> {
       searchTerm: query,
       userId: user.Id,
       limit: 20,
-      fields: [
-        ItemFields.PrimaryImageAspectRatio,
-        ItemFields.Overview,
-      ],
+      fields: [ItemFields.PrimaryImageAspectRatio, ItemFields.Overview],
       enableImages: true,
     });
 

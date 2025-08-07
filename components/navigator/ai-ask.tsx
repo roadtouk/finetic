@@ -48,6 +48,7 @@ import { GenreCard } from "./genre-card";
 import { MediaDetailsCard } from "./media-details-card";
 import { isAIAskOpenAtom } from "@/lib/atoms";
 import { TextShimmer } from "../motion-primitives/text-shimmer";
+import { useSettings } from "@/contexts/settings-context";
 
 interface AIAskProps {
   // Props are optional now since we're using the atom
@@ -62,6 +63,7 @@ const AIAsk = ({}: AIAskProps = {}) => {
   const [currentTool, setCurrentTool] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const { isPlayerVisible } = useMediaPlayer();
+  const { aiProvider, ollamaBaseUrl, ollamaModel } = useSettings();
 
   // Function to handle opening AI Ask, with fullscreen exit if needed
   const handleOpenAsk = async () => {
@@ -147,6 +149,9 @@ const AIAsk = ({}: AIAskProps = {}) => {
     body: {
       currentMedia: currentMediaWithSource,
       currentTimestamp,
+      aiProvider,
+      ollamaBaseUrl,
+      ollamaModel,
     },
     onToolCall: (toolInvocation) => {
       const toolInvoked = toolInvocation?.toolCall?.toolName;
