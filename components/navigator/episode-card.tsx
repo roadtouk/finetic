@@ -3,11 +3,13 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Play, Clock, Hash, Info } from "lucide-react";
+import { Clock, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 import { useAtom } from "jotai";
 import { isAIAskOpenAtom } from "@/lib/atoms";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface EpisodeCardProps {
   episode: {
@@ -17,6 +19,7 @@ interface EpisodeCardProps {
     seasonNumber?: number;
     overview?: string;
     runtime?: number;
+    seriesId?: string;
   };
   className?: string;
   index?: number;
@@ -31,6 +34,8 @@ export const EpisodeCard: React.FC<EpisodeCardProps> = ({
 }) => {
   const router = useRouter();
   const [isAIAskOpen, setIsAIAskOpen] = useAtom(isAIAskOpenAtom);
+  const [imageLoading, setImageLoading] = React.useState(true);
+  const { serverUrl } = useAuth();
 
   const handleClick = () => {
     if (onClick) {
@@ -39,7 +44,7 @@ export const EpisodeCard: React.FC<EpisodeCardProps> = ({
       // Navigate to episode page
       router.push(`/episode/${episode.id}`);
     }
-    
+
     // Close the AIAsk component when clicked
     if (isAIAskOpen) {
       setIsAIAskOpen(false);
@@ -73,26 +78,39 @@ export const EpisodeCard: React.FC<EpisodeCardProps> = ({
         )}
         onClick={handleClick}
       >
-        <div className="flex gap-3 items-start w-full">
-          {/* Episode icon */}
-          <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center flex-shrink-0">
-            <Play className="h-5 w-5 text-muted-foreground" />
+        <div className="flex gap-3 items-center w-full">
+          <div className="relative rounded-sm overflow-hidden bg-muted/30 flex-shrink-0 w-10 h-15">
+            {imageLoading && (
+              <Skeleton className="absolute inset-0 w-full h-full" />
+            )}
+            <img
+              src={`${serverUrl}/Items/${
+                episode.seriesId || episode.id
+              }/Images/Primary?maxWidth=80&maxHeight=120&quality=60`}
+              alt={episode.name}
+              className={cn(
+                "object-cover transition-transform duration-200 w-full h-full",
+                imageLoading ? "opacity-0" : "opacity-100"
+              )}
+              sizes="40px"
+              onLoad={() => setImageLoading(false)}
+              onError={() => setImageLoading(false)}
+            />
           </div>
 
           {/* Content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
-                <h3 className="font-medium text-sm leading-tight group-hover:text-primary transition-colors">
+                <h3 className="font-medium text-sm leading-tight">
                   {episode.name}
                 </h3>
-                
+
                 {/* Episode metadata */}
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
                   {episode.seasonNumber && episode.episodeNumber && (
                     <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                      <Hash className="h-3 w-3 mr-1" />
-                      S{episode.seasonNumber}E{episode.episodeNumber}
+                      S{episode.seasonNumber} • E{episode.episodeNumber}
                     </Badge>
                   )}
                   {episode.runtime && (
@@ -106,15 +124,10 @@ export const EpisodeCard: React.FC<EpisodeCardProps> = ({
                 {/* Overview preview */}
                 {episode.overview && (
                   <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">
-                    {episode.overview.length > 100 
-                      ? `${episode.overview.substring(0, 100)}...` 
-                      : episode.overview
-                    }
+                    {episode.overview}
                   </p>
                 )}
               </div>
-              
-              <Info className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           </div>
         </div>
