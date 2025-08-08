@@ -94,6 +94,80 @@ npm run build
 npm run start
 ```
 
+## Docker Deployment
+
+### Quick Start with Docker Compose (Recommended)
+
+The easiest way to run Finetic is using Docker Compose:
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/AyaanZaveri/finetic.git
+   cd finetic
+   ```
+
+2. **Configure environment variables (optional):**
+   ```bash
+   cp .env.example .env.local
+   # Edit .env.local and add your Google AI API key for AI features
+   ```
+
+3. **Run with Docker Compose:**
+   ```bash
+   docker-compose up -d
+   ```
+
+   The application will be available at [http://localhost:3000](http://localhost:3000)
+
+### Manual Docker Build
+
+If you prefer to build and run manually:
+
+1. **Build the Docker image:**
+   ```bash
+   docker build -t finetic .
+   ```
+
+2. **Run the container:**
+   ```bash
+   docker run -d \
+     --name finetic \
+     -p 3000:3000 \
+     -e GOOGLE_GENERATIVE_AI_API_KEY=your_api_key_here \
+     finetic
+   ```
+
+### Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `GOOGLE_GENERATIVE_AI_API_KEY` | Google AI API key for AI navigator features | No |
+| `NODE_ENV` | Node.js environment (automatically set to production in Docker) | No |
+
+### Docker Considerations
+
+- The Docker image uses Node.js 18 Alpine for optimal size and security
+- The application runs as a non-root user for enhanced security
+- Health checks are included to monitor container status
+- The build uses multi-stage optimization to minimize the final image size
+- Static files are properly served for optimal performance
+
+### Updating
+
+To update to the latest version:
+
+```bash
+# With Docker Compose
+docker-compose pull
+docker-compose up -d
+
+# Manual
+docker pull finetic:latest
+docker stop finetic
+docker rm finetic
+# Run command again with latest image
+```
+
 ## Available Scripts
 
 - `dev` - Start Next.js development server with Turbopack
