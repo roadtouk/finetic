@@ -34,8 +34,6 @@ export function ServerSetup({ onNext }: ServerSetupProps) {
     let cleaned = inputUrl.trim();
     // Remove trailing slash
     cleaned = cleaned.replace(/\/$/, '');
-    // Remove common prefixes that users might accidentally include
-    cleaned = cleaned.replace(/^(jellyfin\.|www\.)/, '');
     return cleaned;
   };
 
