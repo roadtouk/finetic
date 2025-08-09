@@ -39,12 +39,12 @@ export function SearchBar({ className = "" }: SearchBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const { serverUrl } = useAuth();
 
-  // Memoized loading component to prevent re-rendering while typing
+  // Memoized loading component to prevent re-rendering while typing, animation restarts every time without memoization
   const loadingComponent = useMemo(
     () => (
       <div className="flex justify-center items-center p-8">
         <TextShimmer className="text-sm font-mono">
-          {`Searching ${serverUrl && new URL(serverUrl).hostname}...`}
+          {`Searching ${serverUrl && new URL(serverUrl).hostname.replace(/^(jellyfin\.|www\.)/, "")}...`}
         </TextShimmer>
       </div>
     ),
