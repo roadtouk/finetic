@@ -34,7 +34,29 @@ export default function SettingsPage() {
     setOllamaBaseUrl,
     ollamaModel,
     setOllamaModel,
+    groqModel,
+    setGroqModel,
+    openrouterModel,
+    setOpenrouterModel,
+    googleApiKey,
+    setGoogleApiKey,
+    groqApiKey,
+    setGroqApiKey,
+    openrouterApiKey,
+    setOpenrouterApiKey,
   } = useSettings();
+
+  console.log({
+    navigatorEnabled,
+    aiProvider,
+    ollamaBaseUrl,
+    ollamaModel,
+    groqModel,
+    openrouterModel,
+    googleApiKey,
+    groqApiKey,
+    openrouterApiKey,
+  });
 
   return (
     <div className="relative px-4 py-6 max-w-full overflow-hidden">
@@ -126,11 +148,51 @@ export default function SettingsPage() {
                       </SelectContent>
                     </Select>
                     <p className="text-sm text-muted-foreground">
-                      {aiProvider === "gemini"
-                        ? "Uses Google's Gemini 2.0 Flash model for AI responses."
-                        : "Uses a locally running Ollama instance for AI responses."}
+                      {aiProvider === "gemini" &&
+                        "Uses Google's Gemini 2.0 Flash model for AI responses. Requires your own API key."}
+                      {aiProvider === "ollama" &&
+                        "Uses a locally running Ollama instance for AI responses."}
+                      {aiProvider === "groq" &&
+                        "Uses Groq's high-speed inference API for AI responses."}
+                      {aiProvider === "openrouter" &&
+                        "Uses OpenRouter's API to access various AI models."}
                     </p>
                   </div>
+
+                  {/* Google API Key Configuration */}
+                  {aiProvider === "gemini" && (
+                    <div className="space-y-4 pl-4 border-l-2 border-muted">
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="google-api-key"
+                          className="text-base font-medium"
+                        >
+                          Google API Key
+                        </Label>
+                        <Input
+                          id="google-api-key"
+                          type="password"
+                          value={googleApiKey}
+                          onChange={(e) => setGoogleApiKey(e.target.value)}
+                          placeholder="Enter your Google Generative AI API key"
+                          className="w-full"
+                          required
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          Get your API key from{" "}
+                          <a
+                            href="https://makersuite.google.com/app/apikey"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            Google AI Studio
+                          </a>
+                          . Your key is stored locally and never shared.
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   {aiProvider === "ollama" && (
                     <div className="space-y-4 pl-4 border-l-2 border-muted">
@@ -185,6 +247,138 @@ export default function SettingsPage() {
                             className="text-primary hover:underline"
                           >
                             all available models
+                          </a>
+                          .
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {aiProvider === "groq" && (
+                    <div className="space-y-4 pl-4 border-l-2 border-muted">
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="groq-api-key"
+                          className="text-base font-medium"
+                        >
+                          API Key
+                        </Label>
+                        <Input
+                          id="groq-api-key"
+                          type="password"
+                          value={groqApiKey}
+                          onChange={(e) => setGroqApiKey(e.target.value)}
+                          placeholder="Enter your Groq API key"
+                          className="w-full"
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          Get your API key from{" "}
+                          <a
+                            href="https://console.groq.com/keys"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            Groq Console
+                          </a>
+                          . Your key is stored locally and never shared.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="groq-model"
+                          className="text-base font-medium"
+                        >
+                          Model
+                        </Label>
+                        <Input
+                          id="groq-model"
+                          type="text"
+                          value={groqModel}
+                          onChange={(e) => setGroqModel(e.target.value)}
+                          placeholder="llama3-8b-8192"
+                          className="w-full"
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          The Groq model to use. Check out{" "}
+                          <a
+                            href="https://console.groq.com/docs/models"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            available models
+                          </a>
+                          . Popular options include{" "}
+                          <code className="text-xs bg-muted px-1 py-0.5 rounded">
+                            llama3-8b-8192
+                          </code>
+                          ,{" "}
+                          <code className="text-xs bg-muted px-1 py-0.5 rounded">
+                            mixtral-8x7b-32768
+                          </code>
+                          .
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {aiProvider === "openrouter" && (
+                    <div className="space-y-4 pl-4 border-l-2 border-muted">
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="openrouter-api-key"
+                          className="text-base font-medium"
+                        >
+                          API Key
+                        </Label>
+                        <Input
+                          id="openrouter-api-key"
+                          type="password"
+                          value={openrouterApiKey}
+                          onChange={(e) => setOpenrouterApiKey(e.target.value)}
+                          placeholder="Enter your OpenRouter API key"
+                          className="w-full"
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          Get your API key from{" "}
+                          <a
+                            href="https://openrouter.ai/keys"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            OpenRouter Dashboard
+                          </a>
+                          . Your key is stored locally and never shared.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="openrouter-model"
+                          className="text-base font-medium"
+                        >
+                          Model
+                        </Label>
+                        <Input
+                          id="openrouter-model"
+                          type="text"
+                          value={openrouterModel}
+                          onChange={(e) => setOpenrouterModel(e.target.value)}
+                          placeholder="qwen/qwen3-coder:free"
+                          className="w-full"
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          The OpenRouter model to use. Check out{" "}
+                          <a
+                            href="https://openrouter.ai/models?fmt=cards&supported_parameters=tools"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            available models
                           </a>
                           .
                         </p>

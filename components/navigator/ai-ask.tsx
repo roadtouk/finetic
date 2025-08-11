@@ -75,7 +75,16 @@ const AIAsk = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [input, setInput] = useState("");
   const [isToolHistoryOpen, setIsToolHistoryOpen] = useState(false);
-  const { aiProvider, ollamaBaseUrl, ollamaModel } = useSettings();
+  const {
+    aiProvider,
+    ollamaBaseUrl,
+    ollamaModel,
+    groqModel,
+    openrouterModel,
+    googleApiKey,
+    groqApiKey,
+    openrouterApiKey,
+  } = useSettings();
 
   // Function to handle opening AI Ask, with fullscreen exit if needed
   const handleOpenAsk = async () => {
@@ -341,9 +350,7 @@ const AIAsk = () => {
           output.results
         ) {
           results.push(...output.results);
-        }
-
-        else if (output.movies) {
+        } else if (output.movies) {
           results.push(...output.movies);
         } else if (output.shows) {
           results.push(...output.shows);
@@ -423,6 +430,11 @@ const AIAsk = () => {
             aiProvider,
             ollamaBaseUrl,
             ollamaModel,
+            groqModel,
+            openrouterModel,
+            googleApiKey,
+            groqApiKey,
+            openrouterApiKey,
           },
         }
       );
