@@ -47,7 +47,7 @@ export default async function Search({
     <div className="text-center p-8">
       <SearchIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
       <p className="text-muted-foreground">
-        No {type.toLowerCase()} found for "{query}"
+        No {type.toLowerCase()} found for &quot;{query}&quot;
       </p>
     </div>
   );
@@ -64,11 +64,11 @@ export default async function Search({
 
       <div className="relative z-10 mb-2">
         <h2 className="text-3xl font-semibold text-foreground mb-2 font-poppins">
-          "{query}"
+          &quot;{query}&quot;
         </h2>
         <p className="text-muted-foreground mb-6 inline-flex items-center">
           <SearchIcon className="h-4 w-4 mr-2" />
-          Found {searchResults.length} results for "{query}"
+          Found {searchResults.length} results for &quot;{query}&quot;
         </p>
       </div>
 
@@ -193,7 +193,7 @@ export default async function Search({
           <div className="text-center p-8">
             <SearchIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
-              No results found for "{query}"
+              No results found for &quot;{query}&quot;
             </p>
           </div>
         )}

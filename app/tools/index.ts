@@ -26,7 +26,7 @@ import {
 } from "./tv-shows";
 
 import {
-  createSkipToSubtitleContent,
+  skipToSubtitleContent,
   createExplainScene,
   createAnalyzeMedia,
 } from "./subtitles";
@@ -70,7 +70,7 @@ export {
 
 // Export subtitle tool factory functions
 export {
-  createSkipToSubtitleContent,
+  skipToSubtitleContent,
   createExplainScene,
   createAnalyzeMedia,
 };
@@ -112,7 +112,7 @@ export function createAllTools(currentMedia: any, currentTimestamp?: number) {
     getEpisodes,
     
     // Subtitle tools (context-dependent)
-    skipToSubtitleContent: createSkipToSubtitleContent(currentMedia),
+    skipToSubtitleContent: skipToSubtitleContent(currentMedia),
     explainScene: createExplainScene(currentMedia),
     analyzeMedia: createAnalyzeMedia(currentMedia),
     

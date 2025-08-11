@@ -11,15 +11,32 @@ import {
   fetchGenre,
 } from "@/app/actions/media";
 
+export interface NavigateMediaTool {
+  success: boolean;
+  action: string;
+  url: string;
+  message: string;
+}
+
+export interface PlayMediaTool {
+  success: boolean;
+  action: string;
+  mediaId: string;
+  mediaName: string;
+  mediaType: "Movie" | "Series" | "Episode";
+  message: string;
+}
+
 export const searchMedia = tool({
   description: "Search for movies, TV shows, or episodes by name or keyword",
-  parameters: z.object({
+  inputSchema: z.object({
     query: z.string().describe("The search term or media title to look for"),
   }),
   execute: async ({ query }) => {
     console.log("🔍 [searchMedia] Tool called with query:", query);
     try {
       const results = await searchItems(query);
+      console.log("🔍 [searchMedia] Search results:", results);
       return {
         success: true,
         results: results.map((item) => ({
@@ -49,7 +66,7 @@ export const searchMedia = tool({
 
 export const navigateToMedia = tool({
   description: "Navigate to a specific movie, TV show, or episode page",
-  parameters: z.object({
+  inputSchema: z.object({
     mediaId: z.string().describe("The unique ID of the media item"),
     mediaType: z
       .enum(["Movie", "Series", "Episode"])
@@ -81,7 +98,7 @@ export const navigateToMedia = tool({
 export const playMedia = tool({
   description:
     "Play a specific movie, TV show, or episode directly in the media player",
-  parameters: z.object({
+  inputSchema: z.object({
     mediaId: z.string().describe("The unique ID of the media item"),
     mediaName: z.string().describe("The name of the media item"),
     mediaType: z
@@ -106,8 +123,9 @@ export const playMedia = tool({
 });
 
 export const getMovies = tool({
-  description: "Get a list of recent movies from the library. For genre-specific requests, use getMoviesByGenre instead.",
-  parameters: z.object({
+  description:
+    "Get a list of recent movies from the library. For genre-specific requests, use getMoviesByGenre instead.",
+  inputSchema: z.object({
     limit: z
       .number()
       .optional()
@@ -115,7 +133,9 @@ export const getMovies = tool({
     genreIds: z
       .array(z.string())
       .optional()
-      .describe("Array of genre IDs to filter movies by (use getMoviesByGenre for genre names)"),
+      .describe(
+        "Array of genre IDs to filter movies by (use getMoviesByGenre for genre names)"
+      ),
   }),
   execute: async ({ limit = 20, genreIds }) => {
     console.log("🎬 [getMovies] Tool called with:", { limit, genreIds });
@@ -143,8 +163,9 @@ export const getMovies = tool({
 });
 
 export const getTVShows = tool({
-  description: "Get a list of recent TV shows from the library. For genre-specific requests, use getTVShowsByGenre instead.",
-  parameters: z.object({
+  description:
+    "Get a list of recent TV shows from the library. For genre-specific requests, use getTVShowsByGenre instead.",
+  inputSchema: z.object({
     limit: z
       .number()
       .optional()
@@ -152,7 +173,9 @@ export const getTVShows = tool({
     genreIds: z
       .array(z.string())
       .optional()
-      .describe("Array of genre IDs to filter TV shows by (use getTVShowsByGenre for genre names)"),
+      .describe(
+        "Array of genre IDs to filter TV shows by (use getTVShowsByGenre for genre names)"
+      ),
   }),
   execute: async ({ limit = 20, genreIds }) => {
     console.log("📺 [getTVShows] Tool called with:", { limit, genreIds });
@@ -182,7 +205,7 @@ export const getTVShows = tool({
 export const continueWatching = tool({
   description:
     "Fetch list of media items that are currently being watched/continued",
-  parameters: z.object({
+  inputSchema: z.object({
     limit: z.number().optional().describe("Number of items, default is 20"),
   }),
   execute: async ({ limit = 20 }) => {
@@ -222,7 +245,7 @@ export const continueWatching = tool({
 
 export const getMediaDetails = tool({
   description: "Get detailed information about a specific movie or TV show",
-  parameters: z.object({
+  inputSchema: z.object({
     mediaId: z.string().describe("The unique ID of the media item"),
   }),
   execute: async ({ mediaId }) => {
@@ -264,7 +287,7 @@ export const getMediaDetails = tool({
 
 export const getGenres = tool({
   description: "Get list of all genres available in the library",
-  parameters: z.object({
+  inputSchema: z.object({
     mediaType: z
       .enum(["Movie", "Series", "All"])
       .optional()
@@ -284,7 +307,7 @@ export const getGenres = tool({
         };
       }
 
-      let genres = genresResponse.Items;
+      const genres = genresResponse.Items;
 
       return {
         success: true,
@@ -304,7 +327,7 @@ export const getGenres = tool({
 export const getWatchlist = tool({
   description:
     "Get user's watchlist or favorites (simulated with highly-rated content)",
-  parameters: z.object({
+  inputSchema: z.object({
     limit: z.number().optional().describe("Number of items, default is 20"),
   }),
   execute: async ({ limit = 20 }) => {
@@ -347,7 +370,7 @@ export const getWatchlist = tool({
 
 export const findSimilarItems = tool({
   description: "Find similar items by media ID",
-  parameters: z.object({
+  inputSchema: z.object({
     mediaId: z.string().describe("The unique ID of the media item"),
   }),
   execute: async ({ mediaId }) => {
@@ -383,7 +406,7 @@ export const findSimilarItems = tool({
 
 export const getMoviesByGenre = tool({
   description: "Get a list of movies filtered by genre name",
-  parameters: z.object({
+  inputSchema: z.object({
     genreName: z.string().describe("The name of the genre to filter by"),
     limit: z
       .number()
@@ -391,7 +414,10 @@ export const getMoviesByGenre = tool({
       .describe("Number of movies to retrieve (default: 20)"),
   }),
   execute: async ({ genreName, limit = 20 }) => {
-    console.log("🎬🎭 [getMoviesByGenre] Tool called with:", { genreName, limit });
+    console.log("🎬🎭 [getMoviesByGenre] Tool called with:", {
+      genreName,
+      limit,
+    });
     try {
       // First, fetch the genre to get its ID
       const genreData = await fetchGenre(genreName);
@@ -429,7 +455,7 @@ export const getMoviesByGenre = tool({
 
 export const getTVShowsByGenre = tool({
   description: "Get a list of TV shows filtered by genre name",
-  parameters: z.object({
+  inputSchema: z.object({
     genreName: z.string().describe("The name of the genre to filter by"),
     limit: z
       .number()
@@ -437,7 +463,10 @@ export const getTVShowsByGenre = tool({
       .describe("Number of TV shows to retrieve (default: 20)"),
   }),
   execute: async ({ genreName, limit = 20 }) => {
-    console.log("📺🎭 [getTVShowsByGenre] Tool called with:", { genreName, limit });
+    console.log("📺🎭 [getTVShowsByGenre] Tool called with:", {
+      genreName,
+      limit,
+    });
     try {
       // First, fetch the genre to get its ID
       const genreData = await fetchGenre(genreName);

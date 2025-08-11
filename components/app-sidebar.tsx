@@ -41,7 +41,7 @@ import {
   Sun,
   Moon,
   Monitor,
-  Settings,
+  Settings2,
   BarChart3,
   MoreHorizontal,
   ChevronRight,
@@ -211,7 +211,7 @@ export function AppSidebar({
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <Link href="/settings">
-                    <Settings className="h-4 w-4" />
+                    <Settings2 className="h-4 w-4" />
                     <span>Settings</span>
                   </Link>
                 </SidebarMenuButton>

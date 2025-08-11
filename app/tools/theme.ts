@@ -1,10 +1,17 @@
 import { tool } from "ai";
 import { z } from "zod";
 
+export interface ThemeToggle {
+  success: boolean;
+  action: string;
+  theme: string;
+  message: string;
+}
+
 export const themeToggle = tool({
   description:
     "Toggle or set the application theme between light, dark, or system mode",
-  parameters: z.object({
+  inputSchema: z.object({
     action: z
       .enum(["toggle", "light", "dark", "system"])
       .describe(

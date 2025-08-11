@@ -27,13 +27,14 @@ import {
   LoaderPinwheel,
   Palette,
   BookOpen,
+  GalleryVerticalEnd,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Markdown from "react-markdown";
 import { toast } from "sonner";
 import { Input } from "../ui/input";
 import { useRouter } from "next/navigation";
-import { ToolInvocation } from "ai";
+import { DefaultChatTransport, ToolCallPart } from "ai";
 import { useMediaPlayer } from "@/contexts/MediaPlayerContext";
 import * as Kbd from "@/components/ui/kbd";
 import { Badge } from "../ui/badge";
@@ -49,20 +50,31 @@ import { MediaDetailsCard } from "./media-details-card";
 import { isAIAskOpenAtom } from "@/lib/atoms";
 import { TextShimmer } from "../motion-primitives/text-shimmer";
 import { useSettings } from "@/contexts/settings-context";
+import {
+  Tool,
+  ToolContent,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+} from "@/components/ai-elements/tool";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { NavigateMediaTool, PlayMediaTool } from "@/app/tools/media";
+import { SkipToSubtitleContent } from "@/app/tools/subtitles";
+import { ThemeToggle } from "@/app/tools/theme";
 
-interface AIAskProps {
-  // Props are optional now since we're using the atom
-}
-
-const AIAsk = ({}: AIAskProps = {}) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
-  const [searchSummary, setSearchSummary] = useState<string>("");
-  const [summaryLoading, setSummaryLoading] = useState(false);
+const AIAsk = () => {
   const [isAskOpen, setIsAskOpen] = useAtom(isAIAskOpenAtom);
   const [currentTool, setCurrentTool] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const { isPlayerVisible } = useMediaPlayer();
+  const [input, setInput] = useState("");
+  const [isToolHistoryOpen, setIsToolHistoryOpen] = useState(false);
   const { aiProvider, ollamaBaseUrl, ollamaModel } = useSettings();
 
   // Function to handle opening AI Ask, with fullscreen exit if needed
@@ -137,159 +149,124 @@ const AIAsk = ({}: AIAskProps = {}) => {
 
   const {
     messages,
-    input,
-    handleInputChange,
-    handleSubmit,
-    isLoading: askLoading,
+    sendMessage,
+    status,
     error: askError,
     setMessages,
-    setInput,
   } = useChat({
-    api: "/api/chat",
-    body: {
-      currentMedia: currentMediaWithSource,
-      currentTimestamp,
-      aiProvider,
-      ollamaBaseUrl,
-      ollamaModel,
+    transport: new DefaultChatTransport({
+      api: "/api/chat",
+    }),
+    onToolCall: ({ toolCall }) => {
+      console.log("🔧 Tool call received:", toolCall);
+      setCurrentTool(toolCall.toolName);
     },
-    onToolCall: (toolInvocation) => {
-      const toolInvoked = toolInvocation?.toolCall?.toolName;
-      setCurrentTool(toolInvoked || null);
-    },
-    onFinish: (message) => {
-      // Clear the current tool badge when finished
+    onFinish: ({ message }) => {
+      console.log("🏁 Chat finished:", message);
       setCurrentTool(null);
 
-      // Check if the message contains navigation or play instructions
-      if (message.toolInvocations) {
-        for (const toolInvocation of message.toolInvocations) {
-          if (toolInvocation.toolName === "navigateToMedia") {
-            navigateToMedia(toolInvocation);
-          } else if (toolInvocation.toolName === "playMedia") {
-            handlePlayMedia(toolInvocation);
-          } else if (toolInvocation.toolName === "skipToSubtitleContent") {
-            handleSkipToTimestamp(toolInvocation);
-          } else if (toolInvocation.toolName === "themeToggle") {
-            handleThemeToggle(toolInvocation);
+      // each tool has a "tool-" prefix
+      if (message.parts) {
+        message.parts.forEach((part) => {
+          console.log(part.type);
+          switch (part.type) {
+            case "tool-navigateToMedia":
+              console.log("navigate media called");
+              navigateToMedia(part.output as NavigateMediaTool);
+              break;
+            case "tool-playMedia":
+              handlePlayMedia(part.output as PlayMediaTool);
+              break;
+            case "tool-skipToSubtitleContent":
+              handleSkipToTimestamp(part.output as SkipToSubtitleContent);
+              break;
+            case "tool-themeToggle":
+              handleThemeToggle(part.output as ThemeToggle);
+              break;
           }
-        }
+        });
       }
     },
   });
 
-  const navigateToMedia = (toolInvocation: ToolInvocation) => {
-    if (
-      "result" in toolInvocation &&
-      toolInvocation.toolName === "navigateToMedia"
-    ) {
-      console.log("Tool invocation result:", toolInvocation.result);
-      const result = toolInvocation.result;
-      if (result.success && result.action === "navigate" && result.url) {
-        router.push(result.url);
-        setTimeout(() => {
-          setIsAskOpen(false);
-        }, 500);
-      }
+  const navigateToMedia = (toolPart: NavigateMediaTool) => {
+    if (toolPart.success && toolPart.action === "navigate" && toolPart.url) {
+      router.push(toolPart.url);
+      setTimeout(() => {
+        setIsAskOpen(false);
+      }, 500);
     }
   };
 
-  const handlePlayMedia = (toolInvocation: ToolInvocation) => {
-    if ("result" in toolInvocation && toolInvocation.toolName === "playMedia") {
-      console.log("Play media tool invocation result:", toolInvocation.result);
-      const result = toolInvocation.result;
-      if (
-        result.success &&
-        result.action === "play" &&
-        result.mediaId &&
-        result.mediaName &&
-        result.mediaType
-      ) {
-        playMedia({
-          id: result.mediaId,
-          name: result.mediaName,
-          type: result.mediaType,
-        });
-        setTimeout(() => {
-          setIsAskOpen(false);
-        }, 500);
-      }
+  const handlePlayMedia = (toolPart: PlayMediaTool) => {
+    if (
+      toolPart.success &&
+      toolPart.action === "play" &&
+      toolPart.mediaId &&
+      toolPart.mediaName &&
+      toolPart.mediaType
+    ) {
+      playMedia({
+        id: toolPart.mediaId,
+        name: toolPart.mediaName,
+        type: toolPart.mediaType,
+      });
+      setTimeout(() => {
+        setIsAskOpen(false);
+      }, 500);
     }
   };
 
-  const handleSkipToTimestamp = (toolInvocation: ToolInvocation) => {
+  const handleSkipToTimestamp = (toolPart: SkipToSubtitleContent) => {
     if (
-      "result" in toolInvocation &&
-      toolInvocation.toolName === "skipToSubtitleContent"
+      toolPart.success &&
+      toolPart.action === "skipTo" &&
+      typeof toolPart.timestamp === "number"
     ) {
-      console.log(
-        "Skip to timestamp tool invocation result:",
-        toolInvocation.result
+      skipToTimestamp(toolPart.timestamp);
+      toast.success(
+        `Skipped to ${toolPart.timestampFormatted}: "${toolPart.text}"`
       );
-      const result = toolInvocation.result;
-      if (
-        result.success &&
-        result.action === "skipTo" &&
-        typeof result.timestamp === "number"
-      ) {
-        skipToTimestamp(result.timestamp);
-        toast.success(
-          `Skipped to ${result.timestampFormatted}: "${result.text}"`
-        );
-        // Hide the AI Ask component after successfully skipping
-        setTimeout(() => {
-          setIsAskOpen(false);
-        }, 500);
-      } else if (!result.success && result.error) {
-        toast.error(result.error);
-      }
+      // Hide the AI Ask component after successfully skipping
+      setTimeout(() => {
+        setIsAskOpen(false);
+      }, 500);
+    } else if (!toolPart.success && toolPart.error) {
+      toast.error(toolPart.error);
     }
   };
 
-  const handleThemeToggle = (toolInvocation: ToolInvocation) => {
-    if (
-      "result" in toolInvocation &&
-      toolInvocation.toolName === "themeToggle"
-    ) {
-      console.log(
-        "Theme toggle tool invocation result:",
-        toolInvocation.result
-      );
-      const result = toolInvocation.result;
-      if (result.success && result.action === "setTheme" && result.theme) {
-        if (result.theme === "toggle") {
-          // Toggle between light and dark (ignore system)
-          const currentTheme = theme === "system" ? "light" : theme;
-          const newTheme = currentTheme === "light" ? "dark" : "light";
-          setTheme(newTheme);
-          toast.success(`Theme switched to ${newTheme} mode`);
-        } else {
-          // Set specific theme
-          setTheme(result.theme);
-          const themeLabel =
-            result.theme === "system"
-              ? "system (follows device preference)"
-              : `${result.theme} mode`;
-          toast.success(`Theme switched to ${themeLabel}`);
-        }
-
-        // Don't auto-close for theme changes as they're quick and users might want to keep chatting
-      } else if (!result.success && result.error) {
-        toast.error(result.error);
+  const handleThemeToggle = (toolPart: ThemeToggle) => {
+    if (toolPart.success && toolPart.action === "setTheme" && toolPart.theme) {
+      if (toolPart.theme === "toggle") {
+        // Toggle between light and dark (ignore system)
+        const currentTheme = theme === "system" ? "light" : theme;
+        const newTheme = currentTheme === "light" ? "dark" : "light";
+        setTheme(newTheme);
+        toast.success(`Theme switched to ${newTheme} mode`);
+      } else {
+        // Set specific theme
+        setTheme(toolPart.theme);
+        const themeLabel =
+          toolPart.theme === "system"
+            ? "system (follows device preference)"
+            : `${toolPart.theme} mode`;
+        toast.success(`Theme switched to ${themeLabel}`);
       }
+
+      // Don't auto-close for theme changes as they're quick and users might want to keep chatting
+    } else if (!toolPart.success) {
+      toast.error("Failed to change theme");
     }
+  };
+
+  const handleResetChat = () => {
+    setMessages([]);
+    setCurrentTool(null);
   };
 
   const handleCloseAsk = () => {
     setIsAskOpen(false);
-    setInput("");
-    setMessages([]);
-  };
-
-  const handleResetChat = () => {
-    setInput("");
-    setMessages([]);
-    setCurrentTool(null);
   };
 
   // Helper function to get tool badge info
@@ -301,6 +278,7 @@ const AIAsk = ({}: AIAskProps = {}) => {
       { icon: React.ComponentType<any>; label: string; color?: string }
     > = {
       thinking: { icon: LoaderPinwheel, label: "Thinking..." },
+      weather: { icon: Search, label: "Getting Weather" },
       searchMedia: { icon: Search, label: "Searching Media" },
       navigateToMedia: { icon: Navigation, label: "Navigating" },
       playMedia: { icon: Play, label: "Playing Media" },
@@ -326,382 +304,131 @@ const AIAsk = ({}: AIAskProps = {}) => {
     return toolMap[toolName] || { icon: Search, label: "Working..." };
   };
 
-  // Render message content with structured media cards
+  const renderMessageText = (message: any) => {
+    const actualMessage = message.message || message;
+
+    if (actualMessage.parts) {
+      return actualMessage.parts
+        .filter((part: any) => part.type === "text")
+        .map((part: any) => part.text)
+        .join("");
+    }
+    return actualMessage.content || message.content || "";
+  };
+
+  const findToolParts = (message: any) => {
+    const actualMessage = message.message || message;
+    if (!actualMessage.parts) return [];
+
+    return actualMessage.parts.filter(
+      (part: any) =>
+        part.type &&
+        (part.type.startsWith("tool-") || part.type === "dynamic-tool")
+    );
+  };
+
+  const extractMediaResults = (toolParts: any[]) => {
+    const results: any[] = [];
+
+    for (const part of toolParts) {
+      if (part.state === "output-available" && part.output) {
+        const output = part.output;
+
+        if (
+          (part.type === "tool-searchMedia" ||
+            part.toolName === "searchMedia") &&
+          output.success &&
+          output.results
+        ) {
+          results.push(...output.results);
+        }
+
+        else if (output.movies) {
+          results.push(...output.movies);
+        } else if (output.shows) {
+          results.push(...output.shows);
+        } else if (output.resumeItems) {
+          results.push(...output.resumeItems);
+        } else if (output.watchlist) {
+          results.push(...output.watchlist);
+        } else if (output.filmography) {
+          results.push(...output.filmography);
+        } else if (output.similarItems) {
+          results.push(...output.similarItems);
+        }
+      }
+    }
+
+    return results;
+  };
+
+  const getAllToolCalls = () => {
+    const allToolCalls: any[] = [];
+
+    messages.forEach((message: any, messageIndex: number) => {
+      const toolParts = findToolParts(message);
+      toolParts.forEach((part: any, partIndex: number) => {
+        allToolCalls.push({
+          ...part,
+          messageIndex,
+          partIndex,
+          timestamp: new Date().toISOString(),
+        });
+      });
+    });
+
+    return allToolCalls.reverse();
+  };
+
   const renderMessageContent = (message: any, index: number) => {
-    // Check if this message has tool invocations with filmography data
-    const filmographyInvocation = message.toolInvocations?.find(
-      (invocation: any) =>
-        invocation.toolName === "getPersonFilmography" &&
-        "result" in invocation &&
-        invocation.result.success &&
-        invocation.result.filmography
-    );
+    const textContent = renderMessageText(message);
+    const toolParts = findToolParts(message);
+    const mediaResults = extractMediaResults(toolParts);
 
-    // Check if this message has tool invocations with similar items data
-    const similarItemsInvocation = message.toolInvocations?.find(
-      (invocation: any) =>
-        invocation.toolName === "findSimilarItems" &&
-        "result" in invocation &&
-        invocation.result.success &&
-        invocation.result.similarItems
-    );
-
-    // Check if this message has tool invocations with search results
-    const searchResultsInvocation = message.toolInvocations?.find(
-      (invocation: any) =>
-        invocation.toolName === "searchMedia" &&
-        "result" in invocation &&
-        invocation.result.success &&
-        invocation.result.results &&
-        invocation.result.results.length > 0
-    );
-
-    // Check if this message has tool invocations with movies data
-    const moviesInvocation = message.toolInvocations?.find(
-      (invocation: any) =>
-        invocation.toolName === "getMovies" &&
-        "result" in invocation &&
-        invocation.result.success &&
-        invocation.result.movies
-    );
-
-    // Check if this message has tool invocations with movies by genre data
-    const moviesByGenreInvocation = message.toolInvocations?.find(
-      (invocation: any) =>
-        invocation.toolName === "getMoviesByGenre" &&
-        "result" in invocation &&
-        invocation.result.success &&
-        invocation.result.movies
-    );
-
-    // Check if this message has tool invocations with TV shows data
-    const tvShowsInvocation = message.toolInvocations?.find(
-      (invocation: any) =>
-        invocation.toolName === "getTVShows" &&
-        "result" in invocation &&
-        invocation.result.success &&
-        invocation.result.shows
-    );
-
-    // Check if this message has tool invocations with TV shows by genre data
-    const tvShowsByGenreInvocation = message.toolInvocations?.find(
-      (invocation: any) =>
-        invocation.toolName === "getTVShowsByGenre" &&
-        "result" in invocation &&
-        invocation.result.success &&
-        invocation.result.shows
-    );
-
-    // Check if this message has tool invocations with continue watching data
-    const continueWatchingInvocation = message.toolInvocations?.find(
-      (invocation: any) =>
-        invocation.toolName === "continueWatching" &&
-        "result" in invocation &&
-        invocation.result.success &&
-        invocation.result.resumeItems
-    );
-
-    // Check if this message has tool invocations with watchlist data
-    const watchlistInvocation = message.toolInvocations?.find(
-      (invocation: any) =>
-        invocation.toolName === "getWatchlist" &&
-        "result" in invocation &&
-        invocation.result.success &&
-        invocation.result.watchlist
-    );
-
-    // Check if this message has tool invocations with theme toggle
-    const themeToggleInvocation = message.toolInvocations?.find(
-      (invocation: any) =>
-        invocation.toolName === "themeToggle" &&
-        "result" in invocation &&
-        invocation.result.success
-    );
-
-    // Check if this message has tool invocations with people search results
-    const peopleInvocation = message.toolInvocations?.find(
-      (invocation: any) =>
-        invocation.toolName === "getPeople" &&
-        "result" in invocation &&
-        invocation.result.success &&
-        invocation.result.people
-    );
-
-    // Check if this message has tool invocations with person details
-    const personDetailsInvocation = message.toolInvocations?.find(
-      (invocation: any) =>
-        invocation.toolName === "getPersonDetails" &&
-        "result" in invocation &&
-        invocation.result.success &&
-        invocation.result.person
-    );
-
-    // Check if this message has tool invocations with seasons
-    const seasonsInvocation = message.toolInvocations?.find(
-      (invocation: any) =>
-        invocation.toolName === "getSeasons" &&
-        "result" in invocation &&
-        invocation.result.success &&
-        invocation.result.seasons
-    );
-
-    // Check if this message has tool invocations with episodes
-    const episodesInvocation = message.toolInvocations?.find(
-      (invocation: any) =>
-        invocation.toolName === "getEpisodes" &&
-        "result" in invocation &&
-        invocation.result.success &&
-        invocation.result.episodes
-    );
-
-    // Check if this message has tool invocations with genres
-    const genresInvocation = message.toolInvocations?.find(
-      (invocation: any) =>
-        invocation.toolName === "getGenres" &&
-        "result" in invocation &&
-        invocation.result.success &&
-        invocation.result.genres
-    );
-
-    // Check if this message has tool invocations with media details
-    const mediaDetailsInvocation = message.toolInvocations?.find(
-      (invocation: any) =>
-        invocation.toolName === "getMediaDetails" &&
-        "result" in invocation &&
-        invocation.result.success &&
-        invocation.result.details
-    );
-
-    // Helper function to render media cards
-    const renderMediaCards = (
-      items: any[],
-      keyPrefix: string,
-      title?: string
-    ) => (
+    return (
       <div className="space-y-3 w-full">
-        <Markdown>{message.content}</Markdown>
-        {title && (
-          <h4 className="font-medium text-sm text-muted-foreground">{title}</h4>
+        {textContent && <Markdown>{textContent}</Markdown>}
+
+        {mediaResults.length > 0 && (
+          <div className="space-y-2">
+            {mediaResults.map((item: any, itemIndex: number) => (
+              <MediaLinkCard
+                key={`media-${item.id || item.Id}-${itemIndex}`}
+                item={item}
+                className="mb-2"
+                index={itemIndex}
+              />
+            ))}
+          </div>
         )}
-        <div className="space-y-2">
-          {items.map((item: any, itemIndex: number) => (
-            <MediaLinkCard
-              key={`${keyPrefix}-${item.id}-${itemIndex}`}
-              item={item}
-              className="mb-2"
-              index={itemIndex}
-            />
-          ))}
-        </div>
       </div>
     );
-
-    // Handle filmography results
-    if (filmographyInvocation) {
-      const filmography = filmographyInvocation.result.filmography;
-      return renderMediaCards(filmography, "filmography");
-    }
-
-    // Handle similar items results
-    if (similarItemsInvocation) {
-      const similarItems = similarItemsInvocation.result.similarItems;
-      return renderMediaCards(similarItems, "similar");
-    }
-
-    // Handle search results
-    if (searchResultsInvocation) {
-      const searchResults = searchResultsInvocation.result.results;
-      return renderMediaCards(searchResults, "search");
-    }
-
-    // Handle movies results
-    if (moviesInvocation) {
-      const movies = moviesInvocation.result.movies;
-      return renderMediaCards(movies, "movies");
-    }
-
-    // Handle movies by genre results
-    if (moviesByGenreInvocation) {
-      const movies = moviesByGenreInvocation.result.movies;
-      return renderMediaCards(movies, "movies-by-genre");
-    }
-
-    // Handle TV shows results
-    if (tvShowsInvocation) {
-      const shows = tvShowsInvocation.result.shows;
-      return renderMediaCards(shows, "shows");
-    }
-
-    // Handle TV shows by genre results
-    if (tvShowsByGenreInvocation) {
-      const shows = tvShowsByGenreInvocation.result.shows;
-      return renderMediaCards(shows, "shows-by-genre");
-    }
-
-    // Handle continue watching results
-    if (continueWatchingInvocation) {
-      const resumeItems = continueWatchingInvocation.result.resumeItems;
-      return renderMediaCards(resumeItems, "resume");
-    }
-
-    // Handle watchlist results
-    if (watchlistInvocation) {
-      const watchlist = watchlistInvocation.result.watchlist;
-      return renderMediaCards(watchlist, "watchlist");
-    }
-
-    // Handle people search results
-    if (peopleInvocation) {
-      const people = peopleInvocation.result.people;
-      return (
-        <div className="space-y-3 w-full">
-          <Markdown>{message.content}</Markdown>
-          <div className="space-y-2">
-            {people.map((person: any, personIndex: number) => (
-              <PersonCard
-                key={`person-${person.id}-${personIndex}`}
-                person={person}
-                className="mb-2"
-                index={personIndex}
-              />
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    // Handle person details results
-    if (personDetailsInvocation) {
-      const person = personDetailsInvocation.result.person;
-      return (
-        <div className="space-y-3 w-full">
-          <Markdown>{message.content}</Markdown>
-          <PersonCard
-            person={person}
-            className="mb-2"
-            index={0}
-          />
-        </div>
-      );
-    }
-
-    // Handle seasons results
-    if (seasonsInvocation) {
-      const seasons = seasonsInvocation.result.seasons;
-      return (
-        <div className="space-y-3 w-full">
-          <Markdown>{message.content}</Markdown>
-          <div className="space-y-2">
-            {seasons.map((season: any, seasonIndex: number) => (
-              <SeasonCard
-                key={`season-${season.id}-${seasonIndex}`}
-                season={season}
-                className="mb-2"
-                index={seasonIndex}
-              />
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    // Handle episodes results
-    if (episodesInvocation) {
-      const episodes = episodesInvocation.result.episodes;
-      return (
-        <div className="space-y-3 w-full">
-          <Markdown>{message.content}</Markdown>
-          <div className="space-y-2">
-            {episodes.map((episode: any, episodeIndex: number) => (
-              <EpisodeCard
-                key={`episode-${episode.id}-${episodeIndex}`}
-                episode={episode}
-                className="mb-2"
-                index={episodeIndex}
-              />
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    // Handle genres results
-    if (genresInvocation) {
-      const genres = genresInvocation.result.genres;
-      return (
-        <div className="space-y-3 w-full">
-          <Markdown>{message.content}</Markdown>
-          <div className="space-y-2">
-            {genres.map((genre: any, genreIndex: number) => (
-              <GenreCard
-                key={`genre-${genre.Id || genre.Name}-${genreIndex}`}
-                genre={genre}
-                className="mb-2"
-                index={genreIndex}
-                onClick={(genreName) => {
-                  // Handle genre click - could trigger a new search
-                  setInput(`Show me movies in the ${genreName} genre`);
-                }}
-              />
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    // Handle media details results
-    if (mediaDetailsInvocation) {
-      const details = mediaDetailsInvocation.result.details;
-      return (
-        <div className="space-y-3 w-full">
-          <Markdown>{message.content}</Markdown>
-          <MediaDetailsCard
-            media={details}
-            className="mb-2"
-            index={0}
-          />
-        </div>
-      );
-    }
-
-    // Handle theme toggle results
-    if (themeToggleInvocation) {
-      return (
-        <div className="space-y-3 w-full">
-          <Markdown>{message.content}</Markdown>
-          <ThemeToggleCard />
-        </div>
-      );
-    }
-
-    // Default markdown rendering for other messages
-    return <Markdown>{message.content}</Markdown>;
   };
 
   const handleSubmitQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!input.trim()) {
-      // toast({
-      //   title: "Error",
-      //   description: "Please enter a question",
-      //   variant: "destructive",
-      // });
       console.log("No input provided");
       return;
     }
 
     try {
-      await handleSubmit(e);
+      sendMessage(
+        { text: input },
+        {
+          body: {
+            currentMedia: currentMediaWithSource,
+            currentTimestamp,
+            aiProvider,
+            ollamaBaseUrl,
+            ollamaModel,
+          },
+        }
+      );
       setCurrentTool("thinking");
-      setInput(""); // Clear the input after successful submission
     } catch (error) {
       console.error("Error asking question:", error);
-      // toast({
-      //   // title: "Error",
-      //   description: "Something went wrong. Please try again.",
-      //   variant: "destructive",
-      // });
     }
   };
 
@@ -709,7 +436,6 @@ const AIAsk = ({}: AIAskProps = {}) => {
     <div
       className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 flex flex-col items-center px-4 w-full max-w-xl ${isAskOpen ? "z-[9999999]" : "z-50"}`}
     >
-      {/* Ask question expanded panel */}
       <AnimatePresence>
         {isAskOpen && (
           <motion.div
@@ -720,7 +446,7 @@ const AIAsk = ({}: AIAskProps = {}) => {
             transition={{ duration: 0.2, ease: "easeOut" }}
           >
             <div className="relative bg-card/90 backdrop-blur-[6px] rounded-2xl border shadow-xl shadow-primary/5 p-4 max-h-[80vh]">
-              {askLoading && (
+              {status !== "ready" && (
                 <BorderBeam
                   size={150}
                   duration={4}
@@ -753,6 +479,16 @@ const AIAsk = ({}: AIAskProps = {}) => {
                     variant="ghost"
                     size="sm"
                     className="h-6 w-6 p-0"
+                    onClick={() => setIsToolHistoryOpen(true)}
+                    title="Tool history"
+                    disabled={getAllToolCalls().length === 0}
+                  >
+                    <GalleryVerticalEnd className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
                     onClick={handleResetChat}
                     title="New chat"
                   >
@@ -770,7 +506,7 @@ const AIAsk = ({}: AIAskProps = {}) => {
                 </div>
               </div>
 
-              {(messages.length > 0 || askLoading) && (
+              {(messages.length > 0 || status !== "ready") && (
                 <div
                   className="mb-4 max-h-[60vh] overflow-y-auto space-y-3"
                   id="chat-body"
@@ -794,7 +530,7 @@ const AIAsk = ({}: AIAskProps = {}) => {
                         </div>
                       ) : (
                         <div className="text-sm font-medium">
-                          {message.content}
+                          {renderMessageText(message)}
                         </div>
                       )}
                     </motion.div>
@@ -807,19 +543,19 @@ const AIAsk = ({}: AIAskProps = {}) => {
                   <div className="relative flex-1">
                     <Input
                       value={input}
-                      onChange={handleInputChange}
+                      onChange={(e) => setInput(e.target.value)}
                       placeholder={`Ask something like "play Inception" or "go to Breaking Bad"`}
                       className="rounded-xl bg-background/80 backdrop-blur-md border px-4"
-                      disabled={askLoading}
+                      disabled={status !== "ready"}
                       autoFocus
                     />
                   </div>
                   <Button
                     type="submit"
                     className="rounded-full px-4 h-10"
-                    disabled={askLoading || !input.trim()}
+                    disabled={status !== "ready" || !input.trim()}
                   >
-                    {askLoading ? (
+                    {status !== "ready" ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <ArrowRight className="h-4 w-4 scale-105" />
@@ -832,7 +568,58 @@ const AIAsk = ({}: AIAskProps = {}) => {
         )}
       </AnimatePresence>
 
-      {/* Ask button */}
+      <Sheet open={isToolHistoryOpen} onOpenChange={setIsToolHistoryOpen}>
+        <SheetContent
+          side="right"
+          className="w-[400px] sm:w-[540px] z-[10000000000]"
+        >
+          <SheetHeader>
+            <SheetTitle>Tool History</SheetTitle>
+            <SheetDescription>
+              List of all tool calls that Navigator made
+            </SheetDescription>
+          </SheetHeader>
+          <div className="space-y-4 max-h-[calc(100vh-120px)] overflow-y-auto px-4">
+            {getAllToolCalls().length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                <GalleryVerticalEnd className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No tool calls yet</p>
+                <p className="text-sm">
+                  Start a conversation to see tool history
+                </p>
+              </div>
+            ) : (
+              getAllToolCalls().map((toolCall, index) => (
+                <Tool
+                  key={`history-tool-${toolCall.messageIndex}-${toolCall.partIndex}-${index}`}
+                  defaultOpen={false}
+                >
+                  <ToolHeader
+                    type={
+                      toolCall.type?.replace("tool-", "") ||
+                      toolCall.toolName ||
+                      "Unknown"
+                    }
+                    state={toolCall.state}
+                  />
+                  <ToolContent>
+                    {toolCall.input && <ToolInput input={toolCall.input} />}
+                    <ToolOutput
+                      output={
+                        toolCall.output
+                          ? JSON.stringify(toolCall.output, null, 2)
+                          : undefined
+                      }
+                      errorText={toolCall.errorText}
+                    />
+                  </ToolContent>
+                </Tool>
+              ))
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
       <motion.div
         initial={false}
         animate={isAskOpen ? { scale: 1.05 } : { scale: 1 }}

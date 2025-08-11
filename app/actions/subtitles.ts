@@ -18,7 +18,7 @@ export async function getAuthData() {
 }
 
 interface SubtitleEntry {
-  timestamp: number; // in seconds
+  timestamp: number;
   timestampFormatted: string;
   text: string;
 }

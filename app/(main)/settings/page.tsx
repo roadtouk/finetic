@@ -17,10 +17,12 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useSettings } from "@/contexts/settings-context";
-import { Settings, Ship, Bot } from "lucide-react";
+import { Settings2, Ship, Bot } from "lucide-react";
 import { AuroraBackground } from "@/components/aurora-background";
 import { SearchBar } from "@/components/search-component";
 import { Label } from "@/components/ui/label";
+import { Gemini, Groq, OpenRouter } from "@lobehub/icons";
+import { Ollama } from "@lobehub/icons";
 
 export default function SettingsPage() {
   const {
@@ -47,8 +49,8 @@ export default function SettingsPage() {
           </div>
         </div>
         <div className="mb-8">
-          <h2 className="text-3xl font-semibold text-foreground mb-2 font-poppins flex items-center gap-3">
-            <Settings className="h-8 w-8" />
+          <h2 className="text-3xl font-semibold text-foreground mb-2 font-poppins flex items-center gap-2">
+            <Settings2 className="h-8 w-8" />
             Settings
           </h2>
         </div>
@@ -97,8 +99,30 @@ export default function SettingsPage() {
                         <SelectValue placeholder="Select AI provider" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="gemini">Gemini</SelectItem>
-                        <SelectItem value="ollama">Ollama</SelectItem>
+                        <SelectItem value="gemini">
+                          <div className="flex items-center gap-2">
+                            <Gemini.Color className="h-4 w-4" />
+                            Gemini
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="ollama">
+                          <div className="flex items-center gap-2">
+                            <Ollama className="h-4 w-4 fill-foreground" />
+                            Ollama
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="groq">
+                          <div className="flex items-center gap-2">
+                            <Groq className="h-4 w-4 fill-[#F55036]" />
+                            Groq
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="openrouter">
+                          <div className="flex items-center gap-2">
+                            <OpenRouter className="h-4 w-4 fill-foreground" />
+                            OpenRouter
+                          </div>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <p className="text-sm text-muted-foreground">

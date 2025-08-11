@@ -10,7 +10,7 @@ import { getAuthData } from "@/app/actions/utils";
 export const getPeople = tool({
   description:
     "Search for people (e.g., directors, actors) related to media",
-  parameters: z.object({
+  inputSchema: z.object({
     query: z
       .string()
       .describe("The search term or person name to look for"),
@@ -79,7 +79,7 @@ export const getPeople = tool({
 export const getPersonDetails = tool({
   description:
     "Get detailed information about a specific person (actor, director, etc.)",
-  parameters: z.object({
+  inputSchema: z.object({
     personId: z.string().describe("The unique ID of the person"),
   }),
   execute: async ({ personId }) => {
@@ -130,7 +130,7 @@ export const getPersonDetails = tool({
 export const getPersonFilmography = tool({
   description:
     "Get filmography (movies and TV shows) for a specific person",
-  parameters: z.object({
+  inputSchema: z.object({
     personId: z.string().describe("The unique ID of the person"),
     limit: z
       .number()

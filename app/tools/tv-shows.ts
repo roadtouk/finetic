@@ -4,7 +4,7 @@ import { fetchSeasons, fetchEpisodes } from "@/app/actions/tv-shows";
 
 export const getSeasons = tool({
   description: "Get seasons for a TV show",
-  parameters: z.object({
+  inputSchema: z.object({
     tvShowId: z.string().describe("The unique ID of the TV show"),
   }),
   execute: async ({ tvShowId }) => {
@@ -34,7 +34,7 @@ export const getSeasons = tool({
 
 export const getEpisodes = tool({
   description: "Get episodes for a TV show season",
-  parameters: z.object({
+  inputSchema: z.object({
     seasonId: z.string().describe("The unique ID of the season"),
   }),
   execute: async ({ seasonId }) => {

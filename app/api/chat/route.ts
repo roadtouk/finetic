@@ -1,8 +1,9 @@
 import { google } from "@ai-sdk/google";
-import { convertToCoreMessages, streamText } from "ai";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { groq } from "@ai-sdk/groq";
+import { convertToModelMessages, streamText, stepCountIs } from "ai";
 import { createAllTools, createSystemPrompt } from "@/app/tools";
 import { cookies } from "next/headers";
-import { createOllama } from "ollama-ai-provider";
 
 async function getAuthData() {
   const cookieStore = await cookies();
@@ -20,29 +21,34 @@ export async function POST(req: Request) {
   try {
     await getAuthData();
 
-    const { 
-      messages, 
-      currentMedia, 
+    const {
+      messages,
+      currentMedia,
       currentTimestamp,
       aiProvider = "gemini",
       ollamaBaseUrl = "http://localhost:11434",
-      ollamaModel = "phi3"
+      ollamaModel = "phi3",
     } = await req.json();
 
-    const model = aiProvider === "ollama" 
-      ? createOllama({ baseURL: ollamaBaseUrl })(ollamaModel)
-      : google("gemini-2.0-flash");
+    const openrouter = createOpenRouter({
+      apiKey: process.env.OPENROUTER_API_KEY,
+    });
 
-    const result = await streamText({
+    const model = openrouter.chat("qwen/qwen3-coder:free");
+
+    const result = streamText({
       model,
-      messages: convertToCoreMessages(messages),
-      maxSteps: 5,
+      messages: convertToModelMessages(messages),
+      stopWhen: stepCountIs(10),
       tools: createAllTools(currentMedia, currentTimestamp),
       system: createSystemPrompt(currentMedia, currentTimestamp),
+      onChunk: async (chunk: any) => {
+        console.log("🪣 [streamText] New chunk received:", chunk);
+      },
       // onFinish: async ({ usage, finishReason, text, toolResults }) => {},
     });
 
-    return result.toDataStreamResponse();
+    return result.toUIMessageStreamResponse();
   } catch (error) {
     console.error("Chat API Error:", error);
 
